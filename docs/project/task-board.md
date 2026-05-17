@@ -13,6 +13,7 @@ Use this as the single source of truth for active execution state.
 | T-003 | Evaluate standalone executable packaging for `radebe-cli` | M0 | Gate C | P1 | Done | `t-003-cli-packaging-evaluation` | None | Hand off to T-006 for SEA implementation or T-005 for the Unity bridge contract using the accepted executable path |
 | T-005 | Define Unity bridge contract for `radebe-unity` consuming `radebe-cli` | M2 | Gate A | P1 | Done | `t-005-unity-bridge-contract` | None | Hand off to the next Unity implementation task to build install validation and invocation helpers against the documented SEA artifact contract |
 | T-006 | Implement the Node SEA packaging pipeline for `radebe-cli` | M1 | Gate B | P1 | Done | `t-006-cli-sea-implementation` | None | Hand off to T-005 for the Unity bridge contract and artifact consumption details, or T-004 for the first web authoring loop |
+| T-007 | Implement Unity bridge install validation and process-launch helper baseline | M2 | Gate A | P1 | Done | `t-007-unity-bridge-helper-baseline` | None | Hand off to the next Unity task to add payload install-copy/update flow and run bridge smoke checks inside a real Unity project |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

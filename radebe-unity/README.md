@@ -14,6 +14,7 @@ Unity-facing integration assets will live here.
 
 ## Expected Layout
 - `Assets/Editor/`: Unity editor scripts that invoke the CLI.
+- `Assets/Editor/RadebeCliBridgeHelper.cs`: install validation and process-launch helper baseline for the packaged CLI payload.
 - `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`: installed CLI payload copied from the packaged SEA artifact.
 - `docs/`: integration notes, bridge contract, and smoke-test instructions.
 

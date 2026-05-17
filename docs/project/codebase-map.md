@@ -28,6 +28,7 @@ Last updated: `2026-05-17`
 - `radebe-unity/README.md`: bridge direction and planned Unity asset layout.
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
+- `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`: Unity-side install validation and process-launch helper for the packaged CLI payload.
 
 ## Tooling / Build Paths
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.

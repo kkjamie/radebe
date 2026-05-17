@@ -36,7 +36,7 @@ Unity should treat the platform folder as an atomic payload. The executable is t
 - Base executable name: `radebe`
 - Windows executable filename: `radebe.exe`
 - macOS and Linux executable filename: `radebe`
-- Unity should derive the launch path from `artifact-manifest.json` when available, and otherwise fall back to `radebe` plus the platform extension rule above.
+- Unity should derive the launch filename from `artifact-manifest.json` when available by taking the leaf name of `executablePath`, and otherwise fall back to `radebe` plus the platform extension rule above.
 
 ## Install and Update Model
 - Source of truth for packaged payloads is the SEA artifact directory produced by `npm run package:cli:sea`.
@@ -75,7 +75,7 @@ Unity should treat the platform folder as an atomic payload. The executable is t
 - Unity-side install checks should confirm:
   - platform folder exists
   - executable exists
-  - `artifact-manifest.json` exists and points at the installed executable name
+  - `artifact-manifest.json` exists and its `executablePath` leaf name matches the installed executable name
 - Unity-side bridge smoke tests should invoke the executable with a known source string and assert stdout plus exit code.
 
 ## Forward-Compatibility Notes

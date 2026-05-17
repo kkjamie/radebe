@@ -9,15 +9,15 @@ Last updated: `2026-05-17`
 - Status: `In Progress`
 
 ## Current Focus
-- Define the first `radebe-web` authoring loop and treat the documented Unity bridge contract as the baseline for future `radebe-unity` implementation work.
+- Define the first `radebe-web` authoring loop, with the documented Unity bridge contract and helper baseline now available for follow-on `radebe-unity` integration work.
 
 ## Open Decisions / Blockers
 - No project blockers in the current scaffold; build and test verification succeed, while workspace-wide typecheck and SEA smoke execution still require an out-of-sandbox run on Windows because of the known sandbox `EPERM` issue.
 
 ## Best Next Tasks
 1. Execute T-004 to define the first `radebe-web` authoring and realtime preview loop.
-2. Build the first Unity install-validation and process-launch helper against `radebe-unity/docs/cli-bridge-contract.md`.
-3. Review whether M1 Gate B can advance once the web authoring loop lands.
+2. Add the Unity payload install-copy/update flow and an editor smoke command on top of `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`.
+3. Review whether M1 Gate B can advance once the web authoring loop lands, while planning the next M2 Unity bridge validation step.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.
