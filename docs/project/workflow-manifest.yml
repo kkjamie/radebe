@@ -1,5 +1,5 @@
 workflow_repo: your-org/wilko-workflow
-workflow_version: v0.1.2
+workflow_version: v0.1.4
 workflow_submodule_path: docs/agent
 workflow_source_url: https://wilko-workflow.pages.dev/
 local_workflow_overrides:

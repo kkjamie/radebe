@@ -28,7 +28,7 @@
     "docs/project/workflow-manifest.yml",
     "docs/project/workflow-overrides.md"
   ],
-  "release_version": "v0.1.2",
+  "release_version": "v0.1.4",
   "source_repo_name": "wilko-workflow",
   "source_site_url": "https://wilko-workflow.pages.dev/",
   "template_repo_url": "https://kkJamie@dev.azure.com/kkJamie/Wilko%20Workflow/_git/wilko-project-template"

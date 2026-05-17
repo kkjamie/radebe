@@ -3,7 +3,7 @@
 This repository is a generated bootstrap payload for Wilko Workflow.
 
 - Source workflow: `wilko-workflow`
-- Release version: `v0.1.2`
+- Release version: `v0.1.4`
 - Canonical published docs: `https://wilko-workflow.pages.dev/`
 - Template repo remote: `https://kkJamie@dev.azure.com/kkJamie/Wilko%20Workflow/_git/wilko-project-template`
 
