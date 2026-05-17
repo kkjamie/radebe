@@ -1,25 +1,43 @@
 # Product Spec
 
-Owner: `TBD`
-Last updated: `YYYY-MM-DD`
+Owner: `Main Thread`
+Last updated: `2026-05-17`
 
 ## Product Summary
-- <what product is being built>
-- <target users>
-- <primary value proposition>
+- Radebe is a language and toolchain for authoring content that can be parsed, compiled, and rendered across multiple environments.
+- Primary users are tool builders and content authors who need a shared language runtime across CLI, web, and Unity workflows.
+- The core value proposition is one canonical TypeScript implementation that powers authoring, validation, rendering, and downstream integrations without divergent logic.
 
 ## Core Experience Goals
-- <goal 1>
-- <goal 2>
+- Make the language usable from both developer tooling and interactive authoring surfaces.
+- Keep the core engine reusable so every integration consumes the same parsing, compiling, and rendering behavior.
+- Support easy embedding in external tools, especially Unity, without requiring a local Node.js runtime in production use.
 
 ## In Scope (Current Milestone)
-- <feature/system>
+- Define the canonical repo/package structure for the Radebe ecosystem.
+- Establish TypeScript as the implementation language for the shared runtime and first-party tooling.
+- Document how `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` relate to each other.
+- Seed planning docs so implementation work can start from concrete tasks instead of template placeholders.
 
 ## Out of Scope (Current Milestone)
-- <explicitly excluded work>
+- Final language grammar and syntax design.
+- Concrete parser/compiler implementation details.
+- Unity runtime integration specifics beyond the high-level bridge direction.
+- Final executable packaging technology choice for the CLI.
 
 ## Open Questions
-- <question requiring decision>
+- What packaging approach should produce the standalone `radebe-cli` executable: Node SEA, `pkg`, `nexe`, Bun, or another strategy?
+- What repository/workspace tooling should manage the multi-package TypeScript layout?
+- How should rendering outputs be represented and versioned between `radebe-core`, `radebe-web`, and `radebe-unity`?
 
 ## Dependencies
-- <external systems, services, or teams>
+- TypeScript toolchain for the shared implementation language.
+- A workspace/package manager strategy for multi-package development.
+- Unity integration constraints for the `radebe-unity` bridge.
+
+## Canonical Package Boundaries
+- `radebe-core`: owns parsing, compiling, rendering, and the reusable TypeScript API surface.
+- `radebe-cli`: wraps `radebe-core` for command-line usage and future standalone executable packaging.
+- `radebe-web`: provides browser-based authoring and realtime feedback by importing `radebe-core` directly as a module.
+- `radebe-unity`: bridges Unity to the language toolchain by invoking `radebe-cli`.
+- `scripts`: owns build automation, packaging helpers, release tasks, and other project-level automation.

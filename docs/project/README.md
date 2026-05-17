@@ -1,7 +1,7 @@
 # Project Docs Index
 
-Owner: `TBD`
-Last updated: `YYYY-MM-DD`
+Owner: `Main Thread`
+Last updated: `2026-05-17`
 
 Purpose: fast startup context for new agent threads with minimal token load.
 
@@ -17,9 +17,9 @@ Purpose: fast startup context for new agent threads with minimal token load.
 9. `docs/project/main-thread-state.md`
 
 ## File Roles
-- `product-spec.md`: canonical product facts and open questions.
+- `product-spec.md`: canonical product facts, package boundaries, and open product questions.
 - `inconsistency-register.md`: ambiguity and conflict register.
-- `codebase-map.md`: architecture and key system locations.
+- `codebase-map.md`: intended repo layout, architecture, and key system locations.
 - `roadmap.md`: milestones, priorities, dependency order.
 - `milestones/Mx-*.md`: milestone scope, gates, acceptance criteria.
 - `task-board.md`: active queue, status, immediate next action.
@@ -30,6 +30,7 @@ Purpose: fast startup context for new agent threads with minimal token load.
 - `main-thread-state.md`: resumable orchestration context.
 - `workflow-manifest.yml`: pinned Wilko version and open upstream proposals.
 - `workflow-overrides.md`: project-local exceptions to shared workflow.
+- `../original-spec.md`: redirect file only; not canonical source-of-truth.
 
 ## Worker Thread Start Prompt Template
 ```md

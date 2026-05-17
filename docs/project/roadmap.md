@@ -1,18 +1,18 @@
 # Roadmap
 
-Owner: `TBD`
-Last updated: `YYYY-MM-DD`
+Owner: `Main Thread`
+Last updated: `2026-05-17`
 
 ## Planning Horizon
-- Current: <date range>
-- Next: <date range>
+- Current: `2026-05-17` to `2026-05-24`
+- Next: `2026-05-24` to `2026-06-14`
 
 ## Milestones
 | Milestone | Outcome | Priority | Status | Target | Dependencies | Spec File | Current Gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| M0 | Planning and documentation baseline | P0 | In Progress | <date> | Initial setup | `docs/project/milestones/M0-planning-phase.md` | Gate A |
-| M1 | Implementation foundation | P0 | Planned | <date> | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Gate A |
-| M2 | Scale and optimization | P1 | Planned | <date> | M1 completed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate A |
+| M0 | Planning baseline for the Radebe monorepo and package model | P0 | In Progress | 2026-05-24 | Initial setup | `docs/project/milestones/M0-planning-phase.md` | Gate C |
+| M1 | Workspace scaffold for `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` | P0 | Planned | 2026-06-07 | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Gate A |
+| M2 | First usable language loop across CLI, web, and Unity bridge | P1 | Planned | 2026-06-28 | M1 completed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate A |
 
 ## Priority Rules
 - P0: blocks core progress or release path.
@@ -20,7 +20,7 @@ Last updated: `YYYY-MM-DD`
 - P2: useful improvements, schedule as capacity allows.
 
 ## Current Focus
-- <what is currently prioritized and why>
+- Convert the Wilko template into project-specific planning truth, then define the first implementation-ready tasks for the TypeScript multi-package workspace.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.

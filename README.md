@@ -1,16 +1,27 @@
-# Wilko Template
+# Radebe
 
-This repository is a generated bootstrap payload for Wilko Workflow.
+Radebe is a TypeScript-based language toolchain and authoring ecosystem.
 
-- Source workflow: `wilko-workflow`
-- Release version: `v0.1.4`
-- Canonical published docs: `https://wilko-workflow.pages.dev/`
-- Template repo remote: `https://kkJamie@dev.azure.com/kkJamie/Wilko%20Workflow/_git/wilko-project-template`
+The repo is being organized as a multi-package workspace with these primary parts:
 
-## Included Files
+- `radebe-core`: parsing, compiling, and rendering for the language.
+- `radebe-cli`: standalone command-line wrapper around `radebe-core`.
+- `radebe-web`: browser-based authoring and realtime preview powered by `radebe-core` as a TypeScript module.
+- `radebe-unity`: Unity bridge that integrates through `radebe-cli`.
+- `scripts`: build, packaging, and automation utilities.
 
-- `AGENTS.md`
-- `docs/agent/`
-- `docs/project/`
+## Documentation
 
-This repo is intended to be updated by export automation from the main Wilko Workflow repository.
+Project planning and source-of-truth docs live in `docs/project/`.
+
+Start with:
+
+1. `AGENTS.md`
+2. `docs/project/README.md`
+3. `docs/project/product-spec.md`
+4. `docs/project/task-board.md`
+5. `docs/project/roadmap.md`
+
+## Packaging Direction
+
+The intended CLI distribution path is a packaged executable so Unity and other consumers do not need a separate Node.js installation at runtime.
