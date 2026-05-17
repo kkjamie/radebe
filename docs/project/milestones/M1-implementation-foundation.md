@@ -18,7 +18,7 @@ Status: `In Progress`
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Gate A | Foundation Baseline | Workspace tooling chosen, root config committed, and initial package folders scaffolded | Passed | T-001 established the workspace baseline, and T-002 replaced the placeholder core surface with explicit parser/compiler/renderer boundaries, shared contracts, and downstream consumers wired to the new API. |
-| Gate B | Reliability | Critical defect risk reduced | In Progress | The workspace now has an explicit staged core API and basic pipeline coverage; next work should deepen integration/testing around packaging and the first authoring loop. |
+| Gate B | Reliability | Critical defect risk reduced | In Progress | The workspace now has an explicit staged core API, an accepted Node SEA packaging direction for `radebe-cli`, and basic pipeline coverage; next work should implement packaging automation/smoke tests and the first web authoring loop. |
 | Gate C | Readiness | Next milestone prerequisites complete | Not Started | |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.

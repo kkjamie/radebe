@@ -23,10 +23,14 @@ Last updated: `2026-05-17`
 - Final language grammar and syntax design.
 - Concrete parser/compiler implementation details.
 - Unity runtime integration specifics beyond the high-level bridge direction.
-- Final executable packaging technology choice for the CLI.
+
+## Packaging Direction
+- Package `radebe-cli` as a Node.js single executable application built from a bundled CLI entrypoint plus a pinned Node LTS binary in release automation.
+- Keep local development on the existing npm workspace and TypeScript project-reference flow; the standalone executable is a release artifact, not a second day-to-day runtime.
+- Avoid switching the CLI to Bun because the repo already standardizes on Node/npm for workspace builds, tests, and downstream consumption.
+- Avoid `pkg` and `nexe` as the primary path because their maintenance posture is weaker than the built-in Node SEA path and would add more long-term packaging risk to the repo.
 
 ## Open Questions
-- What packaging approach should produce the standalone `radebe-cli` executable: Node SEA, `pkg`, `nexe`, Bun, or another strategy?
 - How should rendering outputs be represented and versioned between `radebe-core`, `radebe-web`, and `radebe-unity`?
 
 ## Dependencies
@@ -34,10 +38,11 @@ Last updated: `2026-05-17`
 - npm workspaces with shared TypeScript project references for multi-package development.
 - Vite for the initial browser package shell in `radebe-web`.
 - Unity integration constraints for the `radebe-unity` bridge.
+- A bundling step for `radebe-cli` release builds so the CLI plus `@radebe/core` can be emitted as one SEA entry script before executable generation.
 
 ## Canonical Package Boundaries
 - `radebe-core`: owns parsing, compiling, rendering, and the reusable TypeScript API surface, with a root pipeline API plus explicit parser/compiler/renderer module entrypoints.
-- `radebe-cli`: wraps `radebe-core` for command-line usage and future standalone executable packaging.
+- `radebe-cli`: wraps `radebe-core` for command-line usage and is the source package for the standalone Node SEA executable.
 - `radebe-web`: provides browser-based authoring and realtime feedback by importing `radebe-core` directly as a module.
 - `radebe-unity`: bridges Unity to the language toolchain by invoking `radebe-cli`.
-- `scripts`: owns build automation, packaging helpers, release tasks, and other project-level automation.
+- `scripts`: owns build automation, CLI bundling/SEA packaging helpers, release tasks, and other project-level automation.

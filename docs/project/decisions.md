@@ -80,3 +80,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Downstream consumers can either call the full pipeline or integrate at a specific stage, and future language work can evolve within the stage modules without changing the workspace package split.
 - Related tasks: T-002, T-004, T-005
 - Supersedes: N/A
+
+---
+
+### DEC-006: Package `radebe-cli` with Node SEA Release Artifacts
+- Date: `2026-05-17`
+- Status: Accepted
+- Context: T-003 needed a standalone executable path for Unity and other non-Node consumers that fits the existing npm/TypeScript workspace and the newly staged `radebe-core` API.
+- Decision: Keep `radebe-cli` authored and tested as a normal Node package in the workspace, then produce standalone releases by bundling the CLI and `@radebe/core` into one entry script and generating per-platform Node single executable application artifacts from a pinned Node LTS binary.
+- Consequences: The repo stays on one primary runtime/tooling stack, Unity still consumes the CLI rather than a separate port, release automation must add a bundling plus SEA step, and executable smoke tests should validate the produced artifacts on each supported target platform.
+- Related tasks: T-003, T-005
+- Supersedes: N/A

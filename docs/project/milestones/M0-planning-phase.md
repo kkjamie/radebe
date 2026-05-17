@@ -4,7 +4,7 @@ Milestone ID: `M0`
 Title: `Planning and Documentation Baseline`
 Owner: `Main Thread`
 Last updated: `2026-05-17`
-Status: `In Progress`
+Status: `Done`
 
 ## Outcome
 - Establish project-specific baseline docs, canonical package boundaries, and an initial task queue for Radebe.
@@ -19,6 +19,6 @@ Status: `In Progress`
 | --- | --- | --- | --- | --- |
 | Gate A | Docs Baseline | Core docs created and linked | Passed | Product spec, codebase map, README, and source-of-truth map now reflect Radebe rather than the template. |
 | Gate B | Initial Planning | Task board + roadmap seeded | Passed | Roadmap and task board now contain concrete Radebe planning data. |
-| Gate C | Execution Readiness | First worker-ready tasks defined | In Progress | Initial tasks are defined; next thread should execute T-001 and confirm workspace tooling. |
+| Gate C | Execution Readiness | First worker-ready tasks defined | Passed | T-001 through T-003 executed the initial planning queue, including the accepted `radebe-cli` standalone packaging direction. |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.

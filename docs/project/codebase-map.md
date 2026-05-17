@@ -31,11 +31,12 @@ Last updated: `2026-05-17`
 ## Tooling / Build Paths
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.
 - root workspace config files: npm workspaces, TypeScript project references, and shared build settings.
-- CLI packaging outputs: standalone executable artifacts intended for Unity and non-Node consumers.
+- CLI packaging pipeline: bundle `radebe-cli` plus `@radebe/core` into a single release entry script, then build per-platform Node SEA executables from a pinned Node LTS binary.
+- CLI packaging outputs: signed or otherwise release-ready standalone executable artifacts intended for Unity and other non-Node consumers.
 
 ## Test Paths
 - `radebe-core/test/`: parser, compiler, renderer, and fixture coverage.
-- `radebe-cli/test/`: command invocation and executable packaging verification.
+- `radebe-cli/test/`: command invocation, bundled entrypoint smoke tests, and executable packaging verification.
 - `radebe-web/`: UI and integration tests for authoring and realtime preview flows.
 - `radebe-unity/`: bridge validation and integration smoke tests as the package matures.
 
@@ -44,3 +45,4 @@ Last updated: `2026-05-17`
 - Avoid duplicating detailed implementation notes from session logs.
 - Workspace tooling is now `npm` workspaces plus TypeScript project references, with `radebe-unity` intentionally kept outside the npm workspace boundary.
 - `radebe-core` now exposes both a root API and subpath exports so downstream packages can choose between whole-pipeline usage and stage-specific integration.
+- The recommended executable path is Node SEA so the repo can stay on the current Node/npm toolchain and only add release-time bundling plus per-platform artifact generation.
