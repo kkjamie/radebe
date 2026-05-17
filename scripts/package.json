@@ -7,6 +7,14 @@
     "build": "tsc -b",
     "clean": "Remove-Item -Recurse -Force dist, tsconfig.tsbuildinfo -ErrorAction SilentlyContinue",
     "doctor": "node ./dist/src/doctor.js",
+    "sea:build": "node ./dist/src/sea.js build",
+    "sea:bundle": "node ./dist/src/sea.js bundle",
+    "sea:smoke": "node ./dist/src/sea.js smoke",
+    "test": "node --test dist/test",
     "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0",
+    "postject": "^1.0.0-alpha.6"
   }
 }

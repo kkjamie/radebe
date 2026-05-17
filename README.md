@@ -32,3 +32,19 @@ Start with:
 ## Packaging Direction
 
 The intended CLI distribution path is a packaged executable so Unity and other consumers do not need a separate Node.js installation at runtime.
+
+## CLI SEA Packaging
+
+Build a local Node SEA executable artifact with:
+
+```powershell
+npm run package:cli:sea
+```
+
+Run the packaged executable smoke test with:
+
+```powershell
+npm run smoke:cli:sea
+```
+
+The automation emits release-time bundle, blob, config, and executable outputs under `artifacts/radebe-cli/sea/<platform>-<arch>/`. The current implementation targets the Node 20 SEA flow, so it bundles `radebe-cli` plus `@radebe/core` into a CommonJS entry before creating the executable.
