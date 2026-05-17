@@ -22,7 +22,7 @@ Last updated: `2026-05-17`
 ## Out of Scope (Current Milestone)
 - Final language grammar and syntax design.
 - Concrete parser/compiler implementation details.
-- Unity runtime integration specifics beyond the high-level bridge direction.
+- Unity runtime implementation details beyond the documented packaged-CLI bridge contract.
 
 ## Packaging Direction
 - Package `radebe-cli` as a Node.js single executable application built from a bundled CLI entrypoint plus a pinned Node LTS binary in release automation.
@@ -45,4 +45,5 @@ Last updated: `2026-05-17`
 - `radebe-cli`: wraps `radebe-core` for command-line usage and is the source package for the standalone Node SEA executable.
 - `radebe-web`: provides browser-based authoring and realtime feedback by importing `radebe-core` directly as a module.
 - `radebe-unity`: bridges Unity to the language toolchain by invoking `radebe-cli`.
+- The Unity bridge contract is defined around the packaged SEA artifact layout so production Unity usage does not depend on a local Node.js runtime.
 - `scripts`: owns build automation, CLI bundling/SEA packaging helpers, release tasks, and other project-level automation.

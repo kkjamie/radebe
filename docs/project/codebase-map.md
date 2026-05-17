@@ -26,14 +26,15 @@ Last updated: `2026-05-17`
 - `radebe-cli/test/`: initial CLI behavior coverage.
 - `radebe-web/src/`: browser shell entrypoint that imports `radebe-core`.
 - `radebe-unity/README.md`: bridge direction and planned Unity asset layout.
-- `radebe-unity/bridge.manifest.json`: placeholder bridge metadata for the future Unity integration contract.
+- `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
+- `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
 
 ## Tooling / Build Paths
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.
 - `scripts/src/sea.ts`: release-time bundling and Node SEA packaging automation for `radebe-cli`.
 - root workspace config files: npm workspaces, TypeScript project references, and shared build settings.
 - CLI packaging pipeline: bundle `radebe-cli` plus `@radebe/core` into a single release entry script, then build per-platform Node SEA executables from a pinned Node LTS binary.
-- SEA artifact root: `artifacts/radebe-cli/sea/<platform>-<arch>/` containing the bundled entry, SEA blob, config, manifest, and generated executable.
+- SEA artifact root: `artifacts/radebe-cli/sea/<platform>-<arch>/` containing `artifact-manifest.json`, the bundled entry, SEA blob, config, and generated executable.
 - CLI packaging outputs: signed or otherwise release-ready standalone executable artifacts intended for Unity and other non-Node consumers.
 
 ## Test Paths

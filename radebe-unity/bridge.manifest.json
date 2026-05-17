@@ -1,10 +1,17 @@
 {
   "name": "radebe-unity-bridge",
   "version": "0.1.0",
+  "contractVersion": "2026-05-17",
   "cliPackage": "@radebe/cli",
   "integrationMode": "packaged-executable",
+  "artifactRoot": "artifacts/radebe-cli/sea/<platform>-<arch>",
+  "executableBaseName": "radebe",
+  "metadataManifest": "artifact-manifest.json",
+  "recommendedInstallRoot": "Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>",
+  "docsPath": "radebe-unity/docs/cli-bridge-contract.md",
   "notes": [
     "Unity consumes radebe-cli as the bridge to the canonical TypeScript implementation.",
-    "Do not introduce a separate Unity runtime port."
+    "Do not introduce a separate Unity runtime port.",
+    "Install or update the packaged CLI by replacing the entire platform-specific SEA artifact folder."
   ]
 }

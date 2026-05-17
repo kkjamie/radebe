@@ -20,7 +20,7 @@ Last updated: `2026-05-17`
 - P2: useful improvements, schedule as capacity allows.
 
 ## Current Focus
-- Define the first `radebe-web` authoring loop on top of the staged `radebe-core` API and document the Unity bridge contract around the implemented Node SEA artifact layout.
+- Define the first `radebe-web` authoring loop on top of the staged `radebe-core` API and use the documented Unity bridge contract as the packaged CLI baseline for future Unity implementation work.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.
