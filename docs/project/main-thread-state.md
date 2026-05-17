@@ -5,20 +5,20 @@ Last updated: `2026-05-17`
 
 ## Current Milestone / Gate
 - Milestone: `M1`
-- Gate: `Gate A`
+- Gate: `Gate B`
 - Status: `In Progress`
 
 ## Current Focus
-- Use the scaffolded workspace to define `radebe-core` boundaries next, then evaluate standalone CLI packaging.
+- Use the staged `radebe-core` baseline to evaluate standalone CLI packaging and define the first web authoring loop.
 
 ## Open Decisions / Blockers
 - Standalone executable packaging for `radebe-cli` is still undecided.
-- No project blockers in the current scaffold; full npm verification succeeded when run outside the sandbox.
+- No project blockers in the current scaffold; build/test verification succeeds, with workspace-wide build still requiring an out-of-sandbox run on Windows because of the known sandbox `EPERM` issue.
 
 ## Best Next Tasks
-1. Execute T-002 to define the first `radebe-core` API boundaries.
-2. Execute T-003 to choose a standalone packaging strategy for `radebe-cli`.
-3. Add repo styleguide/testing conventions now that the workspace shape is concrete.
+1. Execute T-003 to choose a standalone packaging strategy for `radebe-cli`.
+2. Execute T-004 to define the first `radebe-web` authoring and realtime preview loop.
+3. Expand `radebe-core` fixture coverage now that the staged API contracts exist.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

@@ -1,15 +1,17 @@
-export interface RenderRequest {
-  source: string;
-}
+export { compileDocument } from "./compiler.js";
+export { parseSource } from "./parser.js";
+export { renderDocument, renderSource } from "./renderer.js";
 
-export interface RenderResult {
-  output: string;
-  diagnostics: string[];
-}
-
-export function renderDocument(request: RenderRequest): RenderResult {
-  return {
-    output: request.source,
-    diagnostics: []
-  };
-}
+export type {
+  CompileResult,
+  CompiledDocument,
+  CompiledSegment,
+  ParseResult,
+  ParsedDocument,
+  ParsedLine,
+  PipelineResult,
+  RadebeDiagnostic,
+  RadebeStage,
+  RenderResult,
+  SourceDocument
+} from "./types.js";

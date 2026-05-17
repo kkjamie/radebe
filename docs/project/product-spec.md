@@ -36,7 +36,7 @@ Last updated: `2026-05-17`
 - Unity integration constraints for the `radebe-unity` bridge.
 
 ## Canonical Package Boundaries
-- `radebe-core`: owns parsing, compiling, rendering, and the reusable TypeScript API surface.
+- `radebe-core`: owns parsing, compiling, rendering, and the reusable TypeScript API surface, with a root pipeline API plus explicit parser/compiler/renderer module entrypoints.
 - `radebe-cli`: wraps `radebe-core` for command-line usage and future standalone executable packaging.
 - `radebe-web`: provides browser-based authoring and realtime feedback by importing `radebe-core` directly as a module.
 - `radebe-unity`: bridges Unity to the language toolchain by invoking `radebe-cli`.

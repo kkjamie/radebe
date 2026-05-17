@@ -11,7 +11,7 @@ Last updated: `2026-05-17`
 | Milestone | Outcome | Priority | Status | Target | Dependencies | Spec File | Current Gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | M0 | Planning baseline for the Radebe monorepo and package model | P0 | In Progress | 2026-05-24 | Initial setup | `docs/project/milestones/M0-planning-phase.md` | Gate C |
-| M1 | Workspace scaffold for `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` | P0 | In Progress | 2026-06-07 | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Gate A |
+| M1 | Workspace scaffold for `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` | P0 | In Progress | 2026-06-07 | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Gate B |
 | M2 | First usable language loop across CLI, web, and Unity bridge | P1 | Planned | 2026-06-28 | M1 completed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate A |
 
 ## Priority Rules
@@ -20,7 +20,7 @@ Last updated: `2026-05-17`
 - P2: useful improvements, schedule as capacity allows.
 
 ## Current Focus
-- Use the scaffolded npm/TypeScript workspace to define the first `radebe-core` API boundaries and evaluate CLI packaging next.
+- Use the staged `radebe-core` API baseline to evaluate CLI packaging and define the first `radebe-web` authoring loop.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.

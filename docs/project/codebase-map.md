@@ -16,7 +16,11 @@ Last updated: `2026-05-17`
 - `scripts/`: workspace automation package for repo-level tooling.
 
 ## Core Runtime Paths
-- `radebe-core/src/`: current public runtime entrypoint and future parser/compiler/renderer modules.
+- `radebe-core/src/index.ts`: root public API that re-exports shared types and the common parse/compile/render helpers.
+- `radebe-core/src/parser.ts`: parser boundary for converting source text into the shared parsed document shape.
+- `radebe-core/src/compiler.ts`: compiler boundary for transforming parsed documents into renderable compiled documents.
+- `radebe-core/src/renderer.ts`: renderer boundary plus the convenience source-to-output pipeline helper.
+- `radebe-core/src/types.ts`: shared contracts that define the cross-stage document and diagnostic shapes.
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.
@@ -39,3 +43,4 @@ Last updated: `2026-05-17`
 - Keep this file high-signal and architecture-focused.
 - Avoid duplicating detailed implementation notes from session logs.
 - Workspace tooling is now `npm` workspaces plus TypeScript project references, with `radebe-unity` intentionally kept outside the npm workspace boundary.
+- `radebe-core` now exposes both a root API and subpath exports so downstream packages can choose between whole-pipeline usage and stage-specific integration.

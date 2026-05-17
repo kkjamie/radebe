@@ -69,3 +69,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The workspace uses default Node/npm tooling with low setup overhead, `radebe-core` stays directly consumable by the CLI and web app, and `radebe-unity` remains outside the npm workspace as a Unity bridge that consumes the packaged CLI.
 - Related tasks: T-001, T-002, T-004, T-005
 - Supersedes: N/A
+
+---
+
+### DEC-005: Expose `radebe-core` as a Staged Pipeline with Root Convenience Helpers
+- Date: `2026-05-17`
+- Status: Accepted
+- Context: T-002 needed a concrete API boundary for parsing, compiling, and rendering without forcing CLI and web consumers to depend on private internals.
+- Decision: Model `radebe-core` as explicit parser, compiler, and renderer modules that share stable document/diagnostic types, then re-export the stage APIs plus a root `renderSource` convenience pipeline from the package entrypoint.
+- Consequences: Downstream consumers can either call the full pipeline or integrate at a specific stage, and future language work can evolve within the stage modules without changing the workspace package split.
+- Related tasks: T-002, T-004, T-005
+- Supersedes: N/A

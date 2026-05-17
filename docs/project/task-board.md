@@ -9,13 +9,13 @@ Use this as the single source of truth for active execution state.
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-001 | Select workspace tooling and scaffold the TypeScript monorepo | M1 | Gate A | P0 | Done | `t-001-workspace-scaffold` | None | Hand off to T-002 with the scaffolded package boundaries and shared TypeScript config |
-| T-002 | Design the initial `radebe-core` API and module boundaries | M1 | Gate A | P0 | Ready | Unassigned | Depends on T-001 output shape | Draft parser/compiler/renderer surface and package exports |
+| T-002 | Design the initial `radebe-core` API and module boundaries | M1 | Gate A | P0 | Done | `t-002-core-api-boundaries` | None | Hand off to T-003 for CLI packaging evaluation or T-004 for the first web authoring loop |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-003 | Evaluate standalone executable packaging for `radebe-cli` | M0 | Gate C | P1 | Backlog | Unassigned | None | Compare SEA, `pkg`, `nexe`, Bun, and release implications |
-| T-004 | Define the first authoring loop for `radebe-web` realtime preview | M1 | Gate B | P1 | Backlog | Unassigned | Depends on T-002 | Describe editor, compile loop, and preview update path |
+| T-004 | Define the first authoring loop for `radebe-web` realtime preview | M1 | Gate B | P1 | Ready | Unassigned | None | Describe editor, compile loop, and preview update path on top of the staged core API |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
