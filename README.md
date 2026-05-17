@@ -10,6 +10,13 @@ The repo is being organized as a multi-package workspace with these primary part
 - `radebe-unity`: Unity bridge that integrates through `radebe-cli`.
 - `scripts`: build, packaging, and automation utilities.
 
+## Workspace Tooling
+
+- Root package manager: `npm` workspaces
+- Shared compiler baseline: TypeScript project references
+- Browser package shell: Vite in `radebe-web`
+- Unity integration direction: `radebe-unity` consumes `radebe-cli`
+
 ## Documentation
 
 Project planning and source-of-truth docs live in `docs/project/`.

@@ -27,12 +27,12 @@ Last updated: `2026-05-17`
 
 ## Open Questions
 - What packaging approach should produce the standalone `radebe-cli` executable: Node SEA, `pkg`, `nexe`, Bun, or another strategy?
-- What repository/workspace tooling should manage the multi-package TypeScript layout?
 - How should rendering outputs be represented and versioned between `radebe-core`, `radebe-web`, and `radebe-unity`?
 
 ## Dependencies
 - TypeScript toolchain for the shared implementation language.
-- A workspace/package manager strategy for multi-package development.
+- npm workspaces with shared TypeScript project references for multi-package development.
+- Vite for the initial browser package shell in `radebe-web`.
 - Unity integration constraints for the `radebe-unity` bridge.
 
 ## Canonical Package Boundaries

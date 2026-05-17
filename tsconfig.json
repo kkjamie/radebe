@@ -1,0 +1,17 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./radebe-core"
+    },
+    {
+      "path": "./radebe-cli"
+    },
+    {
+      "path": "./radebe-web"
+    },
+    {
+      "path": "./scripts"
+    }
+  ]
+}

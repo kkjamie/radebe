@@ -1,0 +1,10 @@
+{
+  "name": "radebe-unity-bridge",
+  "version": "0.1.0",
+  "cliPackage": "@radebe/cli",
+  "integrationMode": "packaged-executable",
+  "notes": [
+    "Unity consumes radebe-cli as the bridge to the canonical TypeScript implementation.",
+    "Do not introduce a separate Unity runtime port."
+  ]
+}

@@ -4,21 +4,21 @@ Owner: `Main Thread`
 Last updated: `2026-05-17`
 
 ## Current Milestone / Gate
-- Milestone: `M0`
-- Gate: `Gate C`
+- Milestone: `M1`
+- Gate: `Gate A`
 - Status: `In Progress`
 
 ## Current Focus
-- Turn the template repo into a concrete Radebe planning baseline and choose the first implementation task for the TypeScript workspace scaffold.
+- Use the scaffolded workspace to define `radebe-core` boundaries next, then evaluate standalone CLI packaging.
 
 ## Open Decisions / Blockers
 - Standalone executable packaging for `radebe-cli` is still undecided.
-- Workspace tooling selection is still open.
+- No project blockers in the current scaffold; full npm verification succeeded when run outside the sandbox.
 
 ## Best Next Tasks
-1. Execute T-001 to pick workspace tooling and scaffold the monorepo.
-2. Execute T-002 to define the first `radebe-core` API boundaries.
-3. Execute T-003 to choose a standalone packaging strategy for `radebe-cli`.
+1. Execute T-002 to define the first `radebe-core` API boundaries.
+2. Execute T-003 to choose a standalone packaging strategy for `radebe-cli`.
+3. Add repo styleguide/testing conventions now that the workspace shape is concrete.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

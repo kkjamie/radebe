@@ -8,7 +8,7 @@ Use this as the single source of truth for active execution state.
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-001 | Select workspace tooling and scaffold the TypeScript monorepo | M1 | Gate A | P0 | Ready | Unassigned | None | Define package manager, root config, and initial package folders |
+| T-001 | Select workspace tooling and scaffold the TypeScript monorepo | M1 | Gate A | P0 | Done | `t-001-workspace-scaffold` | None | Hand off to T-002 with the scaffolded package boundaries and shared TypeScript config |
 | T-002 | Design the initial `radebe-core` API and module boundaries | M1 | Gate A | P0 | Ready | Unassigned | Depends on T-001 output shape | Draft parser/compiler/renderer surface and package exports |
 
 ## Next Up

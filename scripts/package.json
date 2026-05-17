@@ -1,0 +1,12 @@
+{
+  "name": "@radebe/scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "Remove-Item -Recurse -Force dist, tsconfig.tsbuildinfo -ErrorAction SilentlyContinue",
+    "doctor": "node ./dist/src/doctor.js",
+    "typecheck": "tsc -b"
+  }
+}

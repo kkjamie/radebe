@@ -1,0 +1,23 @@
+{
+  "name": "radebe",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "radebe-core",
+    "radebe-cli",
+    "radebe-web",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "dev:web": "npm run dev -w @radebe/web",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3"
+  }
+}

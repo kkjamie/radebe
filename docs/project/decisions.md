@@ -58,3 +58,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Packaging the CLI as a standalone executable becomes an important delivery concern for M0/M1 planning.
 - Related tasks: T-003, T-005
 - Supersedes: N/A
+
+---
+
+### DEC-004: Use npm Workspaces with TypeScript Project References
+- Date: `2026-05-17`
+- Status: Accepted
+- Context: T-001 needed a concrete monorepo baseline that keeps setup lightweight while supporting a shared core library, a CLI package, a web package, and repo-level automation.
+- Decision: Use root `npm` workspaces for `radebe-core`, `radebe-cli`, `radebe-web`, and `scripts`, backed by a shared `tsconfig.base.json`, root project references, and a Vite shell for `radebe-web`.
+- Consequences: The workspace uses default Node/npm tooling with low setup overhead, `radebe-core` stays directly consumable by the CLI and web app, and `radebe-unity` remains outside the npm workspace as a Unity bridge that consumes the packaged CLI.
+- Related tasks: T-001, T-002, T-004, T-005
+- Supersedes: N/A
