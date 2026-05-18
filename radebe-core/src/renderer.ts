@@ -4,13 +4,29 @@ import { parseSource } from "./parser.js";
 import type {
   CompiledDocument,
   PipelineResult,
+  RenderArtifact,
   RenderResult,
   SourceDocument
 } from "./types.js";
 
+function buildTextGridArtifact(document: CompiledDocument): RenderArtifact {
+  const rows = document.segments.map((segment) => segment.value);
+  const width = rows.reduce(
+    (currentWidth, row) => Math.max(currentWidth, row.length),
+    0
+  );
+
+  return {
+    kind: "text-grid",
+    width,
+    height: rows.length,
+    rows
+  };
+}
+
 export function renderDocument(document: CompiledDocument): RenderResult {
   return {
-    output: document.segments.map((segment) => segment.value).join("\n"),
+    artifact: buildTextGridArtifact(document),
     diagnostics: []
   };
 }
@@ -23,7 +39,7 @@ export function renderSource(request: SourceDocument): PipelineResult {
   return {
     parsed: parsed.document,
     compiled: compiled.document,
-    output: rendered.output,
+    artifact: rendered.artifact,
     diagnostics: [
       ...parsed.diagnostics,
       ...compiled.diagnostics,

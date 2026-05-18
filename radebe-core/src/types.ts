@@ -44,14 +44,23 @@ export interface CompileResult {
   diagnostics: RadebeDiagnostic[];
 }
 
+export interface TextGridRenderArtifact {
+  kind: "text-grid";
+  width: number;
+  height: number;
+  rows: string[];
+}
+
+export type RenderArtifact = TextGridRenderArtifact;
+
 export interface RenderResult {
-  output: string;
+  artifact: RenderArtifact;
   diagnostics: RadebeDiagnostic[];
 }
 
 export interface PipelineResult {
   parsed: ParsedDocument;
   compiled: CompiledDocument;
-  output: string;
+  artifact: RenderArtifact;
   diagnostics: RadebeDiagnostic[];
 }

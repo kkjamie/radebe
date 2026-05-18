@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-17`
+Last updated: `2026-05-18`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -90,4 +90,15 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Keep `radebe-cli` authored and tested as a normal Node package in the workspace, then produce standalone releases by bundling the CLI and `@radebe/core` into one entry script and generating per-platform Node single executable application artifacts from a pinned Node LTS binary.
 - Consequences: The repo stays on one primary runtime/tooling stack, Unity still consumes the CLI rather than a separate port, release automation must add a bundling plus SEA step, and executable smoke tests should validate the produced artifacts on each supported target platform.
 - Related tasks: T-003, T-005
+- Supersedes: N/A
+
+---
+
+### DEC-007: Share a Text-Grid Render Artifact Across Core and Web
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: T-004 needed the smallest concrete render-output contract that could power a browser preview immediately without creating a second Unity-specific path.
+- Decision: Have `radebe-core` render to a lightweight text-grid artifact with `rows`, `width`, and `height`, and make `radebe-web` preview that artifact directly.
+- Consequences: Browser preview can stay simple, Unity can later rasterize the same artifact into textures if needed, and richer render artifact kinds can be added later without changing the package split.
+- Related tasks: T-004
 - Supersedes: N/A

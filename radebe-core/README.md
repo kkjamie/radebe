@@ -19,6 +19,6 @@ Radebe toolchain.
 
 - `src/parser.ts`: turns raw source text into a `ParsedDocument`.
 - `src/compiler.ts`: transforms a `ParsedDocument` into a `CompiledDocument`.
-- `src/renderer.ts`: renders a `CompiledDocument` into string output and exposes
-  the end-to-end `renderSource` helper.
+- `src/renderer.ts`: renders a `CompiledDocument` into a text-grid artifact and
+  exposes the end-to-end `renderSource` helper.
 - `src/types.ts`: contains the stable contracts shared by all stages.

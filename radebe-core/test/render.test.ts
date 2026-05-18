@@ -36,14 +36,24 @@ test("renderDocument joins compiled segments into output", () => {
   const compiled = compileDocument(parsed.document);
   const result = renderDocument(compiled.document);
 
-  assert.equal(result.output, "alpha\nbeta");
+  assert.deepEqual(result.artifact, {
+    kind: "text-grid",
+    width: 5,
+    height: 2,
+    rows: ["alpha", "beta"]
+  });
   assert.deepEqual(result.diagnostics, []);
 });
 
 test("renderSource runs the parser, compiler, and renderer pipeline", () => {
   const result = renderSource({ source: "alpha\n\nbeta" });
 
-  assert.equal(result.output, "alpha\nbeta");
+  assert.deepEqual(result.artifact, {
+    kind: "text-grid",
+    width: 5,
+    height: 2,
+    rows: ["alpha", "beta"]
+  });
   assert.equal(result.parsed.lines.length, 3);
   assert.equal(result.compiled.segments.length, 2);
   assert.deepEqual(result.diagnostics, []);

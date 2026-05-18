@@ -11,7 +11,8 @@ export type {
   ParsedLine,
   PipelineResult,
   RadebeDiagnostic,
-  RadebeStage,
+  RenderArtifact,
   RenderResult,
+  RadebeStage,
   SourceDocument
 } from "./types.js";

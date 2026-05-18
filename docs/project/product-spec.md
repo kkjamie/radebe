@@ -30,8 +30,9 @@ Last updated: `2026-05-17`
 - Avoid switching the CLI to Bun because the repo already standardizes on Node/npm for workspace builds, tests, and downstream consumption.
 - Avoid `pkg` and `nexe` as the primary path because their maintenance posture is weaker than the built-in Node SEA path and would add more long-term packaging risk to the repo.
 
-## Open Questions
-- How should rendering outputs be represented and versioned between `radebe-core`, `radebe-web`, and `radebe-unity`?
+## Render Artifact Direction
+- Represent the first shared render output as a lightweight text-grid artifact with `rows`, `width`, and `height`.
+- Use that artifact directly for browser preview now, and keep it cheap for future Unity-side texture generation by avoiding a separate Unity-only runtime contract.
 
 ## Dependencies
 - TypeScript toolchain for the shared implementation language.

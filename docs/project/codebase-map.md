@@ -19,12 +19,12 @@ Last updated: `2026-05-17`
 - `radebe-core/src/index.ts`: root public API that re-exports shared types and the common parse/compile/render helpers.
 - `radebe-core/src/parser.ts`: parser boundary for converting source text into the shared parsed document shape.
 - `radebe-core/src/compiler.ts`: compiler boundary for transforming parsed documents into renderable compiled documents.
-- `radebe-core/src/renderer.ts`: renderer boundary plus the convenience source-to-output pipeline helper.
-- `radebe-core/src/types.ts`: shared contracts that define the cross-stage document and diagnostic shapes.
+- `radebe-core/src/renderer.ts`: renderer boundary plus the convenience source-to-artifact pipeline helper.
+- `radebe-core/src/types.ts`: shared contracts that define the cross-stage document, render artifact, and diagnostic shapes.
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.
-- `radebe-web/src/`: browser shell entrypoint that imports `radebe-core`.
+- `radebe-web/src/`: browser authoring shell that imports `radebe-core` and renders the shared preview artifact.
 - `radebe-unity/README.md`: bridge direction and planned Unity asset layout.
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.

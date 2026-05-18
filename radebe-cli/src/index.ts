@@ -5,8 +5,9 @@ import { renderSource } from "@radebe/core";
 export function run(argv: string[]): number {
   const input = argv[2] ?? "";
   const result = renderSource({ source: input });
+  const output = result.artifact.rows.join("\n");
 
-  process.stdout.write(`${result.output}\n`);
+  process.stdout.write(`${output}\n`);
   return result.diagnostics.length === 0 ? 0 : 1;
 }
 
