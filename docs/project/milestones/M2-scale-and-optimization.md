@@ -4,7 +4,7 @@ Milestone ID: `M2`
 Title: `First Usable Language Loop`
 Owner: `Main Thread`
 Last updated: `2026-05-18`
-Status: `Planned`
+Status: `In Progress`
 
 ## Outcome
 - Establish basic language operation with one or two rendering commands that are usable through the shared runtime and visible in the web preview.
@@ -18,8 +18,8 @@ Status: `Planned`
 ## Gate Definitions
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Not Started | This gate intentionally comes before further Unity integration work. |
-| Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Not Started | Keep the shared render contract small unless a real command requirement forces expansion. |
+| Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Blocked | The canonical language now uses a small `sprite` header block and root-level draw commands. The current `@text` / `@repeat` slice is implementation drift rather than gate-complete evidence. |
+| Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Not Started | Resume after the first spec-aligned slice exists, starting with `plot` and `line`. Keep the shared preview contract as small as possible unless the language requirements force expansion. |
 | Gate C | Unity Return | The packaged CLI path is exercised again from Unity after the basic command loop is stable | Not Started | Revisit install/update and smoke behavior only after the first commands are working end to end elsewhere. |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.

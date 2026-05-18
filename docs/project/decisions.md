@@ -113,3 +113,36 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The next thread should optimize for core language behavior and fast feedback in CLI/web, while Unity remains on the existing packaged CLI bridge baseline until the first usable command loop is stable.
 - Related tasks: T-009, T-010
 - Supersedes: N/A
+
+---
+
+### DEC-009: Introduce `@`-Prefixed Commands While Keeping Plain-Text Compatibility
+- Date: `2026-05-18`
+- Status: Superseded
+- Context: T-010 needed the first real rendering commands, but the packaged CLI bridge and existing smoke expectations still relied on plain text input rendering directly to the shared text-grid artifact.
+- Decision: Add the first command syntax as `@`-prefixed line commands, starting with `@text <content>` and `@repeat <count> <content>`, while continuing to treat non-command lines as literal text rows.
+- Consequences: This provided a temporary implementation slice, but it is not the canonical language direction after the recovered product spec restored the intended `.uis` syntax and command model.
+- Related tasks: T-010
+- Supersedes: N/A
+
+---
+
+### DEC-010: Define the Language as an Indentation-Based `.uis` Command Tree With Schema-Driven Semantics
+- Date: `2026-05-18`
+- Status: Superseded
+- Context: The recovered source product spec restored the intended language design, including concrete examples, command hierarchy rules, and an extensibility model that had been lost during doc consolidation.
+- Decision: Treat the canonical language as an indentation-based `.uis` command language whose parser only builds a generic command tree, and define syntax shorthand, allowed children, command kinds, and semantic behavior through a schema registry and semantic resolver.
+- Consequences: This restored the missing command-tree and schema-registry model, but it used the recovered `.uis` extension and a more deeply nested sprite structure than the currently preferred direction.
+- Related tasks: T-010
+- Supersedes: DEC-009
+
+---
+
+### DEC-011: Use a Small `sprite` Header Block With Root-Level Draw Commands
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: After restoring the source product spec, the language direction still needed refinement to improve authoring ergonomics and clarify the first concrete vertical slice.
+- Decision: Keep `sprite` as a small header block for overall file properties such as `size` and `background`, allow actual drawing commands at root indentation, treat file extensions as conventions rather than hard requirements, tentatively prefer a short project-specific extension such as `.rdb`, and make `plot x y color` followed by `line x1 y1 x2 y2 color` the first real commands to implement.
+- Consequences: The canonical language remains indentation-based and schema-driven, but the top-level file model is flatter and easier to author; the implementation should start with a file-level/header-level validation model instead of nesting every draw command under `sprite`; and future docs and code should avoid treating `.uis` as locked.
+- Related tasks: T-012
+- Supersedes: DEC-010
