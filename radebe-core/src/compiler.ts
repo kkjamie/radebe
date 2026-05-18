@@ -1,5 +1,6 @@
 import {
   FILE_DEFINITION,
+  getAllowedPropertyCommands,
   getCommandDefinition,
   type CommandDefinition
 } from "./schema.js";
@@ -7,10 +8,18 @@ import {
 import type {
   CompileResult,
   CompiledDrawCommand,
+  GradientStop,
+  LinearGradientFill,
   ParsedCommandNode,
   ParsedDocument,
   PlotCommand,
+  RadialGradientFill,
+  RectCommand,
+  RectCut,
+  RectFill,
   RadebeDiagnostic,
+  SolidFill,
+  StrokeAppearance,
   SpriteHeader
 } from "./types.js";
 
@@ -52,6 +61,16 @@ function parseArguments(
         return;
       }
 
+      if (values.has(key)) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            `The ${definition.name} command received duplicate "${key}" values.`,
+            node
+          )
+        );
+        return;
+      }
+
       values.set(key, value);
       return;
     }
@@ -68,6 +87,16 @@ function parseArguments(
       return;
     }
 
+    if (values.has(shorthandKey)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The ${definition.name} command received duplicate "${shorthandKey}" values.`,
+          node
+        )
+      );
+      return;
+    }
+
     values.set(shorthandKey, token);
     positionalIndex += 1;
   });
@@ -75,11 +104,35 @@ function parseArguments(
   return { values, diagnostics };
 }
 
+function setResolvedValue(
+  values: Map<string, string>,
+  propertyName: string,
+  value: string,
+  ownerNode: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): void {
+  if (values.has(propertyName)) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${ownerNode.name} command received duplicate "${propertyName}" values.`,
+        ownerNode
+      )
+    );
+    return;
+  }
+
+  values.set(propertyName, value);
+}
+
 function allowsChild(
   parentDefinition: CommandDefinition,
   childDefinition: CommandDefinition
 ): boolean {
   if (parentDefinition.allowedChildCommands?.includes(childDefinition.name)) {
+    return true;
+  }
+
+  if (getAllowedPropertyCommands(parentDefinition).includes(childDefinition.name)) {
     return true;
   }
 
@@ -105,6 +158,27 @@ function readRequiredString(
   }
 
   return value;
+}
+
+function readOptionalString(
+  values: Map<string, string>,
+  key: string
+): string | null {
+  return values.get(key) ?? null;
+}
+
+function readOptionalNumber(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  key: string,
+  diagnostics: RadebeDiagnostic[],
+  options?: { min?: number; max?: number }
+): number | null {
+  if (!values.has(key)) {
+    return null;
+  }
+
+  return readRequiredNumber(node, values, key, diagnostics, options);
 }
 
 function readRequiredInteger(
@@ -145,6 +219,54 @@ function readRequiredInteger(
   return value;
 }
 
+function readRequiredNumber(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  key: string,
+  diagnostics: RadebeDiagnostic[],
+  options?: { min?: number; max?: number }
+): number | null {
+  const token = readRequiredString(node, values, key, diagnostics);
+
+  if (token === null) {
+    return null;
+  }
+
+  const value = Number.parseFloat(token);
+
+  if (!Number.isFinite(value)) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command expects "${key}" to be a number.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  if (options?.min !== undefined && value < options.min) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command expects "${key}" to be at least ${options.min}.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  if (options?.max !== undefined && value > options.max) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command expects "${key}" to be at most ${options.max}.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  return value;
+}
+
 function validateChildren(
   node: ParsedCommandNode,
   definition: CommandDefinition,
@@ -174,6 +296,50 @@ function validateChildren(
   });
 }
 
+function resolveCommandProperties(
+  node: ParsedCommandNode,
+  definition: CommandDefinition
+): { values: Map<string, string>; diagnostics: RadebeDiagnostic[] } {
+  const diagnostics: RadebeDiagnostic[] = [];
+  const parsedArguments = parseArguments(node, definition);
+  const values = new Map(parsedArguments.values);
+  diagnostics.push(...parsedArguments.diagnostics);
+  validateChildren(node, definition, diagnostics);
+
+  node.children.forEach((child) => {
+    if (!getAllowedPropertyCommands(definition).includes(child.name)) {
+      return;
+    }
+
+    const childDefinition = getCommandDefinition(child.name);
+
+    if (!childDefinition) {
+      return;
+    }
+
+    const childArguments = parseArguments(child, childDefinition);
+    diagnostics.push(...childArguments.diagnostics);
+    const value = childArguments.values.get("value");
+
+    if (!value) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The ${child.name} command requires "value".`,
+          child
+        )
+      );
+      return;
+    }
+
+    setResolvedValue(values, child.name, value, node, diagnostics);
+  });
+
+  return {
+    values,
+    diagnostics
+  };
+}
+
 function compileSpriteHeader(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[]
@@ -185,13 +351,12 @@ function compileSpriteHeader(
     return null;
   }
 
-  const parsedArguments = parseArguments(node, definition);
-  diagnostics.push(...parsedArguments.diagnostics);
-  validateChildren(node, definition, diagnostics);
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
 
   const name = readRequiredString(
     node,
-    parsedArguments.values,
+    resolvedProperties.values,
     "name",
     diagnostics
   );
@@ -206,20 +371,20 @@ function compileSpriteHeader(
       return;
     }
 
-    const childArguments = parseArguments(child, childDefinition);
-    diagnostics.push(...childArguments.diagnostics);
+    const childProperties = resolveCommandProperties(child, childDefinition);
+    diagnostics.push(...childProperties.diagnostics);
 
     if (child.name === "size") {
       width = readRequiredInteger(
         child,
-        childArguments.values,
+        childProperties.values,
         "width",
         diagnostics,
         { min: 1 }
       );
       height = readRequiredInteger(
         child,
-        childArguments.values,
+        childProperties.values,
         "height",
         diagnostics,
         { min: 1 }
@@ -229,7 +394,7 @@ function compileSpriteHeader(
     if (child.name === "background") {
       const color = readRequiredString(
         child,
-        childArguments.values,
+        childProperties.values,
         "color",
         diagnostics
       );
@@ -263,15 +428,14 @@ function compilePlotCommand(
     return null;
   }
 
-  const parsedArguments = parseArguments(node, definition);
-  diagnostics.push(...parsedArguments.diagnostics);
-  validateChildren(node, definition, diagnostics);
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
 
-  const x = readRequiredInteger(node, parsedArguments.values, "x", diagnostics);
-  const y = readRequiredInteger(node, parsedArguments.values, "y", diagnostics);
+  const x = readRequiredInteger(node, resolvedProperties.values, "x", diagnostics);
+  const y = readRequiredInteger(node, resolvedProperties.values, "y", diagnostics);
   const color = readRequiredString(
     node,
-    parsedArguments.values,
+    resolvedProperties.values,
     "color",
     diagnostics
   );
@@ -300,17 +464,16 @@ function compileLineCommand(
     return null;
   }
 
-  const parsedArguments = parseArguments(node, definition);
-  diagnostics.push(...parsedArguments.diagnostics);
-  validateChildren(node, definition, diagnostics);
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
 
-  const x1 = readRequiredInteger(node, parsedArguments.values, "x1", diagnostics);
-  const y1 = readRequiredInteger(node, parsedArguments.values, "y1", diagnostics);
-  const x2 = readRequiredInteger(node, parsedArguments.values, "x2", diagnostics);
-  const y2 = readRequiredInteger(node, parsedArguments.values, "y2", diagnostics);
+  const x1 = readRequiredInteger(node, resolvedProperties.values, "x1", diagnostics);
+  const y1 = readRequiredInteger(node, resolvedProperties.values, "y1", diagnostics);
+  const x2 = readRequiredInteger(node, resolvedProperties.values, "x2", diagnostics);
+  const y2 = readRequiredInteger(node, resolvedProperties.values, "y2", diagnostics);
   const color = readRequiredString(
     node,
-    parsedArguments.values,
+    resolvedProperties.values,
     "color",
     diagnostics
   );
@@ -327,6 +490,795 @@ function compileLineCommand(
     x2,
     y2,
     color
+  };
+}
+
+function compileRectCommand(
+  node: ParsedCommandNode,
+  sprite: SpriteHeader,
+  diagnostics: RadebeDiagnostic[]
+): RectCommand | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  let x: number | null;
+  let y: number | null;
+  let width: number | null;
+  let height: number | null;
+
+  if (node.name === "rect-inset") {
+    const hasInset = readOptionalString(resolvedProperties.values, "inset") !== null;
+    const hasTop = readOptionalString(resolvedProperties.values, "top") !== null;
+    const hasRight = readOptionalString(resolvedProperties.values, "right") !== null;
+    const hasBottom = readOptionalString(resolvedProperties.values, "bottom") !== null;
+    const hasLeft = readOptionalString(resolvedProperties.values, "left") !== null;
+
+    if (!hasInset && !hasTop && !hasRight && !hasBottom && !hasLeft) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          'The rect-inset command requires "inset" or at least one side-specific inset property.',
+          node
+        )
+      );
+      return null;
+    }
+
+    const inset = hasInset
+      ? readRequiredInteger(
+          node,
+          resolvedProperties.values,
+          "inset",
+          diagnostics,
+          { min: 0 }
+        )
+      : 0;
+    const top = hasTop
+      ? readRequiredInteger(node, resolvedProperties.values, "top", diagnostics, {
+          min: 0
+        })
+      : inset;
+    const right = hasRight
+      ? readRequiredInteger(node, resolvedProperties.values, "right", diagnostics, {
+          min: 0
+        })
+      : inset;
+    const bottom = hasBottom
+      ? readRequiredInteger(node, resolvedProperties.values, "bottom", diagnostics, {
+          min: 0
+        })
+      : inset;
+    const left = hasLeft
+      ? readRequiredInteger(node, resolvedProperties.values, "left", diagnostics, {
+          min: 0
+        })
+      : inset;
+
+    if (
+      inset === null ||
+      top === null ||
+      right === null ||
+      bottom === null ||
+      left === null
+    ) {
+      return null;
+    }
+
+    x = left;
+    y = top;
+    width = sprite.width - left - right;
+    height = sprite.height - top - bottom;
+
+    if (width < 1 || height < 1) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The rect-inset command with top=${top}, right=${right}, bottom=${bottom}, left=${left} does not fit inside the current sprite size ${sprite.width}x${sprite.height}.`,
+          node
+        )
+      );
+      return null;
+    }
+  } else {
+    x = readRequiredInteger(node, resolvedProperties.values, "x", diagnostics);
+    y = readRequiredInteger(node, resolvedProperties.values, "y", diagnostics);
+    width = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "width",
+      diagnostics,
+      { min: 1 }
+    );
+    height = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "height",
+      diagnostics,
+      { min: 1 }
+    );
+  }
+
+  const color = readOptionalString(resolvedProperties.values, "color");
+  const fills: RectFill[] = [];
+  const strokes: StrokeAppearance[] = [];
+  let cut: RectCut | null = null;
+
+  if (color !== null) {
+    fills.push({
+      kind: "solid",
+      color
+    });
+  }
+
+  for (const child of node.children) {
+    if (child.name === "cut") {
+      cut = compileRectCut(child, diagnostics);
+      continue;
+    }
+
+    if (child.name !== "fill") {
+      if (child.name !== "stroke") {
+        continue;
+      }
+
+      const stroke = compileStroke(child, diagnostics);
+
+      if (stroke) {
+        strokes.push(stroke);
+      }
+
+      continue;
+    }
+
+    const fill = compileFill(child, diagnostics);
+
+    if (fill) {
+      fills.push(fill);
+    }
+  }
+
+  if (
+    x === null ||
+    y === null ||
+    width === null ||
+    height === null
+  ) {
+    return null;
+  }
+
+  if (fills.length === 0 && strokes.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command requires a color shorthand, a fill child, or a stroke child.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  const rectCut: RectCut | null = cut;
+
+  if (rectCut !== null) {
+    if (rectCut.topLeft + rectCut.topRight >= width) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The cut command expects top-left (${rectCut.topLeft}) plus top-right (${rectCut.topRight}) to leave horizontal space inside width ${width}.`,
+          node
+        )
+      );
+      return null;
+    }
+
+    if (rectCut.bottomLeft + rectCut.bottomRight >= width) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The cut command expects bottom-left (${rectCut.bottomLeft}) plus bottom-right (${rectCut.bottomRight}) to leave horizontal space inside width ${width}.`,
+          node
+        )
+      );
+      return null;
+    }
+
+    if (rectCut.topLeft + rectCut.bottomLeft >= height) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The cut command expects top-left (${rectCut.topLeft}) plus bottom-left (${rectCut.bottomLeft}) to leave vertical space inside height ${height}.`,
+          node
+        )
+      );
+      return null;
+    }
+
+    if (rectCut.topRight + rectCut.bottomRight >= height) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The cut command expects top-right (${rectCut.topRight}) plus bottom-right (${rectCut.bottomRight}) to leave vertical space inside height ${height}.`,
+          node
+        )
+      );
+      return null;
+    }
+  }
+
+  return {
+    kind: "rect",
+    lineNumber: node.lineNumber,
+    x,
+    y,
+    width,
+    height,
+    ...(rectCut === null ? {} : { cut: rectCut }),
+    fills,
+    strokes,
+    sourceCommandName:
+      node.name === "rect"
+        ? "rect"
+        : node.name === "rect-inset"
+          ? "rect-inset"
+          : "rect-absolute"
+  };
+}
+
+function compileSolid(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): SolidFill | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const color = readRequiredString(
+    node,
+    resolvedProperties.values,
+    "color",
+    diagnostics
+  );
+
+  if (color === null) {
+    return null;
+  }
+
+  return {
+    kind: "solid",
+    color
+  };
+}
+
+function compileGradientStop(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): GradientStop | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const color = readRequiredString(
+    node,
+    resolvedProperties.values,
+    "color",
+    diagnostics
+  );
+  const position = readRequiredNumber(
+    node,
+    resolvedProperties.values,
+    "position",
+    diagnostics,
+    { min: 0, max: 1 }
+  );
+
+  if (color === null || position === null) {
+    return null;
+  }
+
+  return {
+    color,
+    position
+  };
+}
+
+function compileRectCut(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): RectCut | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  validateChildren(node, definition, diagnostics);
+
+  let topLeftToken: string | null = null;
+  let topRightToken: string | null = null;
+  let bottomRightToken: string | null = null;
+  let bottomLeftToken: string | null = null;
+
+  if (node.args.length === 1) {
+    [topLeftToken] = node.args;
+    topRightToken = topLeftToken;
+    bottomRightToken = topLeftToken;
+    bottomLeftToken = topLeftToken;
+  } else if (node.args.length === 4) {
+    [topLeftToken, topRightToken, bottomRightToken, bottomLeftToken] = node.args;
+  } else if (node.args.length > 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The cut command expects either one value or four values in "top-left top-right bottom-right bottom-left" order.',
+        node
+      )
+    );
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  if (topLeftToken !== null) {
+    resolvedProperties.values.set("top-left", topLeftToken);
+  }
+  if (topRightToken !== null) {
+    resolvedProperties.values.set("top-right", topRightToken);
+  }
+  if (bottomRightToken !== null) {
+    resolvedProperties.values.set("bottom-right", bottomRightToken);
+  }
+  if (bottomLeftToken !== null) {
+    resolvedProperties.values.set("bottom-left", bottomLeftToken);
+  }
+
+  const topLeft = readRequiredInteger(
+    node,
+    resolvedProperties.values,
+    "top-left",
+    diagnostics,
+    { min: 0 }
+  );
+  const topRight = readRequiredInteger(
+    node,
+    resolvedProperties.values,
+    "top-right",
+    diagnostics,
+    { min: 0 }
+  );
+  const bottomRight = readRequiredInteger(
+    node,
+    resolvedProperties.values,
+    "bottom-right",
+    diagnostics,
+    { min: 0 }
+  );
+  const bottomLeft = readRequiredInteger(
+    node,
+    resolvedProperties.values,
+    "bottom-left",
+    diagnostics,
+    { min: 0 }
+  );
+
+  if (
+    topLeft === null ||
+    topRight === null ||
+    bottomRight === null ||
+    bottomLeft === null
+  ) {
+    return null;
+  }
+
+  return {
+    topLeft,
+    topRight,
+    bottomRight,
+    bottomLeft
+  };
+}
+
+function compileGradientStops(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  diagnostics: RadebeDiagnostic[]
+): GradientStop[] | null {
+  const from = readOptionalString(values, "from");
+  const to = readOptionalString(values, "to");
+  const stopChildren = node.children.filter((child) => child.name === "stop");
+
+  if ((from !== null || to !== null) && stopChildren.length > 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command should use either shorthand "from/to" colors or explicit stop children, not both.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  if (from !== null || to !== null) {
+    if (from === null || to === null) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The ${node.name} command requires both "from" and "to" colors when using shorthand form.`,
+          node
+        )
+      );
+      return null;
+    }
+
+    return [
+      { color: from, position: 0 },
+      { color: to, position: 1 }
+    ];
+  }
+
+  if (stopChildren.length < 2) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command requires at least two "stop" children.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  const stops = stopChildren
+    .map((child) => compileGradientStop(child, diagnostics))
+    .filter((stop): stop is GradientStop => stop !== null);
+
+  if (stops.length < 2) {
+    return null;
+  }
+
+  return stops;
+}
+
+function compileLinearGradient(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): LinearGradientFill | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const direction = readOptionalString(resolvedProperties.values, "direction");
+  const angle = readOptionalNumber(
+    node,
+    resolvedProperties.values,
+    "angle",
+    diagnostics
+  );
+  const stops = compileGradientStops(node, resolvedProperties.values, diagnostics);
+
+  if (stops === null) {
+    return null;
+  }
+
+  if (direction !== null && angle !== null) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command should use either "direction" or "angle", not both.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  if (
+    direction !== null &&
+    direction !== "horizontal" &&
+    direction !== "vertical"
+  ) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command only supports "horizontal" or "vertical" direction right now.`,
+        node
+      )
+    );
+    return null;
+  }
+
+  return {
+    kind: "gradient-linear",
+    direction: direction === "vertical" ? "vertical" : "horizontal",
+    angle,
+    stops
+  };
+}
+
+function compileRadialGradient(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): RadialGradientFill | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const centerX =
+    readOptionalNumber(node, resolvedProperties.values, "center-x", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 0.5;
+  const centerY =
+    readOptionalNumber(node, resolvedProperties.values, "center-y", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 0.5;
+  const radius =
+    readOptionalNumber(node, resolvedProperties.values, "radius", diagnostics, {
+      min: 0.0001
+    }) ?? 1;
+  const stops = compileGradientStops(node, resolvedProperties.values, diagnostics);
+
+  if (stops === null) {
+    return null;
+  }
+
+  return {
+    kind: "gradient-radial",
+    centerX,
+    centerY,
+    radius,
+    stops
+  };
+}
+
+function compileFill(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): RectFill | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  validateChildren(node, definition, diagnostics);
+
+  if (node.args.length > 0) {
+    const [variantName = "", ...variantArgs] = node.args;
+    const variantDefinition = getCommandDefinition(variantName);
+
+    if (!variantDefinition || !allowsChild(definition, variantDefinition)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The fill command does not allow child command "${variantName}".`,
+          node
+        )
+      );
+      return null;
+    }
+
+    const syntheticNode: ParsedCommandNode = {
+      name: variantName,
+      args: variantArgs,
+      children: [],
+      lineNumber: node.lineNumber,
+      column: node.column,
+      indentLevel: node.indentLevel
+    };
+
+    if (variantName === "solid") {
+      return compileSolid(syntheticNode, diagnostics);
+    }
+
+    if (variantName === "gradient" || variantName === "gradient-linear") {
+      return compileLinearGradient(syntheticNode, diagnostics);
+    }
+
+    if (variantName === "gradient-radial") {
+      return compileRadialGradient(syntheticNode, diagnostics);
+    }
+  }
+
+  const variantChildren = node.children.filter(
+    (child) =>
+      child.name === "solid" ||
+      child.name === "gradient" ||
+      child.name === "gradient-linear" ||
+      child.name === "gradient-radial"
+  );
+
+  if (variantChildren.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The fill command currently requires a "solid", "gradient", "gradient-linear", or "gradient-radial" child or shorthand.',
+        node
+      )
+    );
+    return null;
+  }
+
+  if (variantChildren.length > 1) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The fill command currently supports only one appearance variant per fill node.",
+        node
+      )
+    );
+    return null;
+  }
+
+  const variantNode = variantChildren[0]!;
+
+  if (variantNode.name === "solid") {
+    return compileSolid(variantNode, diagnostics);
+  }
+
+  if (variantNode.name === "gradient-radial") {
+    return compileRadialGradient(variantNode, diagnostics);
+  }
+
+  return compileLinearGradient(variantNode, diagnostics);
+}
+
+function compileStroke(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): StrokeAppearance | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const width = readRequiredInteger(
+    node,
+    resolvedProperties.values,
+    "width",
+    diagnostics,
+    { min: 1 }
+  );
+  const color = readOptionalString(resolvedProperties.values, "color");
+  const alignToken = readOptionalString(resolvedProperties.values, "align");
+  const styleToken = readOptionalString(resolvedProperties.values, "style");
+  const dashLength = readOptionalNumber(
+    node,
+    resolvedProperties.values,
+    "dash-length",
+    diagnostics,
+    { min: 1 }
+  );
+  const gapLength = readOptionalNumber(
+    node,
+    resolvedProperties.values,
+    "gap-length",
+    diagnostics,
+    { min: 0 }
+  );
+  const dotSpacing = readOptionalNumber(
+    node,
+    resolvedProperties.values,
+    "dot-spacing",
+    diagnostics,
+    { min: 0 }
+  );
+
+  if (width === null) {
+    return null;
+  }
+
+  const align =
+    alignToken === null ? "center" : alignToken === "inside" || alignToken === "center" || alignToken === "outside"
+      ? alignToken
+      : null;
+
+  if (align === null) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The stroke command only supports align values "inside", "center", or "outside".',
+        node
+      )
+    );
+    return null;
+  }
+
+  const style =
+    styleToken === null ? "solid" : styleToken === "solid" || styleToken === "dashed" || styleToken === "dotted"
+      ? styleToken
+      : null;
+
+  if (style === null) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The stroke command only supports style values "solid", "dashed", or "dotted".',
+        node
+      )
+    );
+    return null;
+  }
+
+  const fills: RectFill[] = [];
+  const strokes: StrokeAppearance[] = [];
+
+  if (color !== null) {
+    fills.push({
+      kind: "solid",
+      color
+    });
+  }
+
+  node.children.forEach((child) => {
+    if (child.name === "fill") {
+      const fill = compileFill(child, diagnostics);
+
+      if (fill) {
+        fills.push(fill);
+      }
+
+      return;
+    }
+
+    if (child.name === "stroke") {
+      const nestedStroke = compileStroke(child, diagnostics);
+
+      if (nestedStroke) {
+        strokes.push(nestedStroke);
+      }
+    }
+  });
+
+  if (fills.length === 0 && strokes.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The stroke command requires a color shorthand, a fill child, or a nested stroke child.",
+        node
+      )
+    );
+    return null;
+  }
+
+  if (fills.length > 1) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The first stroke slice supports only one fill per stroke node.",
+        node
+      )
+    );
+    return null;
+  }
+
+  return {
+    kind: "stroke",
+    width,
+    align,
+    style,
+    dashLength,
+    gapLength,
+    dotSpacing,
+    fill: fills[0] ?? null,
+    strokes
   };
 }
 
@@ -378,6 +1330,14 @@ function compileRootCommand(
 
   if (node.name === "line") {
     return compileLineCommand(node, diagnostics);
+  }
+
+  if (
+    node.name === "rect" ||
+    node.name === "rect-absolute" ||
+    node.name === "rect-inset"
+  ) {
+    return compileRectCommand(node, sprite, diagnostics);
   }
 
   diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));

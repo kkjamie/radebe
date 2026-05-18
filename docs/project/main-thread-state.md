@@ -9,18 +9,20 @@ Last updated: `2026-05-18`
 - Status: `Not Started`
 
 ## Current Focus
-- The recovered source product spec is now reflected in code through an indentation-aware command tree, a schema-backed compiler registry, a small `sprite` header block with nested `size` and `background` properties, and root-level `plot` plus `line` commands.
-- The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, and the SEA smoke path now uses the same spec-aligned sample contract.
-- M2 Gate A and Gate B now have end-to-end evidence. The next thread should return to Unity validation only, using the packaged CLI bridge against the spec-aligned language slice.
+- The recovered source product spec is now reflected in code through an indentation-aware command tree, a schema-backed compiler registry, a small `sprite` header block with nested `size` and `background` properties, root-level `plot`, `line`, `rect`, `rect-absolute`, and `rect-inset` commands, generic property normalization across positional inline args, named inline args, and child property commands, plus actual `fill` / `solid` / explicit `gradient-linear` / explicit `gradient-radial` appearance commands while `gradient` remains the compatibility alias for the linear form.
+- Rectangle geometry now also supports `cut` as a child geometry modifier on rectangle-backed shapes, including uniform shorthand, four-value shorthand, and expanded named corner values for the fill silhouette.
+- Rectangle-backed `stroke` is now available as the first generated-region appearance slice, including `stroke <width> <color>` shorthand, optional `align`, optional `style`, rectangle rendering for `solid`, `dashed`, and `dotted` styles, and nested child `stroke` support on the generated stroke envelope.
+- The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, the SEA smoke path still exercises the same spec-aligned sample contract, and the web shell has grown into a left-nav docs/playground surface with an experimental page plus per-feature example pages that now support multiple editable live scenarios on a single page.
+- M2 Gate A and Gate B now have deeper end-to-end evidence. The next recommended implementation step is still to add one or two richer geometry or stroke commands on top of the current fill model before returning to Unity validation.
 
 ## Open Decisions / Blockers
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
-- No active blocker remains on the language side. The main open execution step is Unity-side revalidation of the packaged CLI bridge against the new source syntax.
+- No active blocker remains on the language side. The main open execution step is choosing the next command increment before Unity-side revalidation of the packaged CLI bridge against the richer source syntax.
 
 ## Best Next Tasks
-1. Re-exercise the packaged CLI bridge from Unity with a spec-aligned `sprite`/`plot`/`line` source sample and confirm install/update plus process-launch behavior still works.
-2. Record any Unity-side contract adjustments required by the new sprite-grid output or compiler diagnostics format without changing the shared language slice unnecessarily.
-3. After Unity revalidation, decide whether the next language increment should add the first rectangle/fill primitive or focus on richer preview/metadata output.
+1. Make `stroke` respect cut-modified silhouettes now that the rectangle fill shape can be chamfered per corner.
+2. Follow with another shape or appearance feature that benefits directly from the new rectangle, cut, fill, and recursive stroke foundations.
+3. Return to Unity bridge validation after that slightly richer language slice is stable through core, CLI, web, and SEA smoke coverage.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

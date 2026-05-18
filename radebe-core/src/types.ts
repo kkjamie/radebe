@@ -65,7 +65,69 @@ export interface LineCommand {
   color: string;
 }
 
-export type CompiledDrawCommand = PlotCommand | LineCommand;
+export interface SolidFill {
+  kind: "solid";
+  color: string;
+}
+
+export interface GradientStop {
+  color: string;
+  position: number;
+}
+
+export interface LinearGradientFill {
+  kind: "gradient-linear";
+  direction: "horizontal" | "vertical";
+  angle: number | null;
+  stops: GradientStop[];
+}
+
+export interface RadialGradientFill {
+  kind: "gradient-radial";
+  centerX: number;
+  centerY: number;
+  radius: number;
+  stops: GradientStop[];
+}
+
+export type RectFill = SolidFill | LinearGradientFill | RadialGradientFill;
+
+export interface RectCut {
+  topLeft: number;
+  topRight: number;
+  bottomRight: number;
+  bottomLeft: number;
+}
+
+export type StrokeAlign = "inside" | "center" | "outside";
+export type StrokeStyle = "solid" | "dashed" | "dotted";
+
+export interface StrokeAppearance {
+  kind: "stroke";
+  width: number;
+  align: StrokeAlign;
+  style: StrokeStyle;
+  dashLength: number | null;
+  gapLength: number | null;
+  dotSpacing: number | null;
+  fill: RectFill | null;
+  strokes: StrokeAppearance[];
+}
+
+export interface RectCommand {
+  kind: "rect";
+  lineNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  cut?: RectCut | null;
+  fills: RectFill[];
+  strokes: StrokeAppearance[];
+  sourceCommandName: "rect" | "rect-absolute" | "rect-inset";
+}
+
+export type CompiledDrawCommand = PlotCommand | LineCommand | RectCommand;
 
 export interface CompiledDocument {
   kind: "compiled-document";

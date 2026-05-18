@@ -146,3 +146,36 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The canonical language remains indentation-based and schema-driven, but the top-level file model is flatter and easier to author; the implementation should start with a file-level/header-level validation model instead of nesting every draw command under `sprite`; and future docs and code should avoid treating `.uis` as locked.
 - Related tasks: T-012
 - Supersedes: DEC-010
+
+---
+
+### DEC-012: Model Gradient Families as Separate Linear and Radial Appearance Variants
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The first gradient implementation worked as a horizontal-only rectangle fill, but richer authoring needed different properties for linear and radial gradients plus clearer example coverage in the web shell.
+- Decision: Keep `gradient` as a compatibility alias for the linear form, add explicit `gradient-linear` and `gradient-radial` appearance variants with their own schema properties, and document them on separate example pages with multiple live scenarios per page.
+- Consequences: The author-facing language stays approachable for simple cases while the compiler and renderer get clearer semantic separation; future gradient work can extend linear and radial independently; and the web docs can explain each variant without overloading one generic page.
+- Related tasks: T-020
+- Supersedes: N/A
+
+---
+
+### DEC-013: Keep `line` as a Primitive While Introducing Rectangle-Backed `stroke`
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The language needed its first real `stroke` slice, but the team also wanted to avoid prematurely redefining simple `line` drawing as a path-stroking abstraction before caps, joins, and reusable path behavior exist.
+- Decision: Keep `line` as a first-class primitive command, and introduce the first `stroke` implementation only as a rectangle-backed generated region with shorthand `width` plus `color`, optional `align`, and optional `style`.
+- Consequences: The language gets useful outline behavior immediately without forcing a full path model too early; later path-capable stroke work can grow independently; and convenience forms such as `stroke 2 white` can still lower into the richer fill-based appearance structure.
+- Related tasks: T-022
+- Supersedes: N/A
+
+---
+
+### DEC-014: Treat `cut` as a Geometry Modifier on Rectangle-Backed Shapes
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The next distinct sci-fi panel feature was corner cuts, but the team preferred a composable modifier model over introducing a separate `cut-rect` shape command.
+- Decision: Implement `cut` as a child geometry modifier under rectangle-backed shapes, with uniform shorthand, four-value shorthand, and expanded named corner values, rather than adding a standalone `cut-rect` command first.
+- Consequences: The language stays more composable, `rect` remains the base shape vocabulary, and future shape modifiers can follow the same pattern; the first implementation currently affects the fill silhouette directly, while stroke-aware cut handling can follow as a later refinement.
+- Related tasks: T-024
+- Supersedes: N/A
