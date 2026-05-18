@@ -45,6 +45,7 @@ Unity should treat the platform folder as an atomic payload. The executable is t
 - Updates should replace the entire installed platform folder with a newly packaged platform folder from the same artifact layout.
 - Unity should compare the bundled `artifact-manifest.json` when deciding whether an installed payload needs refresh.
 - Unity should not require a system Node.js install in production use.
+- The current editor helper baseline exposes `InstallOrUpdatePayload()` for this flow and defaults the source artifact root to `../artifacts/radebe-cli/sea/` relative to the Unity project when the caller does not provide an explicit source path.
 
 ## Invocation Model
 - Launch target: packaged executable from the installed platform folder.
@@ -77,6 +78,7 @@ Unity should treat the platform folder as an atomic payload. The executable is t
   - executable exists
   - `artifact-manifest.json` exists and its `executablePath` leaf name matches the installed executable name
 - Unity-side bridge smoke tests should invoke the executable with a known source string and assert stdout plus exit code.
+- The current editor helper baseline exposes `RunSmokeTest()` which validates the installed payload, invokes the packaged executable with `hello`, expects stdout `hello\n`, and tolerates the known unsigned SEA stderr warning as non-fatal noise when the process still succeeds.
 
 ## Forward-Compatibility Notes
 - The current CLI accepts only a single source-string argument. If a later task introduces file-based input, structured diagnostics, or machine-readable output, this document should be revised first and Unity should continue consuming `radebe-cli` rather than a parallel runtime path.

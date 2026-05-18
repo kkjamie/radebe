@@ -102,3 +102,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Browser preview can stay simple, Unity can later rasterize the same artifact into textures if needed, and richer render artifact kinds can be added later without changing the package split.
 - Related tasks: T-004
 - Supersedes: N/A
+
+---
+
+### DEC-008: Prioritize Basic Language Commands Before More Unity Integration
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: M1 closed with a viable CLI packaging path, a shared render artifact, a live web preview, and a Unity bridge baseline, but the language itself still lacks enough concrete behavior to justify deeper Unity-first integration work.
+- Decision: Use early M2 work to implement one or two basic rendering commands through `radebe-core`, `radebe-cli`, and `radebe-web` before returning to full Unity vertical integration.
+- Consequences: The next thread should optimize for core language behavior and fast feedback in CLI/web, while Unity remains on the existing packaged CLI bridge baseline until the first usable command loop is stable.
+- Related tasks: T-009, T-010
+- Supersedes: N/A

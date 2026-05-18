@@ -27,3 +27,9 @@ Unity-facing integration assets will live here.
   - `radebe.sea.blob`
   - `sea-config.json`
   - `artifact-manifest.json`
+
+## Editor Helper Baseline
+- `RadebeCliBridgeHelper.ValidateInstalledPayload()` checks the installed `StreamingAssets` payload for the current platform.
+- `RadebeCliBridgeHelper.InstallOrUpdatePayload()` validates the packaged SEA source folder, compares manifests, and copies or refreshes the whole platform directory into `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`.
+- `RadebeCliBridgeHelper.RunSmokeTest()` invokes the installed packaged CLI with the current single-argument contract and asserts the known `hello -> hello\n` smoke path.
+- The helper defaults its source artifact root to `../artifacts/radebe-cli/sea/` relative to the Unity project when no explicit path is provided.

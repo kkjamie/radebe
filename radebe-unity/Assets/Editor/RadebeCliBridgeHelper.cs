@@ -13,96 +13,108 @@ namespace Radebe.UnityBridge.Editor
     {
         private const string ArtifactBaseName = "radebe";
         private const string ManifestFileName = "artifact-manifest.json";
+        private const string DefaultSmokeSource = "hello";
+        private const string DefaultArtifactSourceRoot = "artifacts/radebe-cli/sea";
 
         public static RadebeCliInstallValidationResult ValidateInstalledPayload()
         {
-            var issues = new List<string>();
-            var warnings = new List<string>();
-
             if (!TryGetPlatformKey(out var platformKey, out var platformError))
             {
-                issues.Add(platformError);
-                return new RadebeCliInstallValidationResult(
-                    false,
-                    string.Empty,
-                    string.Empty,
-                    string.Empty,
-                    false,
-                    false,
-                    null,
-                    issues,
-                    warnings);
+                return CreatePlatformFailureValidation(platformError);
             }
 
-            var installDirectory = Path.Combine(
-                Application.streamingAssetsPath,
-                "Radebe",
-                "radebe-cli",
-                platformKey);
-
-            if (!Directory.Exists(installDirectory))
-            {
-                issues.Add($"Packaged radebe-cli payload is not installed for platform '{platformKey}'. Expected folder: {installDirectory}");
-            }
-
-            var manifestPath = Path.Combine(installDirectory, ManifestFileName);
-            SeaArtifactManifest manifest = null;
-            if (File.Exists(manifestPath))
-            {
-                if (!TryReadManifest(manifestPath, out manifest, out var manifestError))
-                {
-                    issues.Add(manifestError);
-                }
-            }
-            else
-            {
-                warnings.Add($"Install validation manifest is missing at {manifestPath}. Falling back to the default executable name.");
-            }
-
-            var executableName = ResolveExecutableName(manifest, warnings);
-            var executablePath = Path.Combine(installDirectory, executableName);
-
-            if (!File.Exists(executablePath))
-            {
-                issues.Add($"Packaged radebe-cli executable was not found at {executablePath}");
-            }
-
-            if (manifest != null)
-            {
-                if (!string.IsNullOrWhiteSpace(manifest.artifactName) &&
-                    !string.Equals(manifest.artifactName, ArtifactBaseName, StringComparison.Ordinal))
-                {
-                    warnings.Add($"Manifest artifactName '{manifest.artifactName}' does not match the expected base name '{ArtifactBaseName}'.");
-                }
-
-                if (manifest.target != null)
-                {
-                    if (!string.IsNullOrWhiteSpace(manifest.target.platform) &&
-                        !string.Equals(manifest.target.platform, GetPlatformName(platformKey), StringComparison.Ordinal))
-                    {
-                        warnings.Add($"Manifest target platform '{manifest.target.platform}' does not match the current platform key '{platformKey}'.");
-                    }
-
-                    var expectedArch = GetArchitectureName(platformKey);
-                    if (!string.IsNullOrWhiteSpace(manifest.target.arch) &&
-                        !string.IsNullOrWhiteSpace(expectedArch) &&
-                        !string.Equals(manifest.target.arch, expectedArch, StringComparison.Ordinal))
-                    {
-                        warnings.Add($"Manifest target arch '{manifest.target.arch}' does not match the current platform key '{platformKey}'.");
-                    }
-                }
-            }
-
-            return new RadebeCliInstallValidationResult(
-                issues.Count == 0,
+            var installDirectory = GetInstalledPayloadDirectory(platformKey);
+            return ValidatePayloadDirectory(
                 platformKey,
                 installDirectory,
-                executablePath,
-                File.Exists(manifestPath),
-                File.Exists(executablePath),
-                manifest,
-                issues,
-                warnings);
+                "installed payload",
+                requireManifest: false);
+        }
+
+        public static RadebeCliPayloadInstallResult InstallOrUpdatePayload(string artifactRootDirectory = null)
+        {
+            if (!TryGetPlatformKey(out var platformKey, out var platformError))
+            {
+                return RadebeCliPayloadInstallResult.FromPlatformFailure(platformError);
+            }
+
+            var sourceDirectory = ResolveSourcePayloadDirectory(artifactRootDirectory, platformKey);
+            var sourceValidation = ValidatePayloadDirectory(
+                platformKey,
+                sourceDirectory,
+                "source payload",
+                requireManifest: true);
+
+            if (!sourceValidation.IsValid)
+            {
+                return RadebeCliPayloadInstallResult.FromSourceValidationFailure(sourceValidation);
+            }
+
+            var installedBefore = ValidateInstalledPayload();
+            var installDirectory = GetInstalledPayloadDirectory(platformKey);
+            var sourceManifestPath = Path.Combine(sourceDirectory, ManifestFileName);
+            var installedManifestPath = Path.Combine(installDirectory, ManifestFileName);
+
+            try
+            {
+                var sourceManifestContent = File.ReadAllText(sourceManifestPath);
+                var installedManifestContent = File.Exists(installedManifestPath)
+                    ? File.ReadAllText(installedManifestPath)
+                    : string.Empty;
+
+                var requiresRefresh =
+                    !installedBefore.IsValid ||
+                    !string.Equals(sourceManifestContent, installedManifestContent, StringComparison.Ordinal);
+
+                if (!requiresRefresh)
+                {
+                    return RadebeCliPayloadInstallResult.FromSkippedInstall(
+                        platformKey,
+                        sourceDirectory,
+                        installDirectory,
+                        sourceValidation,
+                        installedBefore);
+                }
+
+                if (Directory.Exists(installDirectory))
+                {
+                    Directory.Delete(installDirectory, recursive: true);
+                }
+
+                CopyDirectory(sourceDirectory, installDirectory);
+
+                var installedAfter = ValidateInstalledPayload();
+                if (!installedAfter.IsValid)
+                {
+                    return RadebeCliPayloadInstallResult.FromPostInstallValidationFailure(
+                        platformKey,
+                        sourceDirectory,
+                        installDirectory,
+                        sourceValidation,
+                        installedBefore,
+                        installedAfter);
+                }
+
+                var operation = installedBefore.IsValid ? "Updated" : "Installed";
+                return RadebeCliPayloadInstallResult.FromSuccess(
+                    platformKey,
+                    sourceDirectory,
+                    installDirectory,
+                    operation,
+                    sourceValidation,
+                    installedBefore,
+                    installedAfter);
+            }
+            catch (Exception exception)
+            {
+                return RadebeCliPayloadInstallResult.FromException(
+                    platformKey,
+                    sourceDirectory,
+                    installDirectory,
+                    sourceValidation,
+                    installedBefore,
+                    $"Failed to copy packaged radebe-cli payload: {exception.Message}");
+            }
         }
 
         public static RadebeCliInvocationResult Invoke(string source, int timeoutMilliseconds = 30000)
@@ -115,6 +127,63 @@ namespace Radebe.UnityBridge.Editor
                 return RadebeCliInvocationResult.FromValidationFailure(validation, arguments);
             }
 
+            return InvokeValidated(validation, arguments, timeoutMilliseconds);
+        }
+
+        public static RadebeCliSmokeTestResult RunSmokeTest(
+            string source = DefaultSmokeSource,
+            int timeoutMilliseconds = 30000)
+        {
+            var invocation = Invoke(source, timeoutMilliseconds);
+            var expectedStdout = $"{source ?? string.Empty}\n";
+            var warnings = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(invocation.Stderr) &&
+                invocation.Stderr.IndexOf("The signature seems corrupted!", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                warnings.Add("Observed the expected unsigned SEA warning on stderr while smoke testing.");
+            }
+
+            if (!invocation.Succeeded)
+            {
+                var failureReason = !string.IsNullOrWhiteSpace(invocation.LaunchError)
+                    ? invocation.LaunchError
+                    : $"radebe-cli returned exit code {invocation.ExitCode}.";
+
+                return new RadebeCliSmokeTestResult(
+                    false,
+                    source ?? string.Empty,
+                    expectedStdout,
+                    invocation,
+                    failureReason,
+                    warnings);
+            }
+
+            if (!string.Equals(invocation.Stdout, expectedStdout, StringComparison.Ordinal))
+            {
+                return new RadebeCliSmokeTestResult(
+                    false,
+                    source ?? string.Empty,
+                    expectedStdout,
+                    invocation,
+                    $"Smoke output mismatch. Expected {QuoteForMessage(expectedStdout)} but received {QuoteForMessage(invocation.Stdout)}.",
+                    warnings);
+            }
+
+            return new RadebeCliSmokeTestResult(
+                true,
+                source ?? string.Empty,
+                expectedStdout,
+                invocation,
+                string.Empty,
+                warnings);
+        }
+
+        private static RadebeCliInvocationResult InvokeValidated(
+            RadebeCliInstallValidationResult validation,
+            IReadOnlyList<string> arguments,
+            int timeoutMilliseconds)
+        {
             var startInfo = new ProcessStartInfo
             {
                 FileName = validation.ExecutablePath,
@@ -177,6 +246,146 @@ namespace Radebe.UnityBridge.Editor
                     string.Empty,
                     string.Empty,
                     $"Failed to launch radebe-cli: {exception.Message}");
+            }
+        }
+
+        private static RadebeCliInstallValidationResult ValidatePayloadDirectory(
+            string platformKey,
+            string payloadDirectory,
+            string payloadLabel,
+            bool requireManifest)
+        {
+            var issues = new List<string>();
+            var warnings = new List<string>();
+
+            if (!Directory.Exists(payloadDirectory))
+            {
+                issues.Add($"Packaged radebe-cli {payloadLabel} is missing for platform '{platformKey}'. Expected folder: {payloadDirectory}");
+            }
+
+            var manifestPath = Path.Combine(payloadDirectory, ManifestFileName);
+            SeaArtifactManifest manifest = null;
+            var manifestExists = File.Exists(manifestPath);
+
+            if (manifestExists)
+            {
+                if (!TryReadManifest(manifestPath, out manifest, out var manifestError))
+                {
+                    issues.Add(manifestError);
+                }
+            }
+            else if (requireManifest)
+            {
+                issues.Add($"Required artifact manifest is missing at {manifestPath}.");
+            }
+            else
+            {
+                warnings.Add($"Install validation manifest is missing at {manifestPath}. Falling back to the default executable name.");
+            }
+
+            var executableName = ResolveExecutableName(manifest, warnings);
+            var executablePath = Path.Combine(payloadDirectory, executableName);
+            var executableExists = File.Exists(executablePath);
+
+            if (!executableExists)
+            {
+                issues.Add($"Packaged radebe-cli executable was not found at {executablePath}");
+            }
+
+            if (manifest != null)
+            {
+                if (!string.IsNullOrWhiteSpace(manifest.artifactName) &&
+                    !string.Equals(manifest.artifactName, ArtifactBaseName, StringComparison.Ordinal))
+                {
+                    warnings.Add($"Manifest artifactName '{manifest.artifactName}' does not match the expected base name '{ArtifactBaseName}'.");
+                }
+
+                if (manifest.target != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(manifest.target.platform) &&
+                        !string.Equals(manifest.target.platform, GetPlatformName(platformKey), StringComparison.Ordinal))
+                    {
+                        warnings.Add($"Manifest target platform '{manifest.target.platform}' does not match the current platform key '{platformKey}'.");
+                    }
+
+                    var expectedArch = GetArchitectureName(platformKey);
+                    if (!string.IsNullOrWhiteSpace(manifest.target.arch) &&
+                        !string.IsNullOrWhiteSpace(expectedArch) &&
+                        !string.Equals(manifest.target.arch, expectedArch, StringComparison.Ordinal))
+                    {
+                        warnings.Add($"Manifest target arch '{manifest.target.arch}' does not match the current platform key '{platformKey}'.");
+                    }
+                }
+            }
+
+            return new RadebeCliInstallValidationResult(
+                issues.Count == 0,
+                platformKey,
+                payloadDirectory,
+                executablePath,
+                manifestExists,
+                executableExists,
+                manifest,
+                issues,
+                warnings);
+        }
+
+        private static RadebeCliInstallValidationResult CreatePlatformFailureValidation(string error)
+        {
+            return new RadebeCliInstallValidationResult(
+                false,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                false,
+                false,
+                null,
+                new[] { error },
+                Array.Empty<string>());
+        }
+
+        private static string GetInstalledPayloadDirectory(string platformKey)
+        {
+            return Path.Combine(
+                Application.streamingAssetsPath,
+                "Radebe",
+                "radebe-cli",
+                platformKey);
+        }
+
+        private static string ResolveSourcePayloadDirectory(string artifactRootDirectory, string platformKey)
+        {
+            var rootDirectory = string.IsNullOrWhiteSpace(artifactRootDirectory)
+                ? GetDefaultArtifactRootDirectory()
+                : Path.GetFullPath(artifactRootDirectory);
+
+            var leafName = Path.GetFileName(rootDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+            return string.Equals(leafName, platformKey, StringComparison.OrdinalIgnoreCase)
+                ? rootDirectory
+                : Path.Combine(rootDirectory, platformKey);
+        }
+
+        private static string GetDefaultArtifactRootDirectory()
+        {
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", DefaultArtifactSourceRoot));
+        }
+
+        private static void CopyDirectory(string sourceDirectory, string destinationDirectory)
+        {
+            Directory.CreateDirectory(destinationDirectory);
+
+            foreach (var sourceFilePath in Directory.GetFiles(sourceDirectory))
+            {
+                var fileName = Path.GetFileName(sourceFilePath);
+                var destinationFilePath = Path.Combine(destinationDirectory, fileName);
+                File.Copy(sourceFilePath, destinationFilePath, overwrite: true);
+            }
+
+            foreach (var sourceSubdirectory in Directory.GetDirectories(sourceDirectory))
+            {
+                var directoryName = Path.GetFileName(sourceSubdirectory);
+                var destinationSubdirectory = Path.Combine(destinationDirectory, directoryName);
+                CopyDirectory(sourceSubdirectory, destinationSubdirectory);
             }
         }
 
@@ -366,6 +575,11 @@ namespace Radebe.UnityBridge.Editor
             }
         }
 
+        private static string QuoteForMessage(string value)
+        {
+            return $"\"{(value ?? string.Empty).Replace("\\", "\\\\").Replace("\r", "\\r").Replace("\n", "\\n").Replace("\"", "\\\"")}\"";
+        }
+
         [Serializable]
         public sealed class SeaArtifactManifest
         {
@@ -434,6 +648,158 @@ namespace Radebe.UnityBridge.Editor
         public IReadOnlyList<string> Warnings { get; }
     }
 
+    public sealed class RadebeCliPayloadInstallResult
+    {
+        public RadebeCliPayloadInstallResult(
+            bool succeeded,
+            string platformKey,
+            string sourceDirectory,
+            string installDirectory,
+            string operation,
+            string error,
+            RadebeCliInstallValidationResult sourceValidation,
+            RadebeCliInstallValidationResult installedValidationBefore,
+            RadebeCliInstallValidationResult installedValidationAfter)
+        {
+            Succeeded = succeeded;
+            PlatformKey = platformKey;
+            SourceDirectory = sourceDirectory;
+            InstallDirectory = installDirectory;
+            Operation = operation;
+            Error = error;
+            SourceValidation = sourceValidation;
+            InstalledValidationBefore = installedValidationBefore;
+            InstalledValidationAfter = installedValidationAfter;
+        }
+
+        public string Error { get; }
+
+        public string InstallDirectory { get; }
+
+        public RadebeCliInstallValidationResult InstalledValidationAfter { get; }
+
+        public RadebeCliInstallValidationResult InstalledValidationBefore { get; }
+
+        public string Operation { get; }
+
+        public string PlatformKey { get; }
+
+        public string SourceDirectory { get; }
+
+        public RadebeCliInstallValidationResult SourceValidation { get; }
+
+        public bool Succeeded { get; }
+
+        internal static RadebeCliPayloadInstallResult FromPlatformFailure(string error)
+        {
+            return new RadebeCliPayloadInstallResult(
+                false,
+                string.Empty,
+                string.Empty,
+                string.Empty,
+                "Failed",
+                error,
+                null,
+                null,
+                null);
+        }
+
+        internal static RadebeCliPayloadInstallResult FromSourceValidationFailure(
+            RadebeCliInstallValidationResult sourceValidation)
+        {
+            return new RadebeCliPayloadInstallResult(
+                false,
+                sourceValidation.PlatformKey,
+                sourceValidation.InstallDirectory,
+                string.Empty,
+                "Failed",
+                "Source payload failed validation.",
+                sourceValidation,
+                null,
+                null);
+        }
+
+        internal static RadebeCliPayloadInstallResult FromSkippedInstall(
+            string platformKey,
+            string sourceDirectory,
+            string installDirectory,
+            RadebeCliInstallValidationResult sourceValidation,
+            RadebeCliInstallValidationResult installedValidationBefore)
+        {
+            return new RadebeCliPayloadInstallResult(
+                true,
+                platformKey,
+                sourceDirectory,
+                installDirectory,
+                "Skipped",
+                string.Empty,
+                sourceValidation,
+                installedValidationBefore,
+                installedValidationBefore);
+        }
+
+        internal static RadebeCliPayloadInstallResult FromPostInstallValidationFailure(
+            string platformKey,
+            string sourceDirectory,
+            string installDirectory,
+            RadebeCliInstallValidationResult sourceValidation,
+            RadebeCliInstallValidationResult installedValidationBefore,
+            RadebeCliInstallValidationResult installedValidationAfter)
+        {
+            return new RadebeCliPayloadInstallResult(
+                false,
+                platformKey,
+                sourceDirectory,
+                installDirectory,
+                "Failed",
+                "Installed payload failed validation after copy.",
+                sourceValidation,
+                installedValidationBefore,
+                installedValidationAfter);
+        }
+
+        internal static RadebeCliPayloadInstallResult FromSuccess(
+            string platformKey,
+            string sourceDirectory,
+            string installDirectory,
+            string operation,
+            RadebeCliInstallValidationResult sourceValidation,
+            RadebeCliInstallValidationResult installedValidationBefore,
+            RadebeCliInstallValidationResult installedValidationAfter)
+        {
+            return new RadebeCliPayloadInstallResult(
+                true,
+                platformKey,
+                sourceDirectory,
+                installDirectory,
+                operation,
+                string.Empty,
+                sourceValidation,
+                installedValidationBefore,
+                installedValidationAfter);
+        }
+
+        internal static RadebeCliPayloadInstallResult FromException(
+            string platformKey,
+            string sourceDirectory,
+            string installDirectory,
+            RadebeCliInstallValidationResult sourceValidation,
+            RadebeCliInstallValidationResult installedValidationBefore,
+            string error)
+        {
+            return new RadebeCliPayloadInstallResult(
+                false,
+                platformKey,
+                sourceDirectory,
+                installDirectory,
+                "Failed",
+                error,
+                sourceValidation,
+                installedValidationBefore,
+                null);
+        }
+    }
+
     public sealed class RadebeCliInvocationResult
     {
         public RadebeCliInvocationResult(
@@ -481,5 +847,36 @@ namespace Radebe.UnityBridge.Editor
                 string.Join("\n", validation.Issues),
                 "Packaged radebe-cli payload failed validation.");
         }
+    }
+
+    public sealed class RadebeCliSmokeTestResult
+    {
+        public RadebeCliSmokeTestResult(
+            bool succeeded,
+            string source,
+            string expectedStdout,
+            RadebeCliInvocationResult invocation,
+            string failureReason,
+            IReadOnlyList<string> warnings)
+        {
+            Succeeded = succeeded;
+            Source = source;
+            ExpectedStdout = expectedStdout;
+            Invocation = invocation;
+            FailureReason = failureReason;
+            Warnings = warnings;
+        }
+
+        public string ExpectedStdout { get; }
+
+        public string FailureReason { get; }
+
+        public RadebeCliInvocationResult Invocation { get; }
+
+        public string Source { get; }
+
+        public bool Succeeded { get; }
+
+        public IReadOnlyList<string> Warnings { get; }
     }
 }

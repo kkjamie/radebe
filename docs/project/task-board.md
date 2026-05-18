@@ -15,10 +15,12 @@ Use this as the single source of truth for active execution state.
 | T-006 | Implement the Node SEA packaging pipeline for `radebe-cli` | M1 | Gate B | P1 | Done | `t-006-cli-sea-implementation` | None | Hand off to T-005 for the Unity bridge contract and artifact consumption details, or T-004 for the first web authoring loop |
 | T-007 | Implement Unity bridge install validation and process-launch helper baseline | M2 | Gate A | P1 | Done | `t-007-unity-bridge-helper-baseline` | None | Hand off to the next Unity task to add payload install-copy/update flow and run bridge smoke checks inside a real Unity project |
 | T-004 | Define the first authoring loop for `radebe-web` realtime preview | M1 | Gate B | P1 | Done | `t-008-web-preview-render-contract` | None | Hand off to the next thread to review M1 Gate C readiness and continue either the Unity install-copy flow or richer web preview behavior on top of the shared render artifact |
+| T-009 | Implement Unity payload install/update and smoke helper baseline | M1 | Gate C | P1 | Done | `t-009-unity-payload-install-smoke` | None | Hand off to M2 language work with Unity follow-on intentionally deferred until the first render commands work through core, CLI, and web |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-010 | Establish basic language operation with the first one or two rendering commands | M2 | Gate A | P1 | Ready | Unassigned | None | Implement one or two minimal rendering commands that work end to end through `radebe-core`, `radebe-cli`, and `radebe-web`, then return to deeper Unity integration afterward |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
