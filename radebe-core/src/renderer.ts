@@ -181,7 +181,10 @@ function isPointInsidePolygon(
 }
 
 function buildCutPolygon(
-  rect: Pick<Extract<CompiledDrawCommand, { kind: "rect" }>, "x" | "y" | "width" | "height" | "cut">
+  rect: Pick<
+    Extract<CompiledDrawCommand, { kind: "rect" }>,
+    "x" | "y" | "width" | "height" | "cut"
+  >
 ): Array<{ x: number; y: number }> | null {
   if (!rect.cut) {
     return null;
@@ -197,6 +200,39 @@ function buildCutPolygon(
     { x: rect.x, y: rect.y + rect.height - rect.cut.bottomLeft },
     { x: rect.x, y: rect.y + rect.cut.topLeft }
   ];
+}
+
+function isPointInsideRoundedRect(
+  pointX: number,
+  pointY: number,
+  rect: Pick<
+    Extract<CompiledDrawCommand, { kind: "rect" }>,
+    "x" | "y" | "width" | "height" | "radius"
+  >
+): boolean {
+  const radius = rect.radius?.value ?? 0;
+
+  if (radius <= 0) {
+    return true;
+  }
+
+  const innerLeft = rect.x + radius;
+  const innerRight = rect.x + rect.width - radius;
+  const innerTop = rect.y + radius;
+  const innerBottom = rect.y + rect.height - radius;
+
+  if (pointX >= innerLeft && pointX <= innerRight) {
+    return true;
+  }
+
+  if (pointY >= innerTop && pointY <= innerBottom) {
+    return true;
+  }
+
+  const cornerCenterX = pointX < innerLeft ? innerLeft : innerRight;
+  const cornerCenterY = pointY < innerTop ? innerTop : innerBottom;
+
+  return Math.hypot(pointX - cornerCenterX, pointY - cornerCenterY) <= radius;
 }
 
 function sampleGradientStops(
@@ -320,17 +356,27 @@ function resolveRadialGradientPosition(
 function drawRectFill(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
-  command: Pick<Extract<CompiledDrawCommand, { kind: "rect" }>, "x" | "y" | "width" | "height" | "cut">,
+  command: Pick<
+    Extract<CompiledDrawCommand, { kind: "rect" }>,
+    "x" | "y" | "width" | "height" | "cut" | "radius"
+  >,
   fill: RectFill
 ): void {
   const polygon = buildCutPolygon(command);
 
   for (let y = command.y; y < command.y + command.height; y += 1) {
     for (let x = command.x; x < command.x + command.width; x += 1) {
+      const pointX = x + 0.5;
+      const pointY = y + 0.5;
+
       if (
         polygon !== null &&
-        !isPointInsidePolygon(x + 0.5, y + 0.5, polygon)
+        !isPointInsidePolygon(pointX, pointY, polygon)
       ) {
+        continue;
+      }
+
+      if (!isPointInsideRoundedRect(pointX, pointY, command)) {
         continue;
       }
 

@@ -502,6 +502,51 @@ test("compileDocument supports named corner values for cut", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports radius as a rectangle geometry modifier", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 10 8\n  background transparent\n\nrect 1 1 6 5 #70c8e8\n  radius 2"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 5,
+      x: 1,
+      y: 1,
+      width: 6,
+      height: 5,
+      radius: {
+        value: 2
+      },
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: [],
+      sourceCommandName: "rect"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument rejects rectangles that combine cut and radius", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 10 8\n  background transparent\n\nrect 1 1 6 5 #70c8e8\n  cut 2\n  radius 1"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, []);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message:
+        'The rect command currently does not allow both "cut" and "radius" on the same rectangle.',
+      line: 5,
+      column: 1
+    }
+  ]);
+});
+
 test("compileDocument supports nested rectangle strokes", () => {
   const parsed = parseSource({
     source:
@@ -753,6 +798,25 @@ test("renderDocument rasterizes cut rectangles as clipped silhouettes", () => {
   ]);
 });
 
+test("renderDocument rasterizes rounded rectangles from radius-modified rects", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 7 7\n  background transparent\n\nrect 1 1 5 5 #ffffff\n  radius 2"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    ".......",
+    "..###..",
+    ".#####.",
+    ".#####.",
+    ".#####.",
+    "..###..",
+    "......."
+  ]);
+});
+
 test("renderDocument applies multiple rectangle fills in order", () => {
   const parsed = parseSource({
     source:
@@ -910,11 +974,11 @@ test("renderDocument keeps nested stroke alpha explicit instead of inherited", (
   const result = renderDocument(compiled.document);
 
   assert.deepEqual(result.artifact.pixels, [
-    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null],
-    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null],
-    [null, "#0000ff", "#80ffff", "#80ffff", "#80ffff", "#0000ff", null],
-    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null],
-    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null]
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, "#0000ff", "#0000ff", "#0000ff", null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null]
   ]);
 });
 

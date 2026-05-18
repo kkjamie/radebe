@@ -61,21 +61,21 @@ const commandDefinitions = [
     kind: "geometry",
     propertyArgs: ["x", "y", "width", "height", "color"],
     shorthandSchema: ["x", "y", "width", "height", "color"],
-    allowedChildCommands: ["fill", "stroke", "cut"]
+    allowedChildCommands: ["fill", "stroke", "cut", "radius"]
   },
   {
     name: "rect",
     kind: "geometry",
     propertyArgs: ["x", "y", "width", "height", "color"],
     shorthandSchema: ["x", "y", "width", "height", "color"],
-    allowedChildCommands: ["fill", "stroke", "cut"]
+    allowedChildCommands: ["fill", "stroke", "cut", "radius"]
   },
   {
     name: "rect-inset",
     kind: "geometry",
     propertyArgs: ["inset", "top", "right", "bottom", "left", "color"],
     shorthandSchema: ["inset", "color"],
-    allowedChildCommands: ["fill", "stroke", "cut"]
+    allowedChildCommands: ["fill", "stroke", "cut", "radius"]
   },
   {
     name: "cut",

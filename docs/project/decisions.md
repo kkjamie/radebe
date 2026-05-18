@@ -201,3 +201,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The first alpha slice stays consistent with the current geometry-versus-appearance split, gradient stops can keep their own transparency nuance, and future shape- or group-level opacity can be added later as a distinct semantic instead of overloading the current appearance passes.
 - Related tasks: T-029
 - Supersedes: N/A
+
+---
+
+### DEC-017: Model Rounded Corners as `radius` on Rectangle-Backed Shapes
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The language still carried older `rounded-rect` wording even after `cut` had already been accepted as a child geometry modifier on rectangle-backed shapes.
+- Decision: Keep `rect` as the base rectangle geometry vocabulary, add rounded corners through a child `radius` modifier, and reject `cut` plus `radius` on the same rectangle until a richer per-corner corner-treatment model exists.
+- Consequences: Rectangle authoring stays consistent around one base shape plus modifiers, the web docs/examples can collapse rounded and cut cases under the `rect` page, and future mixed-corner semantics remain available without committing to ambiguous precedence rules now.
+- Related tasks: T-030
+- Supersedes: N/A

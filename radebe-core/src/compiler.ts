@@ -17,6 +17,7 @@ import type {
   RectCommand,
   RectCut,
   RectFill,
+  RectRadius,
   RadebeDiagnostic,
   SolidFill,
   StrokeAppearance,
@@ -607,6 +608,7 @@ function compileRectCommand(
   const fills: RectFill[] = [];
   const strokes: StrokeAppearance[] = [];
   let cut: RectCut | null = null;
+  let radius: RectRadius | null = null;
 
   if (color !== null) {
     fills.push({
@@ -619,6 +621,11 @@ function compileRectCommand(
   for (const child of node.children) {
     if (child.name === "cut") {
       cut = compileRectCut(child, diagnostics);
+      continue;
+    }
+
+    if (child.name === "radius") {
+      radius = compileRectRadius(child, diagnostics);
       continue;
     }
 
@@ -663,6 +670,17 @@ function compileRectCommand(
   }
 
   const rectCut: RectCut | null = cut;
+  const rectRadius: RectRadius | null = radius;
+
+  if (rectCut !== null && rectRadius !== null) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The rect command currently does not allow both "cut" and "radius" on the same rectangle.',
+        node
+      )
+    );
+    return null;
+  }
 
   if (rectCut !== null) {
     if (rectCut.topLeft + rectCut.topRight >= width) {
@@ -706,6 +724,20 @@ function compileRectCommand(
     }
   }
 
+  if (rectRadius !== null) {
+    const maxRadius = Math.floor(Math.min(width, height) / 2);
+
+    if (rectRadius.value > maxRadius) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The radius command expects a value no greater than ${maxRadius} for a rectangle sized ${width}x${height}.`,
+          node
+        )
+      );
+      return null;
+    }
+  }
+
   return {
     kind: "rect",
     lineNumber: node.lineNumber,
@@ -714,6 +746,7 @@ function compileRectCommand(
     width,
     height,
     ...(rectCut === null ? {} : { cut: rectCut }),
+    ...(rectRadius === null ? {} : { radius: rectRadius }),
     fills,
     strokes,
     sourceCommandName:
@@ -891,6 +924,31 @@ function compileRectCut(
     bottomRight,
     bottomLeft
   };
+}
+
+function compileRectRadius(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): RectRadius | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const value = readRequiredInteger(node, resolvedProperties.values, "value", diagnostics, {
+    min: 0
+  });
+
+  if (value === null) {
+    return null;
+  }
+
+  return { value };
 }
 
 function compileGradientStops(

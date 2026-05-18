@@ -102,6 +102,10 @@ export interface RectCut {
   bottomLeft: number;
 }
 
+export interface RectRadius {
+  value: number;
+}
+
 export type StrokeAlign = "inside" | "center" | "outside";
 export type StrokeStyle = "solid" | "dashed" | "dotted";
 
@@ -126,6 +130,7 @@ export interface RectCommand {
   width: number;
   height: number;
   cut?: RectCut | null;
+  radius?: RectRadius | null;
   fills: RectFill[];
   strokes: StrokeAppearance[];
   sourceCommandName: "rect" | "rect-absolute" | "rect-inset";

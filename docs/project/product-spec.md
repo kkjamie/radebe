@@ -153,8 +153,6 @@ Geometry Commands:
   rect
   rect-inset
   rect-absolute
-  cut-rect
-  rounded-rect
   circle
   polygon
 
@@ -239,9 +237,6 @@ line:
 rect:
   kind: geometry
 
-cut-rect:
-  kind: geometry
-
 fill:
   kind: appearance
 
@@ -302,11 +297,12 @@ Geometry defines coverage or edges.
 Initial geometry types discussed in the recovered spec and current direction:
 - `plot <x> <y> <color>`
 - `line <x1> <y1> <x2> <y2> <color>`
+- `rect <x> <y> <w> <h>`
 - `rect-inset <amount>`
 - `rect-absolute <x> <y> <w> <h>`
+- `rect` with child `cut` or child `radius`
 - `path <name?>`
 - `shape <name?>`
-- `cut-rect`
 
 Example:
 
@@ -362,7 +358,6 @@ Example:
 ```text
 mask body-mask
   shape
-    cut-rect
     rect-inset 6
     cut 12
 

@@ -31,6 +31,7 @@ Use this as the single source of truth for active execution state.
 | T-027 | Switch source comments to hash-prefixed syntax only | M2 | Gate B | P1 | Done | `t-027-hash-comments` | None | Continue the next language increment with `#` as the canonical and only ignored comment-line prefix; `//` is no longer treated as a comment marker |
 | T-028 | Add syntax highlighting to the web source editor | M2 | Gate B | P1 | Done | `t-028-web-editor-highlighting` | None | Continue with richer editor diagnostics or the next language increment; the web editor now highlights comments, commands, property commands, named argument keys, values, and unknown command tokens |
 | T-029 | Add explicit `alpha` on `fill` and `stroke` appearance passes | M2 | Gate B | P1 | Done | `t-029-appearance-alpha` | None | Hand off to the next language thread for cut-aware stroke geometry or another shape feature now that fills and strokes support explicit per-pass alpha without implicit child inheritance |
+| T-030 | Resolve rounded rectangles into `rect` plus `radius` and consolidate rectangle examples | M2 | Gate B | P1 | Done | `t-030-rect-radius-and-example-consolidation` | None | Hand off to the next language thread for modifier-aware stroke rendering so rectangle-backed `stroke` can eventually follow `cut` and `radius` silhouettes instead of the plain rectangle envelope |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

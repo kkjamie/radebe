@@ -323,7 +323,7 @@ const exampleDocs: ExampleDoc[] = [
     summary:
       "Defines a rectangle from the current sprite bounds using a uniform inset amount or side-specific top/right/bottom/left insets, which makes it a convenient panel and frame primitive.",
     args: ["inset", "top", "right", "bottom", "left", "color shorthand", "fill"],
-    childCommands: ["fill"],
+    childCommands: ["fill", "stroke", "cut", "radius"],
     notes: [
       "The uniform `inset` value applies to every side by default.",
       "Any of `top`, `right`, `bottom`, or `left` can override the uniform inset per side.",
@@ -364,14 +364,6 @@ const exampleDocs: ExampleDoc[] = [
     ]
   },
   createComingSoonDoc({
-    id: "rounded-rect",
-    title: "Rounded Rect",
-    navGroup: "Geometry",
-    summary: "Defines a rectangle with rounded corners.",
-    args: ["x", "y", "width", "height", "radius"],
-    childCommands: ["fill", "overlay", "stroke", "shadow"]
-  }),
-  createComingSoonDoc({
     id: "circle",
     title: "Circle",
     navGroup: "Geometry",
@@ -400,13 +392,15 @@ const exampleDocs: ExampleDoc[] = [
     title: "Rect / Rect-Absolute",
     navGroup: "Geometry",
     summary:
-      "Fills a rectangle using explicit x, y, width, height, and fill values. `rect` is a convenience alias for `rect-absolute`.",
+      "Defines an explicit rectangle using x, y, width, and height. `rect` is a convenience alias for `rect-absolute`, and rectangle-backed shapes can also take geometry modifiers such as `cut` and `radius`.",
     args: ["x", "y", "width", "height", "color shorthand", "fill"],
-    childCommands: ["fill"],
+    childCommands: ["fill", "stroke", "cut", "radius"],
     notes: [
       "`rect` and `rect-absolute` compile to the same rectangle draw command.",
       "Width and height must be positive integers.",
-      "Direct color shorthand lowers into an implicit solid fill."
+      "Direct color shorthand lowers into an implicit solid fill.",
+      "`cut` and `radius` are geometry modifiers on the same base rectangle model.",
+      'A rectangle currently cannot use both `cut` and `radius` at the same time.'
     ],
     examples: [
       {
@@ -428,6 +422,66 @@ const exampleDocs: ExampleDoc[] = [
           "  width 14",
           "  height 8",
           "  fill solid #70c8e8"
+        ].join("\n")
+      },
+      {
+        id: "rect-radius",
+        title: "Rounded Corners With Radius",
+        summary: "Rounded corners now come from a `radius` child on the base rectangle rather than a separate shape command.",
+        source: [
+          "sprite rect-radius-demo",
+          "  size 128 64",
+          "  background #0f1318",
+          "",
+          "# Rounded plate using a radius modifier on rect",
+          "rect 16 12 96 40 #18242c",
+          "  radius 8"
+        ].join("\n")
+      },
+      {
+        id: "rect-cut-uniform",
+        title: "Uniform Cut",
+        summary: "A single cut value creates the same chamfer size on every corner.",
+        source: [
+          "sprite cut-uniform-demo",
+          "  size 128 64",
+          "  background #0f1318",
+          "",
+          "# Uniform chamfered panel",
+          "rect 16 12 96 40 #18242c",
+          "  cut 8"
+        ].join("\n")
+      },
+      {
+        id: "rect-cut-four-values",
+        title: "Four-Value Cut Shorthand",
+        summary: "Each corner can be specified inline in clockwise order when asymmetry is useful.",
+        source: [
+          "sprite cut-four-demo",
+          "  size 128 64",
+          "  background #0f1318",
+          "",
+          "# Small top corners with larger lower corners",
+          "rect 16 12 96 40 #18242c",
+          "  cut 4 4 10 10"
+        ].join("\n")
+      },
+      {
+        id: "rect-cut-expanded",
+        title: "Expanded Named Cut Form",
+        summary: "The expanded form names each corner directly and reads clearly in larger files.",
+        source: [
+          "sprite cut-expanded-demo",
+          "  size 128 64",
+          "  background #0f1318",
+          "",
+          "# Named corner cuts for a more directional panel shape",
+          "rect 16 12 96 40 #18242c",
+          "  cut",
+          "    top-left 4",
+          "    top-right 8",
+          "    bottom-right 12",
+          "    bottom-left 8"
         ].join("\n")
       }
     ]
@@ -803,77 +857,6 @@ const exampleDocs: ExampleDoc[] = [
     childCommands: []
   }),
   {
-    id: "cut",
-    title: "Cut",
-    navGroup: "Properties",
-    summary:
-      "Defines chamfered corner cuts as a geometry modifier on rectangle-backed shapes.",
-    args: ["cut", "top-left", "top-right", "bottom-right", "bottom-left"],
-    childCommands: [],
-    notes: [
-      "`cut 4` applies the same cut value to every corner.",
-      "`cut 4 4 8 8` uses `top-left top-right bottom-right bottom-left` order.",
-      "Expanded named corner values are also supported.",
-      "The first slice currently affects the rectangle fill silhouette."
-    ],
-    examples: [
-      {
-        id: "cut-uniform",
-        title: "Uniform Cut",
-        summary: "A single cut value creates the same chamfer size on every corner.",
-        source: [
-          "sprite cut-uniform-demo",
-          "  size 128 64",
-          "  background #0f1318",
-          "",
-          "# Uniform chamfered panel",
-          "rect 16 12 96 40 #18242c",
-          "  cut 8"
-        ].join("\n")
-      },
-      {
-        id: "cut-four-values",
-        title: "Four-Value Shorthand",
-        summary: "Each corner can be specified inline in clockwise order when asymmetry is useful.",
-        source: [
-          "sprite cut-four-demo",
-          "  size 128 64",
-          "  background #0f1318",
-          "",
-          "# Small top corners with larger lower corners",
-          "rect 16 12 96 40 #18242c",
-          "  cut 4 4 10 10"
-        ].join("\n")
-      },
-      {
-        id: "cut-expanded",
-        title: "Expanded Named Form",
-        summary: "The expanded form names each corner directly and reads clearly in larger files.",
-        source: [
-          "sprite cut-expanded-demo",
-          "  size 128 64",
-          "  background #0f1318",
-          "",
-          "# Named corner cuts for a more directional panel shape",
-          "rect 16 12 96 40 #18242c",
-          "  cut",
-          "    top-left 4",
-          "    top-right 8",
-          "    bottom-right 12",
-          "    bottom-left 8"
-        ].join("\n")
-      }
-    ]
-  },
-  createComingSoonDoc({
-    id: "radius",
-    title: "Radius",
-    navGroup: "Properties",
-    summary: "Defines corner radius or radial sizing for features that expose rounded geometry.",
-    args: ["amount"],
-    childCommands: []
-  }),
-  {
     id: "alpha",
     title: "Alpha",
     navGroup: "Properties",
@@ -953,7 +936,7 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Structure",
     summary: "Holds explicit child drawing under a structural parent such as a mask or reusable path block.",
     args: [],
-    childCommands: ["plot", "line", "rect", "rect-inset", "cut-rect", "rounded-rect", "circle", "polygon", "path"]
+    childCommands: ["plot", "line", "rect", "rect-absolute", "rect-inset", "circle", "polygon", "path"]
   }),
   createComingSoonDoc({
     id: "vars",
