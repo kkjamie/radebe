@@ -24,7 +24,7 @@ function createParserDiagnostic(
 }
 
 function isCommentLine(trimmed: string): boolean {
-  return trimmed.startsWith("//") || trimmed.startsWith("#");
+  return trimmed.startsWith("#");
 }
 
 function parseCommandNode(

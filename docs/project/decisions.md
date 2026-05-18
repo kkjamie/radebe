@@ -179,3 +179,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The language stays more composable, `rect` remains the base shape vocabulary, and future shape modifiers can follow the same pattern; the first implementation currently affects the fill silhouette directly, while stroke-aware cut handling can follow as a later refinement.
 - Related tasks: T-024
 - Supersedes: N/A
+
+---
+
+### DEC-015: Use Hash-Prefixed Source Comments
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The language previously accepted both `//` and `#` as whole-line comment prefixes, while the desired authoring convention is a single comment style.
+- Decision: Treat only trimmed lines that start with `#` as source comments.
+- Consequences: Radebe examples and docs use one comment style, and `//` lines are parsed as ordinary source rather than being silently ignored.
+- Related tasks: T-027
+- Supersedes: N/A

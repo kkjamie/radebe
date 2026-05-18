@@ -27,6 +27,8 @@ Use this as the single source of truth for active execution state.
 | T-023 | Allow nested rectangle-backed `stroke` passes | M2 | Gate B | P1 | Done | `t-023-nested-stroke` | None | Hand off to the next language thread for `rect-outline` as a convenience alias or the first `cut-rect` slice now that stroke can recurse and produce double-outline treatments within the same appearance model |
 | T-024 | Add `cut` as a rectangle geometry modifier | M2 | Gate B | P1 | Done | `t-024-rect-cut-modifier` | None | Hand off to the next language thread for cut-aware stroke rendering, `rect-outline` as a convenience alias, or the next distinct shape now that rectangle fill silhouettes support uniform, four-value, and named corner cuts |
 | T-025 | Realign `cut` from side semantics to corner semantics | M2 | Gate B | P1 | Done | `t-025-corner-cut-realignment` | None | Hand off to the next language thread for cut-aware stroke rendering now that `cut` resolves per corner with `top-left`, `top-right`, `bottom-right`, and `bottom-left` forms in both shorthand and expanded syntax |
+| T-026 | Fix `radebe-web` dev resolution of `@radebe/core` | M2 | Gate B | P1 | Done | `t-026-web-dev-core-resolution` | None | Continue M2 Gate C or the next language increment with `npm run dev:web` restored for fresh workspaces where `radebe-core/dist` has not been built yet |
+| T-027 | Switch source comments to hash-prefixed syntax only | M2 | Gate B | P1 | Done | `t-027-hash-comments` | None | Continue the next language increment with `#` as the canonical and only ignored comment-line prefix; `//` is no longer treated as a comment marker |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

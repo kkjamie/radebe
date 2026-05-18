@@ -40,7 +40,7 @@ Last updated: `2026-05-18`
 - Indentation defines ownership and scope.
 - Arguments provide shorthand configuration for the current command.
 - Blank lines are ignored.
-- Comments may start with `//` or `#`.
+- Comments start with `#`.
 - The file begins with a small `sprite` header block for overall file properties.
 - Actual draw commands should be allowed at root indentation after the header block so authoring stays flatter and easier to scan.
 

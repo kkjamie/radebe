@@ -51,6 +51,23 @@ test("parseSource returns a nested command tree for indentation-based source", (
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("parseSource treats only hash-prefixed lines as comments", () => {
+  const result = parseSource({
+    source:
+      "# File comment\nsprite panel\n  # Header comment\n  size 4 3\n  background transparent\n// legacy slash comment"
+  });
+
+  assert.deepEqual(
+    result.document.commands.map((command) => command.name),
+    ["sprite", "//"]
+  );
+  assert.deepEqual(result.document.commands[0]?.children.map((child) => child.name), [
+    "size",
+    "background"
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
 test("compileDocument builds the sprite header and draw commands", () => {
   const parsed = parseSource({
     source:
