@@ -59,6 +59,15 @@ interface SeaPaths {
   seaPrepBlobPath: string;
 }
 
+const SMOKE_SOURCE = [
+  "sprite sea-smoke",
+  "  size 4 3",
+  "  background transparent",
+  "",
+  "plot 1 1 #ffffff",
+  "line 0 0 3 0 #70c8e8"
+].join("\n");
+
 function findRepoRoot(startDir = getCurrentDirectory()): string {
   let currentDir = path.resolve(startDir);
 
@@ -282,12 +291,12 @@ export async function smokeTestSeaArtifact(options: SeaBuildOptions = {}): Promi
   const manifest = await buildSeaArtifact(options);
   const cwd = resolveBuildOptions(options).rootDir;
 
-  const bundledEntry = await runProcess(process.execPath, [manifest.bundlePath, "hello"], cwd);
+  const bundledEntry = await runProcess(process.execPath, [manifest.bundlePath, SMOKE_SOURCE], cwd);
   if (bundledEntry.code !== 0) {
     throw new Error(`Bundled SEA entry smoke test failed.\n${bundledEntry.stderr || bundledEntry.stdout}`);
   }
 
-  const executable = await runProcess(manifest.executablePath, ["hello"], cwd);
+  const executable = await runProcess(manifest.executablePath, [SMOKE_SOURCE], cwd);
   if (executable.code !== 0) {
     throw new Error(`SEA executable smoke test failed.\n${executable.stderr || executable.stdout}`);
   }

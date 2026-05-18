@@ -7,6 +7,8 @@ import test from "node:test";
 
 import { smokeTestSeaArtifact } from "../src/sea.js";
 
+const EXPECTED_STDOUT = "####\n.#..\n....\n";
+
 test("smokeTestSeaArtifact builds a runnable SEA executable", async (context) => {
   const outputRootDir = await mkdtemp(path.join(os.tmpdir(), "radebe-sea-test-"));
 
@@ -25,8 +27,8 @@ test("smokeTestSeaArtifact builds a runnable SEA executable", async (context) =>
 
   assert.equal(result.bundledEntry.code, 0);
   assert.equal(result.executable.code, 0);
-  assert.equal(result.bundledEntry.stdout, "hello\n");
-  assert.equal(result.executable.stdout, "hello\n");
+  assert.equal(result.bundledEntry.stdout, EXPECTED_STDOUT);
+  assert.equal(result.executable.stdout, EXPECTED_STDOUT);
 
   const executableStats = await stat(result.manifest.executablePath);
   assert.ok(executableStats.isFile());

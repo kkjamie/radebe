@@ -18,8 +18,8 @@ Status: `In Progress`
 ## Gate Definitions
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Blocked | The canonical language now uses a small `sprite` header block and root-level draw commands. The current `@text` / `@repeat` slice is implementation drift rather than gate-complete evidence. |
-| Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Not Started | Resume after the first spec-aligned slice exists, starting with `plot` and `line`. Keep the shared preview contract as small as possible unless the language requirements force expansion. |
-| Gate C | Unity Return | The packaged CLI path is exercised again from Unity after the basic command loop is stable | Not Started | Revisit install/update and smoke behavior only after the first commands are working end to end elsewhere. |
+| Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Passed | T-012 replaced the speculative `@text` / `@repeat` slice with a schema-backed indentation-based parser/compiler path, a small `sprite` header block, and root-level `plot` and `line` commands verified through workspace build and tests. |
+| Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Passed | The CLI now prints the shared sprite-grid rows with compiler diagnostics, the web shell previews both the pixel grid and ASCII rows, and the SEA smoke path exercises the same spec-aligned sample. |
+| Gate C | Unity Return | The packaged CLI path is exercised again from Unity after the basic command loop is stable | Not Started | Next thread should reuse the packaged CLI bridge from Unity against the new `sprite`/`plot`/`line` sample without widening language scope yet. |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.

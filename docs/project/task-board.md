@@ -16,16 +16,16 @@ Use this as the single source of truth for active execution state.
 | T-007 | Implement Unity bridge install validation and process-launch helper baseline | M2 | Gate A | P1 | Done | `t-007-unity-bridge-helper-baseline` | None | Hand off to the next Unity task to add payload install-copy/update flow and run bridge smoke checks inside a real Unity project |
 | T-004 | Define the first authoring loop for `radebe-web` realtime preview | M1 | Gate B | P1 | Done | `t-008-web-preview-render-contract` | None | Hand off to the next thread to review M1 Gate C readiness and continue either the Unity install-copy flow or richer web preview behavior on top of the shared render artifact |
 | T-009 | Implement Unity payload install/update and smoke helper baseline | M1 | Gate C | P1 | Done | `t-009-unity-payload-install-smoke` | None | Hand off to M2 language work with Unity follow-on intentionally deferred until the first spec-aligned language slice works through core, CLI, and web |
+| T-012 | Realign the language implementation to the recovered product spec | M2 | Gate A | P1 | Done | `t-012-spec-aligned-language-slice` | None | Hand off to T-011 to re-exercise the packaged CLI bridge from Unity now that the spec-aligned `sprite` header plus root-level `plot` and `line` slice is stable through `radebe-core`, `radebe-cli`, `radebe-web`, and the SEA smoke path |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-012 | Realign the language implementation to the recovered product spec | M2 | Gate A | P1 | Ready | Unassigned | None | Replace the speculative `@text` / `@repeat` slice with a spec-aligned vertical slice around a small `sprite` header block plus root-level `plot` and `line` commands while preserving the shared CLI/web/core path |
+| T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Ready | Unassigned | None | Run the packaged CLI bridge from Unity against the spec-aligned `sprite`/`plot`/`line` sample, confirm the install/update path still works, and record any follow-on Unity-side contract adjustments without changing the shared core/CLI/web language path |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Blocked | Unassigned | T-012 must land first because the current `@text` / `@repeat` slice does not match the recovered canonical language spec | Return to Unity validation only after the first spec-aligned header-plus-root-command slice is stable through `radebe-core`, `radebe-cli`, and `radebe-web` |
 | T-099 | Track future language and tooling ideas after the first vertical slice | M2 | Gate B | P2 | Backlog | Unassigned | None | Revisit once the core loop is running |
 
 ## Status Vocabulary
