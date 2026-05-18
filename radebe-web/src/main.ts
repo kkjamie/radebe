@@ -873,14 +873,55 @@ const exampleDocs: ExampleDoc[] = [
     args: ["amount"],
     childCommands: []
   }),
-  createComingSoonDoc({
+  {
     id: "alpha",
     title: "Alpha",
     navGroup: "Properties",
-    summary: "Defines opacity for appearance passes where separate alpha control is useful.",
+    summary:
+      "Defines explicit opacity on `fill` and `stroke` appearance passes without introducing implicit child inheritance.",
     args: ["value 0..1"],
-    childCommands: []
-  }),
+    childCommands: [],
+    notes: [
+      "Currently implemented on `fill` and `stroke`.",
+      "`alpha` defaults to `1` when omitted.",
+      "Nested child strokes do not inherit parent stroke alpha automatically.",
+      "Pass alpha multiplies with any alpha already present in solid colors or gradient stop colors."
+    ],
+    examples: [
+      {
+        id: "alpha-fill-gradient",
+        title: "Fill Alpha With Gradient Stops",
+        summary:
+          "A fill-level alpha scales the whole gradient while still preserving per-stop transparency differences.",
+        source: [
+          "sprite alpha-fill-demo",
+          "  size 128 48",
+          "  background #101418",
+          "",
+          "rect 12 10 104 28 #ff0044",
+          "  fill alpha=0.5",
+          "    gradient-linear",
+          "      stop #00ff0000 0",
+          "      stop #0000ff80 1"
+        ].join("\n")
+      },
+      {
+        id: "alpha-stroke-explicit",
+        title: "Explicit Stroke Alpha",
+        summary:
+          "Stroke alpha affects only that stroke pass, so nested strokes stay fully explicit.",
+        source: [
+          "sprite alpha-stroke-demo",
+          "  size 128 64",
+          "  background #0f1318",
+          "",
+          "rect-inset 18 #18242c",
+          "  stroke 3 #d8f8ff alpha=0.4",
+          "    stroke 1 white"
+        ].join("\n")
+      }
+    ]
+  },
   createComingSoonDoc({
     id: "blend",
     title: "Blend",

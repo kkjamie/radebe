@@ -68,6 +68,7 @@ export interface LineCommand {
 export interface SolidFill {
   kind: "solid";
   color: string;
+  alpha: number;
 }
 
 export interface GradientStop {
@@ -80,6 +81,7 @@ export interface LinearGradientFill {
   direction: "horizontal" | "vertical";
   angle: number | null;
   stops: GradientStop[];
+  alpha: number;
 }
 
 export interface RadialGradientFill {
@@ -88,6 +90,7 @@ export interface RadialGradientFill {
   centerY: number;
   radius: number;
   stops: GradientStop[];
+  alpha: number;
 }
 
 export type RectFill = SolidFill | LinearGradientFill | RadialGradientFill;
@@ -107,6 +110,7 @@ export interface StrokeAppearance {
   width: number;
   align: StrokeAlign;
   style: StrokeStyle;
+  alpha: number;
   dashLength: number | null;
   gapLength: number | null;
   dotSpacing: number | null;

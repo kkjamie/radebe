@@ -118,12 +118,20 @@ function formatColor(color: RgbaColor | null): string | null {
   return alpha === "ff" ? `#${r}${g}${b}` : `#${r}${g}${b}${alpha}`;
 }
 
+function withOpacity(color: RgbaColor, opacity: number): RgbaColor {
+  return {
+    ...color,
+    a: clampUnit(color.a * opacity)
+  };
+}
+
 function setPixel(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   x: number,
   y: number,
-  color: string
+  color: string,
+  opacity = 1
 ): void {
   if (y < 0 || y >= pixels.length) {
     return;
@@ -139,7 +147,7 @@ function setPixel(
     return;
   }
 
-  pixels[y]![x] = blendColors(pixels[y]![x] ?? null, parsed);
+  pixels[y]![x] = blendColors(pixels[y]![x] ?? null, withOpacity(parsed, opacity));
   drawnPixels[y]![x] = true;
 }
 
@@ -340,7 +348,7 @@ function drawRectFill(
               );
 
       if (color !== null) {
-        setPixel(pixels, drawnPixels, x, y, color);
+        setPixel(pixels, drawnPixels, x, y, color, fill.alpha);
       }
     }
   }
@@ -413,6 +421,7 @@ function drawStrokeRectBand(
   dashLength: number | null,
   gapLength: number | null,
   dotSpacing: number | null,
+  opacity: number,
   axis: "x" | "y"
 ): void {
   for (let y = rect.y; y < rect.y + rect.height; y += 1) {
@@ -446,7 +455,7 @@ function drawStrokeRectBand(
               );
 
       if (color !== null) {
-        setPixel(pixels, drawnPixels, x, y, color);
+        setPixel(pixels, drawnPixels, x, y, color, opacity);
       }
     }
   }
@@ -514,6 +523,7 @@ function drawRectStroke(
       stroke.dashLength,
       stroke.gapLength,
       stroke.dotSpacing,
+      stroke.alpha * stroke.fill.alpha,
       "x"
     );
     drawStrokeRectBand(
@@ -527,6 +537,7 @@ function drawRectStroke(
       stroke.dashLength,
       stroke.gapLength,
       stroke.dotSpacing,
+      stroke.alpha * stroke.fill.alpha,
       "x"
     );
 
@@ -542,6 +553,7 @@ function drawRectStroke(
         stroke.dashLength,
         stroke.gapLength,
         stroke.dotSpacing,
+        stroke.alpha * stroke.fill.alpha,
         "y"
       );
     }
@@ -558,6 +570,7 @@ function drawRectStroke(
         stroke.dashLength,
         stroke.gapLength,
         stroke.dotSpacing,
+        stroke.alpha * stroke.fill.alpha,
         "y"
       );
     }

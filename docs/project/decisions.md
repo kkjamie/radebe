@@ -190,3 +190,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Radebe examples and docs use one comment style, and `//` lines are parsed as ordinary source rather than being silently ignored.
 - Related tasks: T-027
 - Supersedes: N/A
+
+---
+
+### DEC-016: Keep `alpha` Explicit on Appearance Passes
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The language needed separate opacity control, but putting alpha on geometry nodes would imply subtree-style inheritance or offscreen group compositing semantics that the current pass-based renderer does not model yet.
+- Decision: Support `alpha` explicitly on `fill` and `stroke`, default it to `1`, make it multiply with any alpha already present in solid colors or gradient stop colors, and do not implicitly inherit it to nested child strokes.
+- Consequences: The first alpha slice stays consistent with the current geometry-versus-appearance split, gradient stops can keep their own transparency nuance, and future shape- or group-level opacity can be added later as a distinct semantic instead of overloading the current appearance passes.
+- Related tasks: T-029
+- Supersedes: N/A

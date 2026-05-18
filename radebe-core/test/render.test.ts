@@ -112,7 +112,7 @@ test("compileDocument supports rect-absolute and rect alias", () => {
       y: 1,
       width: 3,
       height: 2,
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect-absolute"
     },
@@ -123,7 +123,7 @@ test("compileDocument supports rect-absolute and rect alias", () => {
       y: 4,
       width: 2,
       height: 1,
-      fills: [{ kind: "solid", color: "#ffffff" }],
+      fills: [{ kind: "solid", color: "#ffffff", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect"
     }
@@ -146,7 +146,7 @@ test("compileDocument supports rect-inset against the current sprite bounds", ()
       y: 2,
       width: 6,
       height: 4,
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect-inset"
     }
@@ -169,7 +169,7 @@ test("compileDocument supports side-specific rect-inset overrides", () => {
       y: 1,
       width: 7,
       height: 7,
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect-inset"
     }
@@ -192,7 +192,7 @@ test("compileDocument lowers rectangle color shorthand into fill solid", () => {
       y: 1,
       width: 3,
       height: 2,
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect"
     }
@@ -214,7 +214,7 @@ test("compileDocument supports explicit fill solid on rectangles", () => {
       y: 1,
       width: 4,
       height: 3,
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect"
     }
@@ -237,7 +237,7 @@ test("compileDocument supports expanded fill solid color child form", () => {
       y: 1,
       width: 4,
       height: 3,
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect"
     }
@@ -261,8 +261,8 @@ test("compileDocument allows multiple rectangle fills as ordered passes", () => 
       width: 4,
       height: 3,
       fills: [
-        { kind: "solid", color: "#112233" },
-        { kind: "solid", color: "#ffffff" }
+        { kind: "solid", color: "#112233", alpha: 1 },
+        { kind: "solid", color: "#ffffff", alpha: 1 }
       ],
       strokes: [],
       sourceCommandName: "rect"
@@ -290,6 +290,7 @@ test("compileDocument supports linear gradient shorthand and explicit stops", ()
           kind: "gradient-linear",
           direction: "horizontal",
           angle: null,
+          alpha: 1,
           stops: [
             { color: "red", position: 0 },
             { color: "blue", position: 1 }
@@ -311,6 +312,7 @@ test("compileDocument supports linear gradient shorthand and explicit stops", ()
           kind: "gradient-linear",
           direction: "vertical",
           angle: null,
+          alpha: 1,
           stops: [
             { color: "red", position: 0 },
             { color: "#0000ff80", position: 1 }
@@ -345,6 +347,7 @@ test("compileDocument supports radial gradient properties and stop children", ()
           centerX: 0.25,
           centerY: 0.75,
           radius: 0.6,
+          alpha: 1,
           stops: [
             { color: "#ffffff", position: 0 },
             { color: "#00000000", position: 1 }
@@ -352,6 +355,53 @@ test("compileDocument supports radial gradient properties and stop children", ()
         }
       ],
       strokes: [],
+      sourceCommandName: "rect"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument supports fill alpha and stroke alpha independently", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 4\n  background transparent\n\nrect 1 1 6 2\n  fill alpha=0.5 gradient-linear red blue\n  stroke 1 white alpha=0.25"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 5,
+      x: 1,
+      y: 1,
+      width: 6,
+      height: 2,
+      fills: [
+        {
+          kind: "gradient-linear",
+          direction: "horizontal",
+          angle: null,
+          alpha: 0.5,
+          stops: [
+            { color: "red", position: 0 },
+            { color: "blue", position: 1 }
+          ]
+        }
+      ],
+      strokes: [
+        {
+          kind: "stroke",
+          width: 1,
+          align: "center",
+          style: "solid",
+          alpha: 0.25,
+          dashLength: null,
+          gapLength: null,
+          dotSpacing: null,
+          fill: { kind: "solid", color: "white", alpha: 1 },
+          strokes: []
+        }
+      ],
       sourceCommandName: "rect"
     }
   ]);
@@ -380,10 +430,11 @@ test("compileDocument supports stroke shorthand and named properties on rectangl
           width: 2,
           align: "inside",
           style: "dashed",
+          alpha: 1,
           dashLength: 3,
           gapLength: 1,
           dotSpacing: null,
-          fill: { kind: "solid", color: "white" },
+          fill: { kind: "solid", color: "white", alpha: 1 },
           strokes: []
         }
       ],
@@ -414,7 +465,7 @@ test("compileDocument supports cut as a rectangle geometry modifier", () => {
         bottomRight: 2,
         bottomLeft: 2
       },
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect"
     }
@@ -443,7 +494,7 @@ test("compileDocument supports named corner values for cut", () => {
         bottomRight: 3,
         bottomLeft: 4
       },
-      fills: [{ kind: "solid", color: "#70c8e8" }],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: [],
       sourceCommandName: "rect"
     }
@@ -473,20 +524,22 @@ test("compileDocument supports nested rectangle strokes", () => {
           width: 2,
           align: "center",
           style: "solid",
+          alpha: 1,
           dashLength: null,
           gapLength: null,
           dotSpacing: null,
-          fill: { kind: "solid", color: "#70c8e8" },
+          fill: { kind: "solid", color: "#70c8e8", alpha: 1 },
           strokes: [
             {
               kind: "stroke",
               width: 1,
               align: "center",
               style: "solid",
+              alpha: 1,
               dashLength: null,
               gapLength: null,
               dotSpacing: null,
-              fill: { kind: "solid", color: "white" },
+              fill: { kind: "solid", color: "white", alpha: 1 },
               strokes: []
             }
           ]
@@ -787,6 +840,17 @@ test("renderDocument blends semi-transparent gradient fills over previous fills"
   assert.deepEqual(result.artifact.pixels, [["#ff0000", "#bf2020", "#7f0080"]]);
 });
 
+test("renderDocument multiplies fill alpha with gradient stop alpha", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 3 1\n  background transparent\n\nrect 0 0 3 1 #ff0000\n  fill alpha=0.5\n    gradient\n      stop #00ff0000 0\n      stop #0000ff80 1"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.pixels, [["#ff0000", "#df1010", "#bf0040"]]);
+});
+
 test("renderDocument rasterizes solid rectangle strokes", () => {
   const parsed = parseSource({
     source:
@@ -834,6 +898,23 @@ test("renderDocument samples gradient-filled strokes across the whole stroke env
     [null, "#ff0000", null, null, null, "#0000ff", null],
     [null, "#ff0000", "#bf0040", "#800080", "#4000bf", "#0000ff", null],
     [null, null, null, null, null, null, null]
+  ]);
+});
+
+test("renderDocument keeps nested stroke alpha explicit instead of inherited", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 7 5\n  background transparent\n\nrect 2 2 3 1\n  stroke 1 #ffffff alpha=0.5\n    stroke 1 #0000ff"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null],
+    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null],
+    [null, "#0000ff", "#80ffff", "#80ffff", "#80ffff", "#0000ff", null],
+    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null],
+    [null, "#0000ff", "#0000ff", "#0000ff", "#0000ff", "#0000ff", null]
   ]);
 });
 

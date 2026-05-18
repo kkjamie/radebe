@@ -87,6 +87,7 @@ const commandDefinitions = [
   {
     name: "fill",
     kind: "appearance",
+    propertyArgs: ["alpha"],
     allowedChildCommands: ["solid", "gradient", "gradient-linear", "gradient-radial"]
   },
   {
@@ -95,6 +96,7 @@ const commandDefinitions = [
     propertyArgs: [
       "width",
       "color",
+      "alpha",
       "align",
       "style",
       "dash-length",
@@ -151,6 +153,7 @@ const commandDefinitions = [
   createSingleValuePropertyDefinition("name"),
   createSingleValuePropertyDefinition("width"),
   createSingleValuePropertyDefinition("height"),
+  createSingleValuePropertyDefinition("alpha"),
   createSingleValuePropertyDefinition("color"),
   createSingleValuePropertyDefinition("position"),
   createSingleValuePropertyDefinition("from"),

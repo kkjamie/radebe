@@ -21,7 +21,7 @@ Last updated: `2026-05-18`
 
 ## Current Focus
 - M1 Gate C remains passed with the shared core/web render contract, SEA packaging pipeline, and Unity payload install/update plus smoke helper baseline in place.
-- The recovered source product spec has now been realigned in code through a schema-backed `sprite` header block, root-level `plot` and `line` commands, rectangle geometry spanning `rect`, `rect-absolute`, `rect-inset`, and child `cut` modifiers with corner-based chamfer control, filled rectangles with `solid`, `gradient-linear`, and `gradient-radial` appearance variants, the first rectangle-backed `stroke` slice with `solid`, `dashed`, and `dotted` styles plus nested stroke support, and a shared sprite-grid render artifact consumed by `radebe-core`, `radebe-cli`, `radebe-web`, and the SEA smoke path.
+- The recovered source product spec has now been realigned in code through a schema-backed `sprite` header block, root-level `plot` and `line` commands, rectangle geometry spanning `rect`, `rect-absolute`, `rect-inset`, and child `cut` modifiers with corner-based chamfer control, filled rectangles with `solid`, `gradient-linear`, and `gradient-radial` appearance variants, explicit per-pass `alpha` on `fill` and `stroke`, the first rectangle-backed `stroke` slice with `solid`, `dashed`, and `dotted` styles plus nested stroke support, and a shared sprite-grid render artifact consumed by `radebe-core`, `radebe-cli`, `radebe-web`, and the SEA smoke path.
 - M2 Gate A and Gate B now have working end-to-end evidence; one or two more language-level geometry or stroke additions should land before returning to Gate C to re-exercise the packaged CLI bridge from Unity against the richer spec-aligned language slice.
 
 ## Gate Policy

@@ -611,7 +611,8 @@ function compileRectCommand(
   if (color !== null) {
     fills.push({
       kind: "solid",
-      color
+      color,
+      alpha: 1
     });
   }
 
@@ -726,7 +727,8 @@ function compileRectCommand(
 
 function compileSolid(
   node: ParsedCommandNode,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  alpha: number
 ): SolidFill | null {
   const definition = getCommandDefinition(node.name);
 
@@ -751,7 +753,8 @@ function compileSolid(
 
   return {
     kind: "solid",
-    color
+    color,
+    alpha
   };
 }
 
@@ -949,7 +952,8 @@ function compileGradientStops(
 
 function compileLinearGradient(
   node: ParsedCommandNode,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  alpha: number
 ): LinearGradientFill | null {
   const definition = getCommandDefinition(node.name);
 
@@ -1002,13 +1006,15 @@ function compileLinearGradient(
     kind: "gradient-linear",
     direction: direction === "vertical" ? "vertical" : "horizontal",
     angle,
-    stops
+    stops,
+    alpha
   };
 }
 
 function compileRadialGradient(
   node: ParsedCommandNode,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  alpha: number
 ): RadialGradientFill | null {
   const definition = getCommandDefinition(node.name);
 
@@ -1045,7 +1051,8 @@ function compileRadialGradient(
     centerX,
     centerY,
     radius,
-    stops
+    stops,
+    alpha
   };
 }
 
@@ -1062,8 +1069,76 @@ function compileFill(
 
   validateChildren(node, definition, diagnostics);
 
-  if (node.args.length > 0) {
-    const [variantName = "", ...variantArgs] = node.args;
+  const fillPropertyValues = new Map<string, string>();
+  let variantName: string | null = null;
+  const variantArgs: string[] = [];
+
+  node.args.forEach((token) => {
+    const equalsIndex = token.indexOf("=");
+
+    if (equalsIndex > 0) {
+      const key = token.slice(0, equalsIndex);
+      const value = token.slice(equalsIndex + 1);
+
+      if (key === "alpha") {
+        if (value.length === 0) {
+          diagnostics.push(
+            createCompilerDiagnostic(
+              'The fill command received an empty value for "alpha".',
+              node
+            )
+          );
+          return;
+        }
+
+        setResolvedValue(fillPropertyValues, key, value, node, diagnostics);
+        return;
+      }
+    }
+
+    if (variantName === null) {
+      variantName = token;
+      return;
+    }
+
+    variantArgs.push(token);
+  });
+
+  node.children.forEach((child) => {
+    if (child.name !== "alpha") {
+      return;
+    }
+
+    const childDefinition = getCommandDefinition(child.name);
+
+    if (!childDefinition) {
+      return;
+    }
+
+    const childArguments = parseArguments(child, childDefinition);
+    diagnostics.push(...childArguments.diagnostics);
+    const value = childArguments.values.get("value");
+
+    if (!value) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          'The alpha command requires "value".',
+          child
+        )
+      );
+      return;
+    }
+
+    setResolvedValue(fillPropertyValues, "alpha", value, node, diagnostics);
+  });
+
+  const alpha =
+    readOptionalNumber(node, fillPropertyValues, "alpha", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 1;
+
+  if (variantName !== null) {
     const variantDefinition = getCommandDefinition(variantName);
 
     if (!variantDefinition || !allowsChild(definition, variantDefinition)) {
@@ -1086,15 +1161,15 @@ function compileFill(
     };
 
     if (variantName === "solid") {
-      return compileSolid(syntheticNode, diagnostics);
+      return compileSolid(syntheticNode, diagnostics, alpha);
     }
 
     if (variantName === "gradient" || variantName === "gradient-linear") {
-      return compileLinearGradient(syntheticNode, diagnostics);
+      return compileLinearGradient(syntheticNode, diagnostics, alpha);
     }
 
     if (variantName === "gradient-radial") {
-      return compileRadialGradient(syntheticNode, diagnostics);
+      return compileRadialGradient(syntheticNode, diagnostics, alpha);
     }
   }
 
@@ -1129,14 +1204,14 @@ function compileFill(
   const variantNode = variantChildren[0]!;
 
   if (variantNode.name === "solid") {
-    return compileSolid(variantNode, diagnostics);
+    return compileSolid(variantNode, diagnostics, alpha);
   }
 
   if (variantNode.name === "gradient-radial") {
-    return compileRadialGradient(variantNode, diagnostics);
+    return compileRadialGradient(variantNode, diagnostics, alpha);
   }
 
-  return compileLinearGradient(variantNode, diagnostics);
+  return compileLinearGradient(variantNode, diagnostics, alpha);
 }
 
 function compileStroke(
@@ -1161,6 +1236,11 @@ function compileStroke(
     { min: 1 }
   );
   const color = readOptionalString(resolvedProperties.values, "color");
+  const alpha =
+    readOptionalNumber(node, resolvedProperties.values, "alpha", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 1;
   const alignToken = readOptionalString(resolvedProperties.values, "align");
   const styleToken = readOptionalString(resolvedProperties.values, "style");
   const dashLength = readOptionalNumber(
@@ -1225,7 +1305,8 @@ function compileStroke(
   if (color !== null) {
     fills.push({
       kind: "solid",
-      color
+      color,
+      alpha: 1
     });
   }
 
@@ -1274,6 +1355,7 @@ function compileStroke(
     width,
     align,
     style,
+    alpha,
     dashLength,
     gapLength,
     dotSpacing,
