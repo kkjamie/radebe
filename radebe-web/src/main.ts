@@ -1,4 +1,4 @@
-import { renderSource } from "@radebe/core";
+import { getCommandDefinition, renderSource } from "@radebe/core";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -38,6 +38,104 @@ type PageDefinition =
       kind: "example";
       doc: ExampleDoc;
     };
+
+const syntaxStyles = document.createElement("style");
+syntaxStyles.textContent = `
+.syntax-command { color: #7dd3fc; font-weight: 700; }
+.syntax-child-command { color: #c4a7ff; font-weight: 700; }
+.syntax-property-command { color: #f0b35f; font-weight: 700; }
+.syntax-property { color: #ffc66d; }
+.syntax-value { color: #d8e6b3; }
+.syntax-comment { color: #7f948a; font-style: italic; }
+.syntax-punctuation { color: #9d9183; }
+.syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
+`;
+document.head.append(syntaxStyles);
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function spanSyntax(className: string, value: string): string {
+  return `<span class="${className}">${escapeHtml(value)}</span>`;
+}
+
+function highlightCommandToken(token: string): string {
+  const definition = getCommandDefinition(token);
+
+  if (!definition) {
+    return spanSyntax("syntax-unknown", token);
+  }
+
+  if (definition.kind === "property") {
+    return spanSyntax("syntax-property-command", token);
+  }
+
+  return spanSyntax("syntax-command", token);
+}
+
+function highlightArgumentToken(token: string): string {
+  const equalsIndex = token.indexOf("=");
+
+  if (equalsIndex > 0) {
+    const key = token.slice(0, equalsIndex);
+    const value = token.slice(equalsIndex + 1);
+
+    return [
+      spanSyntax("syntax-property", key),
+      spanSyntax("syntax-punctuation", "="),
+      value.length === 0 ? "" : spanSyntax("syntax-value", value)
+    ].join("");
+  }
+
+  const definition = getCommandDefinition(token);
+
+  if (definition && definition.kind !== "property") {
+    return spanSyntax("syntax-child-command", token);
+  }
+
+  return spanSyntax("syntax-value", token);
+}
+
+function highlightSourceLine(line: string): string {
+  if (line.trimStart().startsWith("#")) {
+    return spanSyntax("syntax-comment", line);
+  }
+
+  const tokens = line.match(/\s+|\S+/g) ?? [];
+  let hasCommandToken = false;
+
+  return tokens
+    .map((token) => {
+      if (/^\s+$/.test(token)) {
+        return escapeHtml(token);
+      }
+
+      if (!hasCommandToken) {
+        hasCommandToken = true;
+        return highlightCommandToken(token);
+      }
+
+      return highlightArgumentToken(token);
+    })
+    .join("");
+}
+
+function highlightSource(source: string): string {
+  const highlighted = source
+    .split("\n")
+    .map(highlightSourceLine)
+    .join("\n");
+
+  if (highlighted.length === 0) {
+    return " ";
+  }
+
+  return source.endsWith("\n") ? `${highlighted} ` : highlighted;
+}
 
 const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
   id: "experimental",
@@ -977,6 +1075,8 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   const editorPanel = document.createElement("article");
   const previewPanel = document.createElement("article");
   const sourceLabel = document.createElement("label");
+  const sourceEditor = document.createElement("div");
+  const sourceHighlight = document.createElement("pre");
   const sourceInput = document.createElement("textarea");
   const status = document.createElement("p");
   const previewLabel = document.createElement("h4");
@@ -1003,11 +1103,17 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   previewPanel.style.cssText =
     "border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); padding: 18px; min-width: 0;";
   sourceLabel.textContent = "Source";
-  sourceLabel.style.cssText = "display: block; margin-bottom: 12px; color: #fff3e1;";
+  sourceLabel.style.cssText = "display: grid; gap: 12px; margin-bottom: 12px; color: #fff3e1;";
+  sourceEditor.style.cssText =
+    "position: relative; min-height: 320px; border: 1px solid rgba(255,255,255,0.12); background: #12110f; overflow: hidden;";
+  sourceHighlight.setAttribute("aria-hidden", "true");
+  sourceHighlight.style.cssText =
+    "position: absolute; inset: 0; margin: 0; min-height: 320px; box-sizing: border-box; padding: 14px; color: #f8f4ec; font: inherit; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; pointer-events: none;";
   sourceInput.value = sourceState.get(playground.id) ?? "";
+  sourceInput.setAttribute("aria-label", "Source");
   sourceInput.setAttribute("spellcheck", "false");
   sourceInput.style.cssText =
-    "width: 100%; min-height: 320px; resize: vertical; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.12); background: #12110f; color: #f8f4ec; padding: 14px; font: inherit;";
+    "position: relative; z-index: 1; display: block; width: 100%; min-height: 320px; resize: vertical; box-sizing: border-box; border: 0; outline: none; background: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #f8f4ec; padding: 14px; font: inherit; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2;";
   status.style.cssText = "margin: 0; color: #cbbda7;";
   previewLabel.textContent = "Preview";
   previewLabel.style.cssText = "margin: 0;";
@@ -1121,7 +1227,18 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     });
   }
 
+  function syncEditorScroll(): void {
+    sourceHighlight.style.transform = `translate(${-sourceInput.scrollLeft}px, ${-sourceInput.scrollTop}px)`;
+  }
+
+  function updateEditorHighlight(source: string): void {
+    sourceHighlight.innerHTML = highlightSource(source);
+    syncEditorScroll();
+  }
+
   function updatePreview(source: string): void {
+    updateEditorHighlight(source);
+
     const result = renderSource({ source });
     const diagnosticsText = result.diagnostics
       .map((diagnostic) => {
@@ -1157,6 +1274,14 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     updatePreview(sourceInput.value);
   });
 
+  sourceInput.addEventListener("scroll", syncEditorScroll);
+  sourceInput.addEventListener("focus", () => {
+    sourceEditor.style.borderColor = "rgba(125,211,252,0.48)";
+  });
+  sourceInput.addEventListener("blur", () => {
+    sourceEditor.style.borderColor = "rgba(255,255,255,0.12)";
+  });
+
   zoomSelect.addEventListener("change", () => {
     applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
   });
@@ -1167,7 +1292,8 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
   }).observe(spriteViewport);
 
-  sourceLabel.append(sourceInput);
+  sourceEditor.append(sourceHighlight, sourceInput);
+  sourceLabel.append(sourceEditor);
   editorPanel.append(sourceLabel, status);
   zoomLabel.append(zoomSelect);
   previewToolbar.append(previewMeta, zoomLabel);
