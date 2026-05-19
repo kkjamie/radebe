@@ -1,0 +1,87 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to the License Client on channel: "LicenseClient-Jamie" at "2026-05-19T19:34:09.220282Z"
+[Licensing::Client] Error: Code 10 while verifying Licensing Client signature (process Id: 32864, path: "C:/Program Files/Unity Hub/UnityLicensingClient_V1/Unity.Licensing.Client.exe")
+[Licensing::Module] Error: LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.17.1+ae67fbc
+  Session Id:              bdb31040438d452891e472e81610e4ca
+  Correlation Id:          38aef90c897f6a5957cbbe868c92e12b
+  External correlation Id: 8806625932465773208
+  Machine Id:              zkas4aEmkmBSM1HbTxA1rcX26SM=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-Jamie" (connect: 0.00s, validation: 0.01s, handshake: 0.07s)
+[Licensing::IpcConnector] Successfully connected to the License Notification on channel: "LicenseClient-Jamie-notifications" at "2026-05-19T19:34:09.3016275Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully updated license
+Built from '6000.0/staging' branch; Version is '6000.0.32f1 (b2e806cf271c) revision 11724806'; Using compiler version '193933523'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) 64bit Professional' Language: 'en' Physical Memory: 16247 MB
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Serial number assigned to: "F4-MBTX-FBB9-R7E9-74A5-XXXX"
+[Licensing::Module] Serial number assigned to: "5773972523591-UnityPersXXXX"
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1, IsPro: 0
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Serial number assigned to: "F4-MBTX-FBB9-R7E9-74A5-XXXX"
+[Licensing::Module] Serial number assigned to: "5773972523591-UnityPersXXXX"
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.0.32f1\Editor\Unity.exe
+-batchmode
+-projectPath
+D:\projects\personal\eddie
+-executeMethod
+Radebe.UnityBridge.Editor.RadebeUnityImportVerifier.VerifyEnvironmentSmokeAsset
+-quit
+-logFile
+D:\projects\personal\radebe\Temp\unity-import-verify.log
+Successfully changed project path to: D:\projects\personal\eddie
+D:/projects/personal/eddie
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gfx=262144"
+Player connection [12052]  Target information:
+
+Player connection [12052]  * "[IP] 192.168.0.49 [Port] 55504 [Flags] 2 [Guid] 3173746345 [EditorId] 3173746345 [Version] 1048832 [Id] WindowsEditor(7,XRG-LAP-000458) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [12052] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [12052] Host joined alternative multi-casting on [225.0.0.222:34997]...
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-36964" after 0.5 seconds.
+Library Redirect Path: Library/
+[Package Manager] Done resolving packages in 7.13 seconds
+[Licensing::Client] Successfully resolved entitlement details
+An error occurred while resolving packages:
+  Project has invalid dependencies:
+    com.unity.test-framework: Package [com.unity.test-framework@1.6.0] cannot be found
+Exiting without the bug reporter. Application will terminate with return code 1
