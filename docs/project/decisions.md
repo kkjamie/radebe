@@ -278,3 +278,25 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The language gets a useful multi-segment line primitive now, `path` stays distinct from filled region shapes such as `polygon`, and future path work can add closing, fill, winding, or reusable-name semantics without rewriting the initial stroke-first surface.
 - Related tasks: T-036
 - Supersedes: N/A
+
+---
+
+### DEC-024: Keep Placeholder Example Pages Only For Substantive Future Features
+- Date: `2026-05-19`
+- Status: Superseded
+- Context: The web docs nav included placeholder pages for both meaningful future features and low-value support concepts such as header sub-properties or appearance containers, which made the placeholder set noisy.
+- Decision: Keep placeholder pages only for substantive planned features such as `overlay`, `shadow`, `group`, `mask`, and `vars`, and remove placeholder-only pages that are better documented under parent pages or once real implementation work exists.
+- Consequences: The nav still signals important planned capabilities without over-advertising low-signal stubs like `size`, `background`, `fill`, `inset`, `blend`, and `draw`.
+- Related tasks: T-037
+- Supersedes: N/A
+
+---
+
+### DEC-025: Drop `overlay` From The Near-Term Language Surface
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: The current implementation already supports ordered multi-`fill` passes on shapes, which covers the existing layering use cases without needing a separate `overlay` command or placeholder page.
+- Decision: Remove `overlay` from the current product spec and web docs surface for now, keep ordered `fill` passes as the only shape-interior layering model, and revisit a distinct overlay concept only if future compositing rules require semantics that multi-`fill` cannot express cleanly.
+- Consequences: The near-term language gets simpler, the docs stop implying an extra appearance primitive that does not exist, and future overlay work stays available as a deliberate new feature instead of inherited placeholder baggage.
+- Related tasks: T-038
+- Supersedes: DEC-024

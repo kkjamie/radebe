@@ -5,7 +5,7 @@ Last updated: `2026-05-19`
 
 ## Product Summary
 - Radebe is a language and toolchain for authoring procedural UI sprites as text-first source files that compile into raster outputs and optional metadata.
-- The initial use case is crisp sci-fi and game UI sprites built from pixel-perfect lines, rectangles, angled cuts, fills, strokes, overlays, and later masks, patterns, gradients, and noise.
+- The initial use case is crisp sci-fi and game UI sprites built from pixel-perfect lines, rectangles, angled cuts, fills, strokes, and later masks, patterns, gradients, and noise.
 - The core value proposition is one canonical implementation that powers authoring, validation, rendering, browser preview, CLI compilation, and downstream engine integration without divergent logic.
 
 ## Core Experience Goals
@@ -22,7 +22,7 @@ Last updated: `2026-05-19`
 - Stable intermediate representation.
 - Simple features early, extensible renderer later.
 - Separate geometry from appearance.
-- Treat shapes as implicit coverage regions for their own fills and overlays.
+- Treat shapes as implicit coverage regions for their own fills.
 - Use explicit masks only when clipping arbitrary child drawing.
 - Compile advanced effects into normal render commands rather than parser-specific hacks.
 
@@ -158,7 +158,6 @@ Geometry Commands:
 
 Appearance Commands:
   fill
-  overlay
   stroke
   shadow
 
@@ -325,7 +324,6 @@ A shape may produce:
 
 Initial appearance commands:
 - `fill`
-- `overlay`
 - `stroke`
 
 Example fill:
@@ -350,10 +348,10 @@ Stroke alignment values:
 - `center`
 - `outside`
 
-Longer term, strokes should behave like generated shapes that can themselves carry fill, overlay, and nested stroke passes.
+Longer term, strokes should behave like generated shapes that can themselves carry fill and nested stroke passes.
 
 ## Mask Model
-- Every shape has implicit coverage for its own fill and overlays.
+- Every shape has implicit coverage for its own fill.
 - Explicit masks are for clipping arbitrary child drawing commands.
 - Planned mask modes include `intersect`, `subtract`, `replace`, and `add`.
 
@@ -388,9 +386,9 @@ Recovered core render command concepts:
 - `PathStroke`
 - `PushMask`
 - `PopMask`
-- `OverlayNoise`
-- `OverlayPattern`
-- `OverlayGradient`
+- `NoisePass`
+- `PatternPass`
+- `GradientPass`
 
 Longer term, these may unify under a richer renderable-region model, but the early compiler should prefer explicit, easy-to-validate draw commands.
 

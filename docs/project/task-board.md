@@ -38,6 +38,8 @@ Use this as the single source of truth for active execution state.
 | T-034 | Add a first `polygon` geometry slice without comma-separated tuple syntax | M2 | Gate B | P1 | Done | `t-034-polygon-geometry` | None | Hand off to the next thread for polygon stroke/path follow-up or return to Unity Gate C now that polygon fill authoring works through shorthand point pairs and canonical `point` children |
 | T-035 | Extend `polygon` into the shared `stroke` model | M2 | Gate B | P1 | Done | `t-035-polygon-stroke` | None | Hand off to the next thread for Unity Gate C revalidation or `path`/polygon contour refinements now that polygon participates in the same fill and stroke authoring model as the other supported shapes |
 | T-036 | Add a first stroke-first `path` geometry slice | M2 | Gate B | P1 | Done | `t-036-path-stroke-slice` | None | Hand off to the next thread for Unity Gate C revalidation or deeper path semantics now that open polyline paths render through required `stroke` children |
+| T-037 | Audit placeholder web example pages and trim the low-value stubs | M2 | Gate B | P2 | Done | `t-037-placeholder-page-audit` | None | Keep placeholder pages only for substantive planned features such as `shadow`, `group`, `mask`, and `vars`; remove low-value placeholder stubs that are better covered by parent pages or by future implementation docs |
+| T-038 | Remove `overlay` from the near-term language surface and web docs | M2 | Gate B | P2 | Done | `codex-main` | None | Keep ordered multi-`fill` passes as the current layering model and revisit a separate overlay concept only if future compositing semantics clearly require it |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

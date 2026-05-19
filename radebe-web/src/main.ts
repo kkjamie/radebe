@@ -236,22 +236,6 @@ const exampleDocs: ExampleDoc[] = [
       }
     ]
   },
-  createComingSoonDoc({
-    id: "size",
-    title: "Size",
-    navGroup: "Document",
-    summary: "Defines the sprite canvas dimensions inside the sprite header block.",
-    args: ["width", "height"],
-    childCommands: []
-  }),
-  createComingSoonDoc({
-    id: "background",
-    title: "Background",
-    navGroup: "Document",
-    summary: "Defines the sprite background color or transparency inside the sprite header block.",
-    args: ["color"],
-    childCommands: []
-  }),
   {
     id: "plot",
     title: "Plot",
@@ -647,15 +631,6 @@ const exampleDocs: ExampleDoc[] = [
       }
     ]
   },
-  createComingSoonDoc({
-    id: "fill",
-    title: "Fill",
-    navGroup: "Appearance",
-    summary: "Acts as the appearance container for one concrete fill variant such as solid or gradient.",
-    args: ["variant shorthand"],
-    childCommands: ["solid", "gradient-linear", "gradient-radial"],
-    notes: ["The container itself is structural; it does not render without a concrete fill variant."]
-  }),
   {
     id: "solid",
     title: "Solid Fill",
@@ -817,17 +792,17 @@ const exampleDocs: ExampleDoc[] = [
       },
       {
         id: "gradient-radial-transparent",
-        title: "Transparent Overlay",
-        summary: "A radial overlay pass that can sit above another fill because alpha is preserved.",
+        title: "Transparent Highlight",
+        summary: "A radial highlight can sit above an earlier fill because ordered fill passes preserve alpha.",
         source: [
-          "sprite radial-overlay-demo",
+          "sprite radial-highlight-demo",
           "  size 192 112",
           "  background transparent",
           "",
           "# Base plate",
           "rect 16 16 160 80 #18242c",
           "",
-          "# Transparent radial highlight layered on top",
+          "# Transparent radial highlight layered on top with another fill pass",
           "rect 16 16 160 80",
           "  fill",
           "    gradient-radial",
@@ -841,14 +816,6 @@ const exampleDocs: ExampleDoc[] = [
       }
     ]
   },
-  createComingSoonDoc({
-    id: "overlay",
-    title: "Overlay",
-    navGroup: "Appearance",
-    summary: "Adds a secondary ordered appearance pass above the base fill.",
-    args: ["overlay-specific args"],
-    childCommands: ["solid", "gradient-linear", "gradient-radial"]
-  }),
   {
     id: "stroke",
     title: "Stroke",
@@ -1012,7 +979,7 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Appearance",
     summary: "Adds a shadow-like appearance pass to a shape.",
     args: ["shadow-specific args"],
-    childCommands: ["fill", "overlay"]
+    childCommands: ["fill"]
   }),
   {
     id: "align",
@@ -1041,14 +1008,6 @@ const exampleDocs: ExampleDoc[] = [
       "`dotted` can be tuned with `dot-spacing`."
     ]
   },
-  createComingSoonDoc({
-    id: "inset",
-    title: "Inset",
-    navGroup: "Properties",
-    summary: "Defines inset spacing for shapes or appearance passes that support inner offsets.",
-    args: ["amount"],
-    childCommands: []
-  }),
   {
     id: "alpha",
     title: "Alpha",
@@ -1099,14 +1058,6 @@ const exampleDocs: ExampleDoc[] = [
     ]
   },
   createComingSoonDoc({
-    id: "blend",
-    title: "Blend",
-    navGroup: "Properties",
-    summary: "Selects a blend mode for later richer compositing behavior.",
-    args: ["mode"],
-    childCommands: []
-  }),
-  createComingSoonDoc({
     id: "group",
     title: "Group",
     navGroup: "Structure",
@@ -1122,14 +1073,6 @@ const exampleDocs: ExampleDoc[] = [
     args: ["optional name"],
     childCommands: ["draw", "geometry", "appearance"],
     notes: ["Planned mask modes include intersect, subtract, replace, and add."]
-  }),
-  createComingSoonDoc({
-    id: "draw",
-    title: "Draw",
-    navGroup: "Structure",
-    summary: "Holds explicit child drawing under a structural parent such as a mask or reusable path block.",
-    args: [],
-    childCommands: ["plot", "line", "rect", "rect-absolute", "rect-inset", "circle", "polygon", "path"]
   }),
   createComingSoonDoc({
     id: "vars",
