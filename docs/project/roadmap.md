@@ -28,6 +28,8 @@ Last updated: `2026-05-19`
 - The web example surface now treats rounded and cut corners as part of the main `rect` story instead of separate geometry pages, which keeps the current authoring model aligned with the implemented modifier-based shape semantics.
 - The placeholder example audit now keeps only substantive future-feature stubs in the web nav; low-value property/container placeholders that are better covered by their parent pages have been removed.
 - M2 Gate A, Gate B, and Gate C now all have working evidence. T-011 established the first real Unity plugin import baseline: `.rdb` files are Unity source assets handled by a ScriptedImporter, the packaged CLI can emit a Unity JSON sprite artifact, local deployment into a configured Unity project is driven by `.env` / environment variables rather than hard-coding Eddie into repo state, and manual verification in Eddie confirmed the deployed importer produces a generated Sprite main asset.
+- The next recommended Unity slice is importer-facing asset options: expose and validate inspector controls for sprite pivot, pixels per unit, border/9-slice metadata, and texture filtering so Unity users can tune imported `.rdb` assets without changing the CLI-backed rendering contract.
+- T-043 is now underway in repo code: the importer has explicit pivot presets, custom pivot support, border sanitization for 9-slice, mesh type and extrude controls, and a custom importer inspector that groups sprite, texture, and bridge settings. The remaining work is in-editor confirmation in Eddie that those settings behave as expected on reimport.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.

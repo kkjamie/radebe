@@ -37,11 +37,13 @@ Last updated: `2026-05-19`
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
 - No active blocker remains on T-011. The remaining Unity follow-on work is product choice, not integration failure.
+- The current leading Unity follow-on is importer options for sprite authoring ergonomics: border/9-slice metadata, pivot, pixels per unit, and filter mode surfaced through the existing ScriptedImporter settings.
+- T-043 is now in progress. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector now also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. The updated plugin has been redeployed to Eddie through `npm run deploy:unity`, but the settings still need a hands-on Unity editor check.
 
 ## Best Next Tasks
-1. Choose the next Unity slice now that the importer baseline is validated, such as metadata-driven sprite settings like pivot, PPU, and border.
-2. Decide whether the Eddie-specific batchmode package-resolution issue should be cleaned up now or deferred until the next automation-focused Unity thread.
-3. If Unity work pauses, return to the next highest-value language or tooling increment with Gate C closed.
+1. Open a deployed `.rdb` asset in Eddie and verify the new importer preview plus inspector options for pivot, PPU, border/9-slice metadata, mesh type, extrude edges, and point/bilinear filtering.
+2. If the importer options behave correctly, move T-043 to `Done` and document the validated Unity workflow.
+3. Decide whether any of those options should later move into `.rdb` source metadata versus staying Unity-import-only.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

@@ -45,6 +45,7 @@ Use this as the single source of truth for active execution state.
 | T-041 | Add optional real output antialiasing with sprite defaults and geometry overrides | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C with the richer renderer contract now preserving pixel-perfect defaults while allowing `sprite antialias` and per-geometry overrides for smoother contours |
 | T-042 | Remove standalone `align` and `style` pages from the web docs nav | M2 | Gate B | P2 | Done | `codex-main` | None | Keep `align` and `style` documented only where they apply, currently inside the `stroke` examples and notes |
 | T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Done | `codex-main` | None | Hand off to the next thread to choose the next Unity slice now that local deploy plus manual Unity verification confirmed the `.rdb` importer produces a generated Sprite in Eddie |
+| T-043 | Add Unity importer options for sprite settings and slicing metadata | M2 | Gate C | P1 | In Progress | `codex-main` | Needs in-editor Unity confirmation that the new importer inspector preview and settings behave correctly for 9-slice, pivot, and filtering in Eddie | Open a deployed `.rdb` asset in Eddie, confirm the live preview shows border guides and pivot updates immediately, and verify reimport behavior for border/9-slice, pivot, PPU, and point vs bilinear filtering |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

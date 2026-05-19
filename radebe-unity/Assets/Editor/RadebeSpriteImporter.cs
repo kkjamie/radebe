@@ -9,6 +9,9 @@ namespace Radebe.UnityBridge.Editor
     public sealed class RadebeSpriteImporter : ScriptedImporter
     {
         [SerializeField]
+        private RadebeSpritePivotMode pivotMode = RadebeSpritePivotMode.Center;
+
+        [SerializeField]
         private float pixelsPerUnit = 100f;
 
         [SerializeField]
@@ -16,6 +19,12 @@ namespace Radebe.UnityBridge.Editor
 
         [SerializeField]
         private Vector4 border = Vector4.zero;
+
+        [SerializeField]
+        private SpriteMeshType meshType = SpriteMeshType.FullRect;
+
+        [SerializeField]
+        private int extrudeEdges = 0;
 
         [SerializeField]
         private FilterMode filterMode = FilterMode.Point;
@@ -81,14 +90,16 @@ namespace Radebe.UnityBridge.Editor
             texture.SetPixels32(pixels);
             texture.Apply(updateMipmaps: false, makeNoLongerReadable: false);
 
+            var resolvedPivot = ResolvePivot(pivotMode, pivot);
+            var resolvedBorder = SanitizeBorder(border, artifact.width, artifact.height);
             var sprite = Sprite.Create(
                 texture,
                 new Rect(0, 0, artifact.width, artifact.height),
-                pivot,
+                resolvedPivot,
                 Math.Max(pixelsPerUnit, 1f),
-                0,
-                SpriteMeshType.FullRect,
-                border);
+                (uint)Math.Max(extrudeEdges, 0),
+                meshType,
+                resolvedBorder);
             sprite.name = artifact.name;
 
             ctx.AddObjectToAsset("texture", texture);
@@ -192,6 +203,77 @@ namespace Radebe.UnityBridge.Editor
                 ctx.LogImportWarning(invocation.Stderr.Trim());
             }
         }
+
+        internal static Vector2 ResolvePivot(RadebeSpritePivotMode mode, Vector2 customPivot)
+        {
+            switch (mode)
+            {
+                case RadebeSpritePivotMode.TopLeft:
+                    return new Vector2(0f, 1f);
+                case RadebeSpritePivotMode.Top:
+                    return new Vector2(0.5f, 1f);
+                case RadebeSpritePivotMode.TopRight:
+                    return new Vector2(1f, 1f);
+                case RadebeSpritePivotMode.Left:
+                    return new Vector2(0f, 0.5f);
+                case RadebeSpritePivotMode.Right:
+                    return new Vector2(1f, 0.5f);
+                case RadebeSpritePivotMode.BottomLeft:
+                    return new Vector2(0f, 0f);
+                case RadebeSpritePivotMode.Bottom:
+                    return new Vector2(0.5f, 0f);
+                case RadebeSpritePivotMode.BottomRight:
+                    return new Vector2(1f, 0f);
+                case RadebeSpritePivotMode.Custom:
+                    return new Vector2(
+                        Mathf.Clamp01(customPivot.x),
+                        Mathf.Clamp01(customPivot.y));
+                case RadebeSpritePivotMode.Center:
+                default:
+                    return new Vector2(0.5f, 0.5f);
+            }
+        }
+
+        internal static Vector4 SanitizeBorder(Vector4 value, int width, int height)
+        {
+            var sanitized = new Vector4(
+                Mathf.Max(0f, value.x),
+                Mathf.Max(0f, value.y),
+                Mathf.Max(0f, value.z),
+                Mathf.Max(0f, value.w));
+
+            var horizontal = sanitized.x + sanitized.z;
+            if (horizontal > width && horizontal > 0f)
+            {
+                var scale = width / horizontal;
+                sanitized.x *= scale;
+                sanitized.z *= scale;
+            }
+
+            var vertical = sanitized.y + sanitized.w;
+            if (vertical > height && vertical > 0f)
+            {
+                var scale = height / vertical;
+                sanitized.y *= scale;
+                sanitized.w *= scale;
+            }
+
+            return sanitized;
+        }
+    }
+
+    public enum RadebeSpritePivotMode
+    {
+        Center = 0,
+        TopLeft = 1,
+        Top = 2,
+        TopRight = 3,
+        Left = 4,
+        Custom = 5,
+        Right = 6,
+        BottomLeft = 7,
+        Bottom = 8,
+        BottomRight = 9
     }
 
     [Serializable]

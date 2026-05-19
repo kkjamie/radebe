@@ -16,6 +16,7 @@ Unity-facing integration assets will live here.
 - `Assets/Editor/`: Unity editor scripts that invoke the CLI.
 - `Assets/Editor/RadebeCliBridgeHelper.cs`: install validation and process-launch helper baseline for the packaged CLI payload.
 - `Assets/Editor/RadebeSpriteImporter.cs`: `.rdb` ScriptedImporter that compiles source through the packaged CLI and creates generated `Texture2D` plus `Sprite` subassets.
+- `Assets/Editor/RadebeSpriteImporterEditor.cs`: custom importer inspector that exposes Unity-facing sprite, slicing, filtering, and bridge options for `.rdb` assets.
 - `Assets/Editor/RadebeUnityMenu.cs`: editor menu helpers for payload validation, payload install/update, and smoke execution.
 - `Assets/Editor/RadebeUnityImportVerifier.cs`: batchmode-friendly importer assertion helper for configured smoke assets.
 - `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`: installed CLI payload copied from the packaged SEA artifact.
@@ -38,6 +39,20 @@ Unity-facing integration assets will live here.
 - `RadebeCliBridgeHelper.RunSmokeTest()` invokes the installed packaged CLI with the current spec-aligned source-string contract and asserts the rendered row output.
 - The helper defaults its source artifact root to `../artifacts/radebe-cli/sea/` relative to the Unity project when no explicit path is provided.
 - The helper also respects `RADEBE_CLI_ARTIFACT_ROOT` for local editor install/update flows.
+
+## Importer Options
+- The `.rdb` importer now exposes Unity-side sprite import controls in the inspector.
+- The importer inspector also renders a live preview of the current imported sprite with 9-slice border guides and pivot overlay so border tuning can be done visually.
+- Current options include:
+  - pivot presets plus custom pivot
+  - pixels per unit
+  - 9-slice border metadata
+  - sprite mesh type
+  - extrude edges
+  - filter mode
+  - wrap mode
+  - importer bridge timeout and optional auto-install of the CLI payload
+- Border values are interpreted in sprite pixels and clamped during import so they cannot exceed the generated sprite bounds.
 
 ## Local Deploy Testing
 - Root script: `npm run deploy:unity`
