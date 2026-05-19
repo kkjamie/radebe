@@ -23,6 +23,30 @@ type RgbaColor = {
   a: number;
 };
 
+type RectBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type CoveragePredicate = (pointX: number, pointY: number) => boolean;
+
+const ANTIALIAS_SAMPLE_GRID_SIZE = 4;
+const ANTIALIAS_SAMPLE_COUNT =
+  ANTIALIAS_SAMPLE_GRID_SIZE * ANTIALIAS_SAMPLE_GRID_SIZE;
+const ANTIALIAS_SAMPLE_OFFSETS = Array.from(
+  { length: ANTIALIAS_SAMPLE_COUNT },
+  (_, index) => ({
+    x:
+      (index % ANTIALIAS_SAMPLE_GRID_SIZE + 0.5) /
+      ANTIALIAS_SAMPLE_GRID_SIZE,
+    y:
+      (Math.floor(index / ANTIALIAS_SAMPLE_GRID_SIZE) + 0.5) /
+      ANTIALIAS_SAMPLE_GRID_SIZE
+  })
+);
+
 const NAMED_COLORS: Record<string, RgbaColor> = {
   black: { r: 0, g: 0, b: 0, a: 1 },
   blue: { r: 0, g: 0, b: 255, a: 1 },
@@ -151,6 +175,50 @@ function setPixel(
 
   pixels[y]![x] = blendColors(pixels[y]![x] ?? null, withOpacity(parsed, opacity));
   drawnPixels[y]![x] = true;
+}
+
+function getPixelCoverage(
+  x: number,
+  y: number,
+  antialias: boolean,
+  isCovered: CoveragePredicate
+): number {
+  if (!antialias) {
+    return isCovered(x + 0.5, y + 0.5) ? 1 : 0;
+  }
+
+  let coveredSamples = 0;
+
+  for (const offset of ANTIALIAS_SAMPLE_OFFSETS) {
+    if (isCovered(x + offset.x, y + offset.y)) {
+      coveredSamples += 1;
+    }
+  }
+
+  return coveredSamples / ANTIALIAS_SAMPLE_COUNT;
+}
+
+function sampleFillColor(
+  fill: RectFill,
+  bounds: RectBounds,
+  x: number,
+  y: number
+): string | null {
+  if (fill.kind === "solid") {
+    return fill.color;
+  }
+
+  if (fill.kind === "gradient-linear") {
+    return sampleGradientStops(
+      fill.stops,
+      resolveLinearGradientPosition(fill, bounds, x, y)
+    );
+  }
+
+  return sampleGradientStops(
+    fill.stops,
+    resolveRadialGradientPosition(fill, bounds, x, y)
+  );
 }
 
 function lerp(start: number, end: number, t: number): number {
@@ -512,41 +580,29 @@ function drawRectFill(
     Extract<CompiledDrawCommand, { kind: "rect" }>,
     "x" | "y" | "width" | "height" | "cut" | "radius"
   >,
-  fill: RectFill
+  fill: RectFill,
+  antialias: boolean
 ): void {
   const polygon = buildCutPolygon(command);
 
   for (let y = command.y; y < command.y + command.height; y += 1) {
     for (let x = command.x; x < command.x + command.width; x += 1) {
-      const pointX = x + 0.5;
-      const pointY = y + 0.5;
+      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+        if (polygon !== null && !isPointInsidePolygon(pointX, pointY, polygon)) {
+          return false;
+        }
 
-      if (
-        polygon !== null &&
-        !isPointInsidePolygon(pointX, pointY, polygon)
-      ) {
+        return isPointInsideRoundedRect(pointX, pointY, command);
+      });
+
+      if (coverage <= 0) {
         continue;
       }
 
-      if (!isPointInsideRoundedRect(pointX, pointY, command)) {
-        continue;
-      }
-
-      const color =
-        fill.kind === "solid"
-          ? fill.color
-          : fill.kind === "gradient-linear"
-            ? sampleGradientStops(
-                fill.stops,
-                resolveLinearGradientPosition(fill, command, x, y)
-              )
-            : sampleGradientStops(
-                fill.stops,
-                resolveRadialGradientPosition(fill, command, x, y)
-              );
+      const color = sampleFillColor(fill, command, x, y);
 
       if (color !== null) {
-        setPixel(pixels, drawnPixels, x, y, color, fill.alpha);
+        setPixel(pixels, drawnPixels, x, y, color, fill.alpha * coverage);
       }
     }
   }
@@ -556,7 +612,8 @@ function drawCircleFill(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
-  fill: RectFill
+  fill: RectFill,
+  antialias: boolean
 ): void {
   const bounds = {
     x: command.x - command.radius,
@@ -567,30 +624,20 @@ function drawCircleFill(
 
   for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
     for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-      const pointX = x + 0.5;
-      const pointY = y + 0.5;
       const centerX = command.x + 0.5;
       const centerY = command.y + 0.5;
+      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) =>
+        Math.hypot(pointX - centerX, pointY - centerY) <= command.radius
+      );
 
-      if (Math.hypot(pointX - centerX, pointY - centerY) > command.radius) {
+      if (coverage <= 0) {
         continue;
       }
 
-      const color =
-        fill.kind === "solid"
-          ? fill.color
-          : fill.kind === "gradient-linear"
-            ? sampleGradientStops(
-                fill.stops,
-                resolveLinearGradientPosition(fill, bounds, x, y)
-              )
-            : sampleGradientStops(
-                fill.stops,
-                resolveRadialGradientPosition(fill, bounds, x, y)
-              );
+      const color = sampleFillColor(fill, bounds, x, y);
 
       if (color !== null) {
-        setPixel(pixels, drawnPixels, x, y, color, fill.alpha);
+        setPixel(pixels, drawnPixels, x, y, color, fill.alpha * coverage);
       }
     }
   }
@@ -753,34 +800,25 @@ function drawPolygonFill(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
-  fill: RectFill
+  fill: RectFill,
+  antialias: boolean
 ): void {
   const bounds = getPolygonBounds(command.points);
 
   for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
     for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-      const pointX = x + 0.5;
-      const pointY = y + 0.5;
+      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) =>
+        isPointInsidePolygon(pointX, pointY, command.points)
+      );
 
-      if (!isPointInsidePolygon(pointX, pointY, command.points)) {
+      if (coverage <= 0) {
         continue;
       }
 
-      const color =
-        fill.kind === "solid"
-          ? fill.color
-          : fill.kind === "gradient-linear"
-            ? sampleGradientStops(
-                fill.stops,
-                resolveLinearGradientPosition(fill, bounds, x, y)
-              )
-            : sampleGradientStops(
-                fill.stops,
-                resolveRadialGradientPosition(fill, bounds, x, y)
-              );
+      const color = sampleFillColor(fill, bounds, x, y);
 
       if (color !== null) {
-        setPixel(pixels, drawnPixels, x, y, color, fill.alpha);
+        setPixel(pixels, drawnPixels, x, y, color, fill.alpha * coverage);
       }
     }
   }
@@ -790,7 +828,8 @@ function drawPolygonShadow(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
-  shadow: ShadowAppearance
+  shadow: ShadowAppearance,
+  antialias: boolean
 ): void {
   if (shadow.fill === null) {
     return;
@@ -811,33 +850,22 @@ function drawPolygonShadow(
 
   for (let y = sampleBounds.y; y < sampleBounds.y + sampleBounds.height; y += 1) {
     for (let x = sampleBounds.x; x < sampleBounds.x + sampleBounds.width; x += 1) {
-      const pointX = x + 0.5;
-      const pointY = y + 0.5;
-      const inside = isPointInsidePolygon(pointX, pointY, points);
-      const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, points);
+      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+        const inside = isPointInsidePolygon(pointX, pointY, points);
+        const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, points);
 
-      if (shadow.spread >= 0) {
-        if (!inside && closestEdge.distance > shadow.spread) {
-          continue;
+        if (shadow.spread >= 0) {
+          return inside || closestEdge.distance <= shadow.spread;
         }
-      } else {
-        if (!inside || closestEdge.distance <= -shadow.spread) {
-          continue;
-        }
+
+        return inside && closestEdge.distance > -shadow.spread;
+      });
+
+      if (coverage <= 0) {
+        continue;
       }
 
-      const color =
-        shadow.fill.kind === "solid"
-          ? shadow.fill.color
-          : shadow.fill.kind === "gradient-linear"
-            ? sampleGradientStops(
-                shadow.fill.stops,
-                resolveLinearGradientPosition(shadow.fill, sampleBounds, x, y)
-              )
-            : sampleGradientStops(
-                shadow.fill.stops,
-                resolveRadialGradientPosition(shadow.fill, sampleBounds, x, y)
-              );
+      const color = sampleFillColor(shadow.fill, sampleBounds, x, y);
 
       if (color !== null) {
         setPixel(
@@ -846,7 +874,7 @@ function drawPolygonShadow(
           x,
           y,
           color,
-          shadow.alpha * shadow.fill.alpha
+          shadow.alpha * shadow.fill.alpha * coverage
         );
       }
     }
@@ -857,49 +885,44 @@ function drawPolygonStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
-  stroke: StrokeAppearance
+  stroke: StrokeAppearance,
+  antialias: boolean
 ): void {
   const bounds = getPolygonStrokeBounds(command.points, stroke);
 
   if (stroke.fill !== null) {
     for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
       for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-        const pointX = x + 0.5;
-        const pointY = y + 0.5;
-        const inside = isPointInsidePolygon(pointX, pointY, command.points);
-        const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, command.points);
-        const inInnerBand = inside && bounds.inner > 0 && closestEdge.distance <= bounds.inner;
-        const inOuterBand = !inside && bounds.outer > 0 && closestEdge.distance <= bounds.outer;
+        const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+          const inside = isPointInsidePolygon(pointX, pointY, command.points);
+          const closestEdge = getClosestPolygonEdgeSample(
+            pointX,
+            pointY,
+            command.points
+          );
+          const inInnerBand =
+            inside && bounds.inner > 0 && closestEdge.distance <= bounds.inner;
+          const inOuterBand =
+            !inside && bounds.outer > 0 && closestEdge.distance <= bounds.outer;
 
-        if (!inInnerBand && !inOuterBand) {
+          return (
+            (inInnerBand || inOuterBand) &&
+            getStrokePatternState(
+              stroke.style,
+              closestEdge.perimeterPosition,
+              stroke.width,
+              stroke.dashLength,
+              stroke.gapLength,
+              stroke.dotSpacing
+            )
+          );
+        });
+
+        if (coverage <= 0) {
           continue;
         }
 
-        if (
-          !getStrokePatternState(
-            stroke.style,
-            closestEdge.perimeterPosition,
-            stroke.width,
-            stroke.dashLength,
-            stroke.gapLength,
-            stroke.dotSpacing
-          )
-        ) {
-          continue;
-        }
-
-        const color =
-          stroke.fill.kind === "solid"
-            ? stroke.fill.color
-            : stroke.fill.kind === "gradient-linear"
-              ? sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveLinearGradientPosition(stroke.fill, bounds, x, y)
-                )
-              : sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveRadialGradientPosition(stroke.fill, bounds, x, y)
-                );
+        const color = sampleFillColor(stroke.fill, bounds, x, y);
 
         if (color !== null) {
           setPixel(
@@ -908,7 +931,7 @@ function drawPolygonStroke(
             x,
             y,
             color,
-            stroke.alpha * stroke.fill.alpha
+            stroke.alpha * stroke.fill.alpha * coverage
           );
         }
       }
@@ -916,7 +939,7 @@ function drawPolygonStroke(
   }
 
   stroke.strokes.forEach((nestedStroke) => {
-    drawPolygonStroke(pixels, drawnPixels, command, nestedStroke);
+    drawPolygonStroke(pixels, drawnPixels, command, nestedStroke, antialias);
   });
 }
 
@@ -924,50 +947,39 @@ function drawPathStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "path" }>, "points">,
-  stroke: StrokeAppearance
+  stroke: StrokeAppearance,
+  antialias: boolean
 ): void {
   const bounds = getPathStrokeBounds(command.points, stroke);
 
   if (stroke.fill !== null) {
     for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
       for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-        const pointX = x + 0.5;
-        const pointY = y + 0.5;
-        const closestSegment = getClosestPathSegmentSample(
-          pointX,
-          pointY,
-          command.points
-        );
+        const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+          const closestSegment = getClosestPathSegmentSample(
+            pointX,
+            pointY,
+            command.points
+          );
 
-        if (closestSegment.distance > bounds.radius) {
+          return (
+            closestSegment.distance <= bounds.radius &&
+            getStrokePatternState(
+              stroke.style,
+              closestSegment.perimeterPosition,
+              stroke.width,
+              stroke.dashLength,
+              stroke.gapLength,
+              stroke.dotSpacing
+            )
+          );
+        });
+
+        if (coverage <= 0) {
           continue;
         }
 
-        if (
-          !getStrokePatternState(
-            stroke.style,
-            closestSegment.perimeterPosition,
-            stroke.width,
-            stroke.dashLength,
-            stroke.gapLength,
-            stroke.dotSpacing
-          )
-        ) {
-          continue;
-        }
-
-        const color =
-          stroke.fill.kind === "solid"
-            ? stroke.fill.color
-            : stroke.fill.kind === "gradient-linear"
-              ? sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveLinearGradientPosition(stroke.fill, bounds, x, y)
-                )
-              : sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveRadialGradientPosition(stroke.fill, bounds, x, y)
-                );
+        const color = sampleFillColor(stroke.fill, bounds, x, y);
 
         if (color !== null) {
           setPixel(
@@ -976,7 +988,7 @@ function drawPathStroke(
             x,
             y,
             color,
-            stroke.alpha * stroke.fill.alpha
+            stroke.alpha * stroke.fill.alpha * coverage
           );
         }
       }
@@ -984,7 +996,7 @@ function drawPathStroke(
   }
 
   stroke.strokes.forEach((nestedStroke) => {
-    drawPathStroke(pixels, drawnPixels, command, nestedStroke);
+    drawPathStroke(pixels, drawnPixels, command, nestedStroke, antialias);
   });
 }
 
@@ -1008,7 +1020,8 @@ function drawCircleShadow(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
-  shadow: ShadowAppearance
+  shadow: ShadowAppearance,
+  antialias: boolean
 ): void {
   if (shadow.fill === null) {
     return;
@@ -1031,27 +1044,17 @@ function drawCircleShadow(
 
   for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
     for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-      const pointX = x + 0.5;
-      const pointY = y + 0.5;
       const sampleCenterX = centerX + 0.5;
       const sampleCenterY = centerY + 0.5;
+      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) =>
+        Math.hypot(pointX - sampleCenterX, pointY - sampleCenterY) <= radius
+      );
 
-      if (Math.hypot(pointX - sampleCenterX, pointY - sampleCenterY) > radius) {
+      if (coverage <= 0) {
         continue;
       }
 
-      const color =
-        shadow.fill.kind === "solid"
-          ? shadow.fill.color
-          : shadow.fill.kind === "gradient-linear"
-            ? sampleGradientStops(
-                shadow.fill.stops,
-                resolveLinearGradientPosition(shadow.fill, bounds, x, y)
-              )
-            : sampleGradientStops(
-                shadow.fill.stops,
-                resolveRadialGradientPosition(shadow.fill, bounds, x, y)
-              );
+      const color = sampleFillColor(shadow.fill, bounds, x, y);
 
       if (color !== null) {
         setPixel(
@@ -1060,7 +1063,7 @@ function drawCircleShadow(
           x,
           y,
           color,
-          shadow.alpha * shadow.fill.alpha
+          shadow.alpha * shadow.fill.alpha * coverage
         );
       }
     }
@@ -1071,7 +1074,8 @@ function drawCircleStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
-  stroke: StrokeAppearance
+  stroke: StrokeAppearance,
+  antialias: boolean
 ): void {
   const bounds = getCircleStrokeBounds(command, stroke);
   const centerX = command.x + 0.5;
@@ -1082,45 +1086,34 @@ function drawCircleStroke(
   if (stroke.fill !== null) {
     for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
       for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-        const pointX = x + 0.5;
-        const pointY = y + 0.5;
-        const distance = Math.hypot(pointX - centerX, pointY - centerY);
+        const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+          const distance = Math.hypot(pointX - centerX, pointY - centerY);
 
-        if (distance > bounds.outerRadius || distance <= bounds.innerRadius) {
-          continue;
-        }
+          if (distance > bounds.outerRadius || distance <= bounds.innerRadius) {
+            return false;
+          }
 
-        const angle = Math.atan2(pointY - centerY, pointX - centerX);
-        const normalizedAngle = angle < 0 ? angle + Math.PI * 2 : angle;
-        const patternPosition = Math.round(
-          (normalizedAngle / (Math.PI * 2)) * circumference
-        );
+          const angle = Math.atan2(pointY - centerY, pointX - centerX);
+          const normalizedAngle = angle < 0 ? angle + Math.PI * 2 : angle;
+          const patternPosition = Math.round(
+            (normalizedAngle / (Math.PI * 2)) * circumference
+          );
 
-        if (
-          !getStrokePatternState(
+          return getStrokePatternState(
             stroke.style,
             patternPosition,
             stroke.width,
             stroke.dashLength,
             stroke.gapLength,
             stroke.dotSpacing
-          )
-        ) {
+          );
+        });
+
+        if (coverage <= 0) {
           continue;
         }
 
-        const color =
-          stroke.fill.kind === "solid"
-            ? stroke.fill.color
-            : stroke.fill.kind === "gradient-linear"
-              ? sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveLinearGradientPosition(stroke.fill, bounds, x, y)
-                )
-              : sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveRadialGradientPosition(stroke.fill, bounds, x, y)
-                );
+        const color = sampleFillColor(stroke.fill, bounds, x, y);
 
         if (color !== null) {
           setPixel(
@@ -1129,7 +1122,7 @@ function drawCircleStroke(
             x,
             y,
             color,
-            stroke.alpha * stroke.fill.alpha
+            stroke.alpha * stroke.fill.alpha * coverage
           );
         }
       }
@@ -1145,7 +1138,8 @@ function drawCircleStroke(
         y: command.y,
         radius: bounds.outerRadius
       },
-      nestedStroke
+      nestedStroke,
+      antialias
     );
   });
 }
@@ -1289,7 +1283,8 @@ function drawRectShadow(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: RectContour,
-  shadow: ShadowAppearance
+  shadow: ShadowAppearance,
+  antialias: boolean
 ): void {
   if (shadow.fill === null) {
     return;
@@ -1309,25 +1304,15 @@ function drawRectShadow(
 
   for (let y = shadowContour.y; y < shadowContour.y + shadowContour.height; y += 1) {
     for (let x = shadowContour.x; x < shadowContour.x + shadowContour.width; x += 1) {
-      const pointX = x + 0.5;
-      const pointY = y + 0.5;
+      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) =>
+        isPointInsideRectContour(pointX, pointY, shadowContour)
+      );
 
-      if (!isPointInsideRectContour(pointX, pointY, shadowContour)) {
+      if (coverage <= 0) {
         continue;
       }
 
-      const color =
-        shadow.fill.kind === "solid"
-          ? shadow.fill.color
-          : shadow.fill.kind === "gradient-linear"
-            ? sampleGradientStops(
-                shadow.fill.stops,
-                resolveLinearGradientPosition(shadow.fill, shadowContour, x, y)
-              )
-            : sampleGradientStops(
-                shadow.fill.stops,
-                resolveRadialGradientPosition(shadow.fill, shadowContour, x, y)
-              );
+      const color = sampleFillColor(shadow.fill, shadowContour, x, y);
 
       if (color !== null) {
         setPixel(
@@ -1336,7 +1321,7 @@ function drawRectShadow(
           x,
           y,
           color,
-          shadow.alpha * shadow.fill.alpha
+          shadow.alpha * shadow.fill.alpha * coverage
         );
       }
     }
@@ -1451,7 +1436,8 @@ function drawContourAwareRectStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: RectContour,
-  stroke: StrokeAppearance
+  stroke: StrokeAppearance,
+  antialias: boolean
 ): void {
   const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
   const outerContour = buildAdjustedRectContour(command, outer);
@@ -1464,20 +1450,6 @@ function drawContourAwareRectStroke(
   if (stroke.fill !== null) {
     for (let y = outerContour.y; y < outerContour.y + outerContour.height; y += 1) {
       for (let x = outerContour.x; x < outerContour.x + outerContour.width; x += 1) {
-        const pointX = x + 0.5;
-        const pointY = y + 0.5;
-
-        if (!isPointInsideRectContour(pointX, pointY, outerContour)) {
-          continue;
-        }
-
-        if (
-          innerContour !== null &&
-          isPointInsideRectContour(pointX, pointY, innerContour)
-        ) {
-          continue;
-        }
-
         const patternPosition = getRectContourPatternPosition(x, y, outerContour);
 
         if (
@@ -1493,18 +1465,22 @@ function drawContourAwareRectStroke(
           continue;
         }
 
-        const color =
-          stroke.fill.kind === "solid"
-            ? stroke.fill.color
-            : stroke.fill.kind === "gradient-linear"
-              ? sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveLinearGradientPosition(stroke.fill, outerContour, x, y)
-                )
-              : sampleGradientStops(
-                  stroke.fill.stops,
-                  resolveRadialGradientPosition(stroke.fill, outerContour, x, y)
-                );
+        const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+          if (!isPointInsideRectContour(pointX, pointY, outerContour)) {
+            return false;
+          }
+
+          return (
+            innerContour === null ||
+            !isPointInsideRectContour(pointX, pointY, innerContour)
+          );
+        });
+
+        if (coverage <= 0) {
+          continue;
+        }
+
+        const color = sampleFillColor(stroke.fill, outerContour, x, y);
 
         if (color !== null) {
           setPixel(
@@ -1513,7 +1489,7 @@ function drawContourAwareRectStroke(
             x,
             y,
             color,
-            stroke.alpha * stroke.fill.alpha
+            stroke.alpha * stroke.fill.alpha * coverage
           );
         }
       }
@@ -1521,7 +1497,7 @@ function drawContourAwareRectStroke(
   }
 
   stroke.strokes.forEach((nestedStroke) => {
-    drawRectStroke(pixels, drawnPixels, outerContour, nestedStroke);
+    drawRectStroke(pixels, drawnPixels, outerContour, nestedStroke, antialias);
   });
 }
 
@@ -1529,72 +1505,25 @@ function drawRectStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
   command: RectContour,
-  stroke: StrokeAppearance
+  stroke: StrokeAppearance,
+  antialias: boolean
 ): void {
   if (!command.cut && !command.radius) {
     drawPlainRectStroke(pixels, drawnPixels, command, stroke);
     return;
   }
 
-  drawContourAwareRectStroke(pixels, drawnPixels, command, stroke);
+  drawContourAwareRectStroke(pixels, drawnPixels, command, stroke, antialias);
 }
 
-function drawCommand(
+function drawPixelLine(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
-  command: CompiledDrawCommand
+  command: Pick<
+    Extract<CompiledDrawCommand, { kind: "line" }>,
+    "x1" | "y1" | "x2" | "y2" | "color"
+  >
 ): void {
-  if (command.kind === "plot") {
-    setPixel(pixels, drawnPixels, command.x, command.y, command.color);
-    return;
-  }
-
-  if (command.kind === "rect") {
-    (command.shadows ?? []).forEach((shadow) => {
-      drawRectShadow(pixels, drawnPixels, command, shadow);
-    });
-    command.fills.forEach((fill) => {
-      drawRectFill(pixels, drawnPixels, command, fill);
-    });
-    command.strokes.forEach((stroke) => {
-      drawRectStroke(pixels, drawnPixels, command, stroke);
-    });
-    return;
-  }
-
-  if (command.kind === "circle") {
-    (command.shadows ?? []).forEach((shadow) => {
-      drawCircleShadow(pixels, drawnPixels, command, shadow);
-    });
-    command.fills.forEach((fill) => {
-      drawCircleFill(pixels, drawnPixels, command, fill);
-    });
-    command.strokes.forEach((stroke) => {
-      drawCircleStroke(pixels, drawnPixels, command, stroke);
-    });
-    return;
-  }
-
-  if (command.kind === "polygon") {
-    (command.shadows ?? []).forEach((shadow) => {
-      drawPolygonShadow(pixels, drawnPixels, command, shadow);
-    });
-    command.fills.forEach((fill) => {
-      drawPolygonFill(pixels, drawnPixels, command, fill);
-    });
-    command.strokes.forEach((stroke) => {
-      drawPolygonStroke(pixels, drawnPixels, command, stroke);
-    });
-    return;
-  }
-
-  if (command.kind === "path") {
-    command.strokes.forEach((stroke) => {
-      drawPathStroke(pixels, drawnPixels, command, stroke);
-    });
-    return;
-  }
-
   let currentX = command.x1;
   let currentY = command.y1;
   const deltaX = Math.abs(command.x2 - command.x1);
@@ -1624,6 +1553,107 @@ function drawCommand(
   }
 }
 
+function drawAntialiasedLine(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<
+    Extract<CompiledDrawCommand, { kind: "line" }>,
+    "x1" | "y1" | "x2" | "y2" | "color"
+  >
+): void {
+  const bounds = {
+    x: Math.min(command.x1, command.x2) - 1,
+    y: Math.min(command.y1, command.y2) - 1,
+    width: Math.abs(command.x2 - command.x1) + 3,
+    height: Math.abs(command.y2 - command.y1) + 3
+  };
+  const start = { x: command.x1 + 0.5, y: command.y1 + 0.5 };
+  const end = { x: command.x2 + 0.5, y: command.y2 + 0.5 };
+
+  for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+    for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+      const coverage = getPixelCoverage(x, y, true, (pointX, pointY) =>
+        getDistanceToSegment(pointX, pointY, start, end).distance <= 0.5
+      );
+
+      if (coverage <= 0) {
+        continue;
+      }
+
+      setPixel(pixels, drawnPixels, x, y, command.color, coverage);
+    }
+  }
+}
+
+function drawCommand(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: CompiledDrawCommand,
+  defaultAntialias: boolean
+): void {
+  if (command.kind === "plot") {
+    setPixel(pixels, drawnPixels, command.x, command.y, command.color);
+    return;
+  }
+
+  if (command.kind === "rect") {
+    const antialias = command.antialias ?? defaultAntialias;
+    (command.shadows ?? []).forEach((shadow) => {
+      drawRectShadow(pixels, drawnPixels, command, shadow, antialias);
+    });
+    command.fills.forEach((fill) => {
+      drawRectFill(pixels, drawnPixels, command, fill, antialias);
+    });
+    command.strokes.forEach((stroke) => {
+      drawRectStroke(pixels, drawnPixels, command, stroke, antialias);
+    });
+    return;
+  }
+
+  if (command.kind === "circle") {
+    const antialias = command.antialias ?? defaultAntialias;
+    (command.shadows ?? []).forEach((shadow) => {
+      drawCircleShadow(pixels, drawnPixels, command, shadow, antialias);
+    });
+    command.fills.forEach((fill) => {
+      drawCircleFill(pixels, drawnPixels, command, fill, antialias);
+    });
+    command.strokes.forEach((stroke) => {
+      drawCircleStroke(pixels, drawnPixels, command, stroke, antialias);
+    });
+    return;
+  }
+
+  if (command.kind === "polygon") {
+    const antialias = command.antialias ?? defaultAntialias;
+    (command.shadows ?? []).forEach((shadow) => {
+      drawPolygonShadow(pixels, drawnPixels, command, shadow, antialias);
+    });
+    command.fills.forEach((fill) => {
+      drawPolygonFill(pixels, drawnPixels, command, fill, antialias);
+    });
+    command.strokes.forEach((stroke) => {
+      drawPolygonStroke(pixels, drawnPixels, command, stroke, antialias);
+    });
+    return;
+  }
+
+  if (command.kind === "path") {
+    const antialias = command.antialias ?? defaultAntialias;
+    command.strokes.forEach((stroke) => {
+      drawPathStroke(pixels, drawnPixels, command, stroke, antialias);
+    });
+    return;
+  }
+
+  if (command.antialias ?? defaultAntialias) {
+    drawAntialiasedLine(pixels, drawnPixels, command);
+    return;
+  }
+
+  drawPixelLine(pixels, drawnPixels, command);
+}
+
 function buildSpriteGridArtifact(document: CompiledDocument): RenderArtifact {
   const width = document.sprite?.width ?? 0;
   const height = document.sprite?.height ?? 0;
@@ -1637,7 +1667,7 @@ function buildSpriteGridArtifact(document: CompiledDocument): RenderArtifact {
   );
 
   document.commands.forEach((command) => {
-    drawCommand(pixels, drawnPixels, command);
+    drawCommand(pixels, drawnPixels, command, document.sprite?.antialias ?? false);
   });
 
   const formattedPixels = pixels.map((row) => row.map((pixel) => formatColor(pixel)));

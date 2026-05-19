@@ -253,11 +253,12 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Document",
     summary:
       "Defines the file-level sprite identity and holds nested header properties such as size and background.",
-    args: ["name", "size width height", "background color"],
-    childCommands: ["size", "background"],
+    args: ["name", "size width height", "background color", "antialias true|false"],
+    childCommands: ["size", "background", "antialias"],
     notes: [
       "The sprite header must be the first root command in the file.",
       "Only one sprite header is allowed per file.",
+      "`antialias` defaults to `false` when omitted and acts as the document render default.",
       "Expanded property form can use child commands such as `name panel`."
     ],
     examples: [
@@ -270,6 +271,7 @@ const exampleDocs: ExampleDoc[] = [
           "  name command-header-demo",
           "  size 24 12",
           "  background #0f1318",
+          "  antialias false",
           "",
           "# A simple panel to confirm the header values are active",
           "rect 2 2 20 8 #1c2a33"
@@ -318,10 +320,11 @@ const exampleDocs: ExampleDoc[] = [
     title: "Line",
     navGroup: "Geometry",
     summary: "Draws a line from one integer point to another using the shared raster line path.",
-    args: ["x1", "y1", "x2", "y2", "color"],
-    childCommands: [],
+    args: ["x1", "y1", "x2", "y2", "color", "antialias"],
+    childCommands: ["antialias"],
     notes: [
       "The current MVP rasterizer handles integer coordinates.",
+      "`antialias` can override the sprite default for this line.",
       "Child-property form is equivalent to inline positional or named args."
     ],
     examples: [
@@ -354,8 +357,8 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Geometry",
     summary:
       "Defines a rectangle from the current sprite bounds using a uniform inset amount or side-specific top/right/bottom/left insets, which makes it a convenient panel and frame primitive.",
-    args: ["inset", "top", "right", "bottom", "left", "color shorthand", "fill"],
-    childCommands: ["fill", "stroke", "cut", "radius"],
+    args: ["inset", "top", "right", "bottom", "left", "color shorthand", "fill", "antialias"],
+    childCommands: ["fill", "stroke", "cut", "radius", "antialias"],
     notes: [
       "The uniform `inset` value applies to every side by default.",
       "Any of `top`, `right`, `bottom`, or `left` can override the uniform inset per side.",
@@ -401,12 +404,13 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Geometry",
     summary:
       "Defines a circular coverage region from a center point and radius. It now shares the current fill and stroke appearance model used by shape geometry.",
-    args: ["x", "y", "radius", "color shorthand", "fill"],
-    childCommands: ["fill", "stroke"],
+    args: ["x", "y", "radius", "color shorthand", "fill", "antialias"],
+    childCommands: ["fill", "stroke", "antialias"],
     notes: [
       "The current center uses integer pixel coordinates.",
       "Direct color shorthand lowers into an implicit solid fill.",
       "Circle fill variants reuse the same solid, linear-gradient, and radial-gradient model as rectangles.",
+      "`antialias` can smooth circle fill, stroke, and shadow coverage while preserving pixel-perfect defaults.",
       "Circle strokes now use the shared `stroke` command model, including shorthand, align, style, and nested stroke support."
     ],
     examples: [
@@ -438,12 +442,13 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Geometry",
     summary:
       "Defines a polygon coverage region from at least three points. It now supports the shared fill and stroke appearance model while keeping the syntax on the same whitespace-based token rules as the rest of the language.",
-    args: ["x y point pairs", "optional color shorthand"],
-    childCommands: ["point", "fill", "stroke"],
+    args: ["x y point pairs", "optional color shorthand", "antialias"],
+    childCommands: ["point", "fill", "stroke", "antialias"],
     notes: [
       "Inline shorthand uses whitespace-separated `x y` pairs, not comma-separated tuples.",
       "The canonical readable form is repeated `point` children under `polygon`.",
       "A trailing color shorthand lowers into an implicit solid fill.",
+      "`antialias` can smooth polygon fill, stroke, and shadow coverage.",
       "Polygon stroke now uses the shared `stroke` command model, including align, style, and gradient fill support."
     ],
     examples: [
@@ -504,12 +509,13 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Geometry",
     summary:
       "Defines an open polyline path from child points. In the current slice, a path is visible only through stroke, which makes it the multi-segment counterpart to `line` without introducing fill or winding semantics yet.",
-    args: ["optional name"],
-    childCommands: ["point", "stroke"],
+    args: ["optional name", "antialias"],
+    childCommands: ["point", "stroke", "antialias"],
     notes: [
       "Use child `point` commands to define the path in order.",
       "A path currently requires at least one `stroke` child because open paths do not produce fill coverage.",
       "The current path slice supports only `stroke` align `center`.",
+      "`antialias` smooths the generated stroke coverage for curved-looking route segments and diagonals.",
       "This is an open path primitive; closed fillable contour semantics remain future work."
     ],
     examples: [
@@ -556,14 +562,15 @@ const exampleDocs: ExampleDoc[] = [
     navGroup: "Geometry",
     summary:
       "Defines an explicit rectangle using x, y, width, and height. `rect` is a convenience alias for `rect-absolute`, and rectangle-backed shapes can also take geometry modifiers such as `cut` and `radius`.",
-    args: ["x", "y", "width", "height", "color shorthand", "fill"],
-    childCommands: ["fill", "stroke", "cut", "radius"],
+    args: ["x", "y", "width", "height", "color shorthand", "fill", "antialias"],
+    childCommands: ["fill", "stroke", "cut", "radius", "antialias"],
     notes: [
       "`rect` and `rect-absolute` compile to the same rectangle draw command.",
       "Width and height must be positive integers.",
       "Direct color shorthand lowers into an implicit solid fill.",
       "`cut` and `radius` are geometry modifiers on the same base rectangle model.",
       'A rectangle currently cannot use both `cut` and `radius` at the same time.',
+      "`antialias` is most visible on cut and rounded rectangle contours; plain integer-aligned rectangles remain crisp.",
       "Rectangle-backed strokes now follow cut and rounded contours instead of the plain rectangle envelope."
     ],
     examples: [
@@ -1095,33 +1102,6 @@ const exampleDocs: ExampleDoc[] = [
     ]
   },
   {
-    id: "align",
-    title: "Align",
-    navGroup: "Properties",
-    summary: "Selects how a generated region such as a stroke sits relative to the source shape.",
-    args: ["inside | center | outside"],
-    childCommands: [],
-    notes: [
-      "Currently implemented on `stroke`.",
-      "`inside` keeps the stroke within the source bounds.",
-      "`center` splits the thickness around the source edge.",
-      "`outside` pushes the thickness outward."
-    ]
-  },
-  {
-    id: "style",
-    title: "Style",
-    navGroup: "Properties",
-    summary: "Selects a stylistic distribution pattern for features such as strokes.",
-    args: ["solid | dashed | dotted"],
-    childCommands: [],
-    notes: [
-      "Currently implemented on `stroke`.",
-      "`dashed` can be tuned with `dash-length` and `gap-length`.",
-      "`dotted` can be tuned with `dot-spacing`."
-    ]
-  },
-  {
     id: "alpha",
     title: "Alpha",
     navGroup: "Properties",
@@ -1166,6 +1146,62 @@ const exampleDocs: ExampleDoc[] = [
           "rect-inset 18 #18242c",
           "  stroke 3 #d8f8ff alpha=0.4",
           "    stroke 1 white"
+        ].join("\n")
+      }
+    ]
+  },
+  {
+    id: "antialias",
+    title: "Antialias",
+    navGroup: "Properties",
+    summary:
+      "Controls real renderer coverage smoothing for geometry while keeping pixel-perfect output as the default.",
+    args: ["true", "false"],
+    childCommands: [],
+    notes: [
+      "`antialias` defaults to `false` when omitted.",
+      "A sprite-level value becomes the document render default.",
+      "Geometry commands can override the sprite default with inline `antialias=true|false` or a child `antialias` property.",
+      "The renderer writes partial alpha into the output artifact; this is not a preview-only smoothing mode."
+    ],
+    examples: [
+      {
+        id: "antialias-sprite-default",
+        title: "Sprite Default With Override",
+        summary:
+          "A sprite can opt into smoothing broadly, then a single shape can opt back out when crisp pixels matter.",
+        source: [
+          "sprite antialias-default-demo",
+          "  size 144 64",
+          "  background #0f1318",
+          "  antialias true",
+          "",
+          "# Smooth circle from the sprite default",
+          "circle 38 32 20 #70c8e8",
+          "",
+          "# Crisp circle override",
+          "circle 104 32 20 #ffcc88 antialias=false"
+        ].join("\n")
+      },
+      {
+        id: "antialias-shape-opt-in",
+        title: "Shape Opt-In",
+        summary:
+          "The default stays pixel-perfect, while curved or diagonal geometry can opt into subpixel coverage.",
+        source: [
+          "sprite antialias-opt-in-demo",
+          "  size 160 72",
+          "  background transparent",
+          "",
+          "rect 12 12 56 40 #18242c",
+          "  radius 12",
+          "  antialias true",
+          "",
+          "path sweep antialias=true",
+          "  point 88 54",
+          "  point 112 18",
+          "  point 144 34",
+          "  stroke 2 #d8f8ff"
         ].join("\n")
       }
     ]

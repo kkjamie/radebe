@@ -506,11 +506,12 @@ line 16 24 220 24 #70c8e8
 - The current repo already has a shared TypeScript core, CLI, web preview shell, and Unity CLI bridge baseline.
 - The current browser preview artifact is a temporary text-grid artifact used for fast feedback, not the recovered canonical end-state product output.
 - The current `@text` and `@repeat` command syntax in the codebase is not part of the recovered canonical language design.
-- The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands.
+- The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, `circle`, `polygon`, and stroke-first `path` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
 - The current implemented appearance slice also includes hard-edged `shadow` on rectangle-backed shapes, circles, and polygons with `x`, `y`, `spread`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur` remains deferred.
 - The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse.
-- The current stroke renderer supports rectangle-backed and circle-backed shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
+- The current stroke renderer supports rectangle-backed, circle-backed, polygon-backed, and open path shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
+- The current renderer supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` when omitted.
 
 ## Important Non-Goals for MVP
 - full SVG compatibility

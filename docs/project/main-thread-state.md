@@ -20,22 +20,23 @@ Last updated: `2026-05-19`
 - `polygon` is now available as a shared-shape geometry primitive using either flat whitespace-separated `x y` point pairs or canonical child `point` commands, plus color shorthand or explicit `fill`, and it now also participates in the shared `stroke` model while still keeping polygon syntax on the existing whitespace token model.
 - `path` is now available as a stroke-first open polyline primitive using canonical child `point` commands and required `stroke`; the first slice intentionally limits path to `stroke` align `center` and does not yet treat paths as fillable or closable regions.
 - File-scoped variables are now available through root `var name value` declarations plus optional `vars` grouping blocks. References resolve top-to-bottom as whole value tokens such as `$accent`, including named argument values like `color=$accent`; embedded expression forms such as `left+$pad` remain deferred.
+- Optional real output antialiasing is now available through a sprite-level `antialias` default plus per-geometry overrides on line, rectangle, circle, polygon, and path commands. The omitted default remains `false`, so existing pixel-perfect output remains unchanged unless authors opt in.
 - Source comments now use hash-prefixed lines only. The parser ignores lines whose trimmed text starts with `#`; `//` is no longer a comment marker and will be parsed as ordinary source.
 - The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, the SEA smoke path still exercises the same spec-aligned sample contract, and the web shell has grown into a left-nav docs/playground surface with an experimental page plus per-feature example pages that now support multiple editable live scenarios on a single page.
 - The web source editor now keeps native textarea editing while rendering a synchronized syntax-highlight layer for comments, command tokens, property-command child args, named argument keys, argument values, and unknown command tokens.
 - The web examples now fold cut and rounded-corner rectangle cases into the main `rect` page instead of keeping separate `cut` or `rounded-rect` pages, and `polygon` now has real live examples instead of a placeholder page.
-- The web example nav now keeps placeholder pages only for substantive planned features; low-value stubs such as `size`, `background`, `fill`, `inset`, `blend`, `draw`, and now `overlay` were removed so those concepts can instead live under parent pages or return later with real behavior.
+- The web example nav now keeps placeholder pages only for substantive planned features; low-value stubs such as `size`, `background`, `fill`, `inset`, `blend`, `draw`, `overlay`, and standalone `align` / `style` property pages were removed so those concepts can instead live under parent pages or command-specific pages.
 - The web docs/playground now has a real `shadow` page instead of a placeholder, including examples for simple offset use plus positive and negative `spread`.
 - The web docs/playground now has a real `vars` page, and the syntax highlighter gives variable declarations and `$name` usages their own color.
 - `radebe-web` now has a Vite resolver config that maps `@radebe/core` and its exported subpaths to `radebe-core/src` for web dev/build bundling, so `npm run dev:web` no longer requires a pre-existing `radebe-core/dist`.
-- M2 Gate A and Gate B now have deeper end-to-end evidence. The next recommended execution step is returning to Unity validation with the richer modifier-aware stroke slice unless a different language increment clearly outranks that checkpoint.
+- M2 Gate A and Gate B now have deeper end-to-end evidence. The next recommended execution step is returning to Unity validation with the richer modifier-aware stroke and antialias-capable renderer slice unless a different language increment clearly outranks that checkpoint.
 
 ## Open Decisions / Blockers
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side. The main open execution step is choosing between deeper path semantics and Unity-side revalidation of the packaged CLI bridge against the richer source syntax.
 
 ## Best Next Tasks
-1. Re-exercise the packaged Unity CLI bridge with the current richer geometry set, now including variables, strokable `polygon`, and stroke-first `path`.
+1. Re-exercise the packaged Unity CLI bridge with the current richer geometry set, now including variables, strokable `polygon`, stroke-first `path`, and optional antialiasing.
 2. If Unity Gate C is intentionally deferred again, choose the next geometry follow-up between deeper path semantics and further contour refinement.
 3. Continue widening the capability-driven shape model after the Unity checkpoint is re-established.
 

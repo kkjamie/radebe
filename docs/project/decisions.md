@@ -322,3 +322,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Small files can stay terse, larger files can group variables when helpful, diagnostics remain schema-backed, and embedded expression forms such as `left+$pad` remain a future expression-system concern.
 - Related tasks: T-040
 - Supersedes: N/A
+
+---
+
+### DEC-028: Add Sprite-Level Antialias Defaults With Geometry Overrides
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: The renderer had been fully pixel-perfect, which works well for grid-aligned UI art but makes circles, rounded corners, polygons, paths, and diagonal lines visibly stair-stepped when smoother contours are desired.
+- Decision: Add optional boolean `antialias` control at the `sprite` header as the document render default, allow geometry commands to override it, and keep the omitted default as `false`.
+- Consequences: Existing output remains unchanged unless authors opt in, while smoothed geometry writes partial alpha into the real render artifact rather than relying on preview-only canvas smoothing.
+- Related tasks: T-041
+- Supersedes: N/A

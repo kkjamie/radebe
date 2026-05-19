@@ -43,7 +43,7 @@ const commandDefinitions = [
     name: "sprite",
     kind: "header",
     allowedChildCommands: ["size", "background"],
-    propertyArgs: ["name"],
+    propertyArgs: ["name", "antialias"],
     shorthandSchema: ["name"]
   },
   {
@@ -67,13 +67,13 @@ const commandDefinitions = [
   {
     name: "line",
     kind: "geometry",
-    propertyArgs: ["x1", "y1", "x2", "y2", "color"],
+    propertyArgs: ["x1", "y1", "x2", "y2", "color", "antialias"],
     shorthandSchema: ["x1", "y1", "x2", "y2", "color"]
   },
   {
     name: "rect-absolute",
     kind: "geometry",
-    propertyArgs: ["x", "y", "width", "height", "color"],
+    propertyArgs: ["x", "y", "width", "height", "color", "antialias"],
     shorthandSchema: ["x", "y", "width", "height", "color"],
     allowedChildCapabilities: ["shape-appearance"],
     allowedChildCommands: ["cut", "radius"]
@@ -81,7 +81,7 @@ const commandDefinitions = [
   {
     name: "rect",
     kind: "geometry",
-    propertyArgs: ["x", "y", "width", "height", "color"],
+    propertyArgs: ["x", "y", "width", "height", "color", "antialias"],
     shorthandSchema: ["x", "y", "width", "height", "color"],
     allowedChildCapabilities: ["shape-appearance"],
     allowedChildCommands: ["cut", "radius"]
@@ -89,7 +89,7 @@ const commandDefinitions = [
   {
     name: "rect-inset",
     kind: "geometry",
-    propertyArgs: ["inset", "top", "right", "bottom", "left", "color"],
+    propertyArgs: ["inset", "top", "right", "bottom", "left", "color", "antialias"],
     shorthandSchema: ["inset", "color"],
     allowedChildCapabilities: ["shape-appearance"],
     allowedChildCommands: ["cut", "radius"]
@@ -97,21 +97,21 @@ const commandDefinitions = [
   {
     name: "circle",
     kind: "geometry",
-    propertyArgs: ["x", "y", "radius", "color"],
+    propertyArgs: ["x", "y", "radius", "color", "antialias"],
     shorthandSchema: ["x", "y", "radius", "color"],
     allowedChildCapabilities: ["shape-appearance"]
   },
   {
     name: "polygon",
     kind: "geometry",
-    propertyArgs: ["color"],
+    propertyArgs: ["color", "antialias"],
     allowedChildCapabilities: ["shape-appearance"],
     allowedChildCommands: ["point"]
   },
   {
     name: "path",
     kind: "geometry",
-    propertyArgs: ["name"],
+    propertyArgs: ["name", "antialias"],
     shorthandSchema: ["name"],
     allowedChildCommands: ["point", "stroke"]
   },
@@ -219,6 +219,7 @@ const commandDefinitions = [
   createSingleValuePropertyDefinition("value"),
   createSingleValuePropertyDefinition("width"),
   createSingleValuePropertyDefinition("height"),
+  createSingleValuePropertyDefinition("antialias"),
   createSingleValuePropertyDefinition("alpha"),
   createSingleValuePropertyDefinition("color"),
   createSingleValuePropertyDefinition("position"),

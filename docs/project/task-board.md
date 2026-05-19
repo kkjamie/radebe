@@ -42,6 +42,8 @@ Use this as the single source of truth for active execution state.
 | T-038 | Remove `overlay` from the near-term language surface and web docs | M2 | Gate B | P2 | Done | `codex-main` | None | Keep ordered multi-`fill` passes as the current layering model and revisit a separate overlay concept only if future compositing semantics clearly require it |
 | T-039 | Add hard-edged shape shadows with offset and spread | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to the next language thread for deferred shadow blur support or return to Unity Gate C now that `shadow` is a real appearance pass on `rect`, `circle`, and `polygon` |
 | T-040 | Add file-scoped variables with root declarations and optional grouping | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C, or if language work continues first, build expression support such as symbolic bounds and embedded variable arithmetic on top of whole-token variable references |
+| T-041 | Add optional real output antialiasing with sprite defaults and geometry overrides | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C with the richer renderer contract now preserving pixel-perfect defaults while allowing `sprite antialias` and per-geometry overrides for smoother contours |
+| T-042 | Remove standalone `align` and `style` pages from the web docs nav | M2 | Gate B | P2 | Done | `codex-main` | None | Keep `align` and `style` documented only where they apply, currently inside the `stroke` examples and notes |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

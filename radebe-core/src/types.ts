@@ -45,6 +45,7 @@ export interface SpriteHeader {
   width: number;
   height: number;
   background: string;
+  antialias?: boolean;
 }
 
 export interface PlotCommand {
@@ -63,6 +64,7 @@ export interface LineCommand {
   x2: number;
   y2: number;
   color: string;
+  antialias?: boolean;
 }
 
 export interface SolidFill {
@@ -138,6 +140,7 @@ export interface RectCommand {
   y: number;
   width: number;
   height: number;
+  antialias?: boolean;
   cut?: RectCut | null;
   radius?: RectRadius | null;
   fills: RectFill[];
@@ -152,6 +155,7 @@ export interface CircleCommand {
   x: number;
   y: number;
   radius: number;
+  antialias?: boolean;
   fills: RectFill[];
   shadows?: ShadowAppearance[];
   strokes: StrokeAppearance[];
@@ -165,6 +169,7 @@ export interface PolygonPoint {
 export interface PolygonCommand {
   kind: "polygon";
   lineNumber: number;
+  antialias?: boolean;
   points: PolygonPoint[];
   fills: RectFill[];
   shadows?: ShadowAppearance[];
@@ -175,6 +180,7 @@ export interface PathCommand {
   kind: "path";
   lineNumber: number;
   name: string | null;
+  antialias?: boolean;
   points: PolygonPoint[];
   strokes: StrokeAppearance[];
 }

@@ -97,6 +97,73 @@ test("compileDocument builds the sprite header and draw commands", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports sprite antialias defaults and geometry overrides", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 7 7\n  background transparent\n  antialias true\n\nline 0 0 6 6 white antialias=false\ncircle 3 3 2 #70c8e8\n  antialias false\nrect 0 0 2 2 white\n  antialias true"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.sprite, {
+    name: "panel",
+    width: 7,
+    height: 7,
+    background: "transparent",
+    antialias: true
+  });
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "line",
+      lineNumber: 6,
+      x1: 0,
+      y1: 0,
+      x2: 6,
+      y2: 6,
+      color: "white",
+      antialias: false
+    },
+    {
+      kind: "circle",
+      lineNumber: 7,
+      x: 3,
+      y: 3,
+      radius: 2,
+      antialias: false,
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: []
+    },
+    {
+      kind: "rect",
+      lineNumber: 9,
+      x: 0,
+      y: 0,
+      width: 2,
+      height: 2,
+      antialias: true,
+      fills: [{ kind: "solid", color: "white", alpha: 1 }],
+      strokes: [],
+      sourceCommandName: "rect"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument reports invalid antialias values", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n  antialias maybe\n\ncircle 2 2 2 white antialias=sometimes"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(
+    result.diagnostics.map((diagnostic) => diagnostic.message),
+    [
+      'The sprite command expects "antialias" to be either "true" or "false".',
+      'The circle command expects "antialias" to be either "true" or "false".'
+    ]
+  );
+});
+
 test("compileDocument supports rect-absolute and rect alias", () => {
   const parsed = parseSource({
     source:
@@ -1182,6 +1249,44 @@ test("renderDocument rasterizes circle gradients across the circle bounds", () =
     [null, "#bf0040", "#800080", "#4000bf", null],
     [null, null, "#800080", null, null]
   ]);
+});
+
+test("renderDocument applies sprite antialias defaults with shape overrides", () => {
+  const smoothed = renderSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n  antialias true\n\ncircle 2 2 2 #ffffff"
+  });
+  const crispOverride = renderSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n  antialias true\n\ncircle 2 2 2 #ffffff antialias=false"
+  });
+  const optIn = renderSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n\ncircle 2 2 2 #ffffff antialias=true"
+  });
+
+  assert.deepEqual(smoothed.artifact.rows, [
+    ".###.",
+    "#####",
+    "#####",
+    "#####",
+    ".###."
+  ]);
+  assert.deepEqual(smoothed.artifact.pixels[0], [
+    null,
+    "#ffffff40",
+    "#ffffff80",
+    "#ffffff40",
+    null
+  ]);
+  assert.deepEqual(crispOverride.artifact.rows, [
+    "..#..",
+    ".###.",
+    "#####",
+    ".###.",
+    "..#.."
+  ]);
+  assert.equal(optIn.artifact.pixels[0]?.[1], "#ffffff40");
 });
 
 test("renderDocument rasterizes polygon fills from whitespace-separated point pairs", () => {

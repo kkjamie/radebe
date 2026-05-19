@@ -187,6 +187,37 @@ function readOptionalString(
   return values.get(key) ?? null;
 }
 
+function readOptionalBoolean(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  key: string,
+  diagnostics: RadebeDiagnostic[]
+): boolean | null {
+  const token = values.get(key);
+
+  if (token === undefined) {
+    return null;
+  }
+
+  const normalized = token.toLowerCase();
+
+  if (normalized === "true") {
+    return true;
+  }
+
+  if (normalized === "false") {
+    return false;
+  }
+
+  diagnostics.push(
+    createCompilerDiagnostic(
+      `The ${node.name} command expects "${key}" to be either "true" or "false".`,
+      node
+    )
+  );
+  return null;
+}
+
 function resolveVariableToken(
   token: string,
   variables: VariableEnvironment,
@@ -574,6 +605,12 @@ function compileSpriteHeader(
   let width: number | null = null;
   let height: number | null = null;
   let background = "transparent";
+  const antialias = readOptionalBoolean(
+    node,
+    resolvedProperties.values,
+    "antialias",
+    diagnostics
+  );
 
   node.children.forEach((child) => {
     const childDefinition = getCommandDefinition(child.name);
@@ -624,7 +661,8 @@ function compileSpriteHeader(
     name,
     width,
     height,
-    background
+    background,
+    ...(antialias === null ? {} : { antialias })
   };
 }
 
@@ -688,6 +726,12 @@ function compileLineCommand(
     "color",
     diagnostics
   );
+  const antialias = readOptionalBoolean(
+    node,
+    resolvedProperties.values,
+    "antialias",
+    diagnostics
+  );
 
   if (x1 === null || y1 === null || x2 === null || y2 === null || color === null) {
     return null;
@@ -700,7 +744,8 @@ function compileLineCommand(
     y1,
     x2,
     y2,
-    color
+    color,
+    ...(antialias === null ? {} : { antialias })
   };
 }
 
@@ -860,6 +905,12 @@ function compileRectCommand(
   }
 
   const color = readOptionalString(resolvedProperties.values, "color");
+  const antialias = readOptionalBoolean(
+    node,
+    resolvedProperties.values,
+    "antialias",
+    diagnostics
+  );
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
   const shadows: ShadowAppearance[] = appearances.shadows;
@@ -990,6 +1041,7 @@ function compileRectCommand(
     y,
     width,
     height,
+    ...(antialias === null ? {} : { antialias }),
     ...(rectCut === null ? {} : { cut: rectCut }),
     ...(rectRadius === null ? {} : { radius: rectRadius }),
     fills,
@@ -1028,6 +1080,12 @@ function compileCircleCommand(
     { min: 1 }
   );
   const color = readOptionalString(resolvedProperties.values, "color");
+  const antialias = readOptionalBoolean(
+    node,
+    resolvedProperties.values,
+    "antialias",
+    diagnostics
+  );
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
   const shadows: ShadowAppearance[] = appearances.shadows;
@@ -1061,6 +1119,7 @@ function compileCircleCommand(
     x,
     y,
     radius,
+    ...(antialias === null ? {} : { antialias }),
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
     strokes
@@ -1105,6 +1164,7 @@ function compilePolygonCommand(
   validateChildren(node, definition, diagnostics);
 
   const coordinateTokens: string[] = [];
+  const propertyValues = new Map<string, string>();
   const points: PolygonPoint[] = [];
   let color: string | null = null;
 
@@ -1114,6 +1174,21 @@ function compilePolygonCommand(
     if (equalsIndex > 0) {
       const key = token.slice(0, equalsIndex);
       const value = token.slice(equalsIndex + 1);
+
+      if (key === "antialias") {
+        if (value.length === 0) {
+          diagnostics.push(
+            createCompilerDiagnostic(
+              'The polygon command received an empty value for "antialias".',
+              node
+            )
+          );
+          return;
+        }
+
+        setResolvedValue(propertyValues, "antialias", value, node, diagnostics);
+        return;
+      }
 
       if (key !== "color") {
         diagnostics.push(
@@ -1253,6 +1328,31 @@ function compilePolygonCommand(
       }
 
       color = value;
+      return;
+    }
+
+    if (child.name === "antialias") {
+      const childDefinition = getCommandDefinition(child.name);
+
+      if (!childDefinition) {
+        return;
+      }
+
+      const childArguments = parseArguments(child, childDefinition);
+      diagnostics.push(...childArguments.diagnostics);
+      const value = childArguments.values.get("value");
+
+      if (!value) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            'The antialias command requires "value".',
+            child
+          )
+        );
+        return;
+      }
+
+      setResolvedValue(propertyValues, "antialias", value, node, diagnostics);
     }
   });
 
@@ -1299,9 +1399,17 @@ function compilePolygonCommand(
     return null;
   }
 
+  const antialias = readOptionalBoolean(
+    node,
+    propertyValues,
+    "antialias",
+    diagnostics
+  );
+
   return {
     kind: "polygon",
     lineNumber: node.lineNumber,
+    ...(antialias === null ? {} : { antialias }),
     points,
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
@@ -1325,6 +1433,12 @@ function compilePathCommand(
   validateChildren(node, definition, diagnostics);
 
   const name = readOptionalString(resolvedProperties.values, "name");
+  const antialias = readOptionalBoolean(
+    node,
+    resolvedProperties.values,
+    "antialias",
+    diagnostics
+  );
   const points: PolygonPoint[] = [];
   const strokes: StrokeAppearance[] = [];
 
@@ -1399,6 +1513,7 @@ function compilePathCommand(
     kind: "path",
     lineNumber: node.lineNumber,
     name,
+    ...(antialias === null ? {} : { antialias }),
     points,
     strokes
   };
