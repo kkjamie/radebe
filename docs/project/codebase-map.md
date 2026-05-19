@@ -29,10 +29,14 @@ Last updated: `2026-05-17`
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
 - `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`: Unity-side install validation, payload copy/update, and smoke-invocation helper for the packaged CLI payload.
+- `radebe-unity/Assets/Editor/RadebeSpriteImporter.cs`: Unity `.rdb` ScriptedImporter that invokes `radebe-cli compile <file> --format unity-json` and creates generated `Texture2D` plus `Sprite` subassets.
+- `radebe-unity/Assets/Editor/RadebeUnityMenu.cs`: Unity editor menu entrypoints for payload validation, install/update, and smoke testing.
+- `radebe-unity/Assets/Editor/RadebeUnityImportVerifier.cs`: batchmode-friendly utility for asserting that a configured `.rdb` asset imports as a generated Sprite.
 
 ## Tooling / Build Paths
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.
 - `scripts/src/sea.ts`: release-time bundling and Node SEA packaging automation for `radebe-cli`.
+- `scripts/src/unity-deploy.ts`: local Unity plugin deployment helper that reads `.env` / `RADEBE_UNITY_PROJECT_PATH`, copies `radebe-unity/Assets` into a configured Unity project, and installs the current platform packaged CLI payload.
 - root workspace config files: npm workspaces, TypeScript project references, and shared build settings.
 - CLI packaging pipeline: bundle `radebe-cli` plus `@radebe/core` into a single release entry script, then build per-platform Node SEA executables from a pinned Node LTS binary.
 - SEA artifact root: `artifacts/radebe-cli/sea/<platform>-<arch>/` containing `artifact-manifest.json`, the bundled entry, SEA blob, config, and generated executable.

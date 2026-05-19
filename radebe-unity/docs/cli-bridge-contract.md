@@ -1,7 +1,7 @@
 # Unity CLI Bridge Contract
 
 Owner: `t-005-unity-bridge-contract`
-Last updated: `2026-05-17`
+Last updated: `2026-05-19`
 
 ## Purpose
 - Define how `radebe-unity` consumes the packaged `radebe-cli` Node SEA artifact.
@@ -49,10 +49,12 @@ Unity should treat the platform folder as an atomic payload. The executable is t
 
 ## Invocation Model
 - Launch target: packaged executable from the installed platform folder.
-- Current CLI contract: pass one positional source-string argument.
-- Current example: `radebe.exe "hello"` on Windows or `./radebe "hello"` on macOS/Linux.
-- Stdout contract: rendered output followed by a trailing newline.
-- Current smoke-test expectation: input `hello` produces stdout `hello\n`.
+- Compatibility CLI contract: pass one positional source-string argument to render sprite-grid rows to stdout.
+- Unity importer CLI contract: invoke `radebe compile <source-file> --format unity-json`.
+- Current importer example: `radebe.exe compile Assets/UI/panel.rdb --format unity-json` on Windows or `./radebe compile Assets/UI/panel.rdb --format unity-json` on macOS/Linux.
+- Compatibility stdout contract: rendered sprite-grid rows followed by a trailing newline.
+- Unity importer stdout contract: a JSON object with `kind: "unity-sprite"`, `version: 1`, `name`, `width`, `height`, `background`, `rows`, row-major `pixels` encoded as `#rrggbbaa`, and `diagnostics`.
+- Current smoke-test expectation: the spec-aligned default smoke source renders `....\n.#..\n....\n`.
 - Stderr contract: packaging or process-launch failures may write to stderr; Unity should capture stderr verbatim for logs and user-visible error details.
 - Exit codes:
   - `0`: render completed with no diagnostics.
@@ -78,8 +80,11 @@ Unity should treat the platform folder as an atomic payload. The executable is t
   - executable exists
   - `artifact-manifest.json` exists and its `executablePath` leaf name matches the installed executable name
 - Unity-side bridge smoke tests should invoke the executable with a known source string and assert stdout plus exit code.
-- The current editor helper baseline exposes `RunSmokeTest()` which validates the installed payload, invokes the packaged executable with `hello`, expects stdout `hello\n`, and tolerates the known unsigned SEA stderr warning as non-fatal noise when the process still succeeds.
+- The current editor helper baseline exposes `RunSmokeTest()` which validates the installed payload, invokes the packaged executable with a spec-aligned smoke source, expects stdout `....\n.#..\n....\n`, and tolerates the known unsigned SEA stderr warning as non-fatal noise when the process still succeeds.
+- The current editor helper baseline also exposes `InvokeCompileFile()` for ScriptedImporter use, and `RadebeSpriteImporter` turns the `unity-sprite` JSON artifact into generated `Texture2D` and `Sprite` subassets.
+- The current local deployment baseline uses `npm run deploy:unity`, driven by `.env` / `RADEBE_UNITY_PROJECT_PATH`, to copy `radebe-unity/Assets` plus the current platform SEA payload into a configured Unity test project.
 
 ## Forward-Compatibility Notes
-- The current CLI accepts only a single source-string argument. If a later task introduces file-based input, structured diagnostics, or machine-readable output, this document should be revised first and Unity should continue consuming `radebe-cli` rather than a parallel runtime path.
+- Unity should continue consuming `radebe-cli` rather than a parallel runtime path.
+- The `unity-sprite` JSON artifact is the current machine-readable Unity import contract. If a later task switches Unity to PNG sidecar output, richer metadata, or streaming stdin, this document should be revised first.
 - `artifact-manifest.json` is the preferred future extension point for version, checksum, and compatibility metadata.

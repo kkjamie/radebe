@@ -44,11 +44,11 @@ Use this as the single source of truth for active execution state.
 | T-040 | Add file-scoped variables with root declarations and optional grouping | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C, or if language work continues first, build expression support such as symbolic bounds and embedded variable arithmetic on top of whole-token variable references |
 | T-041 | Add optional real output antialiasing with sprite defaults and geometry overrides | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C with the richer renderer contract now preserving pixel-perfect defaults while allowing `sprite antialias` and per-geometry overrides for smoother contours |
 | T-042 | Remove standalone `align` and `style` pages from the web docs nav | M2 | Gate B | P2 | Done | `codex-main` | None | Keep `align` and `style` documented only where they apply, currently inside the `stroke` examples and notes |
+| T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | In Progress | `codex-main` | Unity batchmode `-executeMethod` did not emit the new Sprite assertion log before exit, so importer subasset verification still needs a hard pass/fail signal | Finish automated Unity importer verification against the deployed `.rdb` smoke asset, then mark M2 Gate C passed if Unity confirms a generated Sprite main asset |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Ready | Unassigned | None | Revisit now that the main contour refinement and variable slice are in place; when taken, run the packaged CLI bridge from Unity against the richer spec-aligned sample including variables, absolute rectangles, inset rectangles, filled and stroked circles, cut-aware and radius-aware rectangle strokes, cut-modified rectangle fills, gradients, and validate the same output contract now that the web feedback loop includes multi-example docs pages with editable live previews |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

@@ -6,7 +6,7 @@ Last updated: `2026-05-19`
 ## Current Milestone / Gate
 - Milestone: `M2`
 - Gate: `Gate C`
-- Status: `Not Started`
+- Status: `In Progress`
 
 ## Current Focus
 - The recovered source product spec is now reflected in code through an indentation-aware command tree, a schema-backed compiler registry, a small `sprite` header block with nested `size` and `background` properties, root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands, generic property normalization across positional inline args, named inline args, and child property commands, plus actual `fill` / `solid` / explicit `gradient-linear` / explicit `gradient-radial` appearance commands while `gradient` remains the compatibility alias for the linear form.
@@ -29,16 +29,19 @@ Last updated: `2026-05-19`
 - The web docs/playground now has a real `shadow` page instead of a placeholder, including examples for simple offset use plus positive and negative `spread`.
 - The web docs/playground now has a real `vars` page, and the syntax highlighter gives variable declarations and `$name` usages their own color.
 - `radebe-web` now has a Vite resolver config that maps `@radebe/core` and its exported subpaths to `radebe-core/src` for web dev/build bundling, so `npm run dev:web` no longer requires a pre-existing `radebe-core/dist`.
-- M2 Gate A and Gate B now have deeper end-to-end evidence. The next recommended execution step is returning to Unity validation with the richer modifier-aware stroke and antialias-capable renderer slice unless a different language increment clearly outranks that checkpoint.
+- M2 Gate C is underway through T-011. The current Unity plugin baseline keeps `.rdb` as source, adds a ScriptedImporter that turns Unity JSON output into generated `Texture2D` and `Sprite` subassets, and deploys repo-owned plugin code plus the packaged CLI payload into a configured Unity project through `.env` / environment variables rather than committed Eddie-specific paths.
+- Current configured-project validation: `npm run deploy:unity` deployed `radebe-unity/Assets` to `Assets/Radebe` and the packaged CLI payload to `Assets/StreamingAssets/Radebe/radebe-cli/win32-x64`; Unity batchmode compiled the deployed editor scripts; a local `Assets/RadebeSmoke/panel.rdb` uses the ScriptedImporter metadata; and the deployed `radebe.exe compile ... --format unity-json` produces a `unity-sprite` artifact for that smoke asset.
+- The remaining Gate C blocker is evidence quality rather than implementation shape: the new Unity batchmode `-executeMethod` verifier did not emit the expected Sprite assertion log before exit, so the next thread should make Unity report a hard pass/fail for `AssetDatabase.LoadAssetAtPath<Sprite>("Assets/RadebeSmoke/panel.rdb")` before marking Gate C passed.
 
 ## Open Decisions / Blockers
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
-- No active blocker remains on the language or web-dev tooling side. The main open execution step is choosing between deeper path semantics and Unity-side revalidation of the packaged CLI bridge against the richer source syntax.
+- No active blocker remains on the language or web-dev tooling side.
+- Gate C remains blocked on a hard Unity-side importer assertion from batchmode, not on the CLI payload or TypeScript toolchain.
 
 ## Best Next Tasks
-1. Re-exercise the packaged Unity CLI bridge with the current richer geometry set, now including variables, strokable `polygon`, stroke-first `path`, and optional antialiasing.
-2. If Unity Gate C is intentionally deferred again, choose the next geometry follow-up between deeper path semantics and further contour refinement.
-3. Continue widening the capability-driven shape model after the Unity checkpoint is re-established.
+1. Fix or replace the Unity batchmode `-executeMethod` verifier so it imports `Assets/RadebeSmoke/panel.rdb` and asserts that Unity loads a generated `Sprite` main asset.
+2. Once the importer assertion passes, update M2 Gate C to `Passed` and move T-011 to `Done`.
+3. After Gate C passes, decide whether the next Unity slice should add metadata-driven sprite import settings such as pivot, PPU, and border, or return to language work.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

@@ -15,6 +15,9 @@ Unity-facing integration assets will live here.
 ## Expected Layout
 - `Assets/Editor/`: Unity editor scripts that invoke the CLI.
 - `Assets/Editor/RadebeCliBridgeHelper.cs`: install validation and process-launch helper baseline for the packaged CLI payload.
+- `Assets/Editor/RadebeSpriteImporter.cs`: `.rdb` ScriptedImporter that compiles source through the packaged CLI and creates generated `Texture2D` plus `Sprite` subassets.
+- `Assets/Editor/RadebeUnityMenu.cs`: editor menu helpers for payload validation, payload install/update, and smoke execution.
+- `Assets/Editor/RadebeUnityImportVerifier.cs`: batchmode-friendly importer assertion helper for configured smoke assets.
 - `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`: installed CLI payload copied from the packaged SEA artifact.
 - `docs/`: integration notes, bridge contract, and smoke-test instructions.
 
@@ -31,5 +34,13 @@ Unity-facing integration assets will live here.
 ## Editor Helper Baseline
 - `RadebeCliBridgeHelper.ValidateInstalledPayload()` checks the installed `StreamingAssets` payload for the current platform.
 - `RadebeCliBridgeHelper.InstallOrUpdatePayload()` validates the packaged SEA source folder, compares manifests, and copies or refreshes the whole platform directory into `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`.
-- `RadebeCliBridgeHelper.RunSmokeTest()` invokes the installed packaged CLI with the current single-argument contract and asserts the known `hello -> hello\n` smoke path.
+- `RadebeCliBridgeHelper.InvokeCompileFile()` invokes `radebe compile <file> --format unity-json` for importer use.
+- `RadebeCliBridgeHelper.RunSmokeTest()` invokes the installed packaged CLI with the current spec-aligned source-string contract and asserts the rendered row output.
 - The helper defaults its source artifact root to `../artifacts/radebe-cli/sea/` relative to the Unity project when no explicit path is provided.
+- The helper also respects `RADEBE_CLI_ARTIFACT_ROOT` for local editor install/update flows.
+
+## Local Deploy Testing
+- Root script: `npm run deploy:unity`
+- Required local config: copy `.env.example` to `.env` and set `RADEBE_UNITY_PROJECT_PATH`.
+- Default deploy target: `Assets/Radebe` in the configured Unity project.
+- The deploy script also copies the current platform SEA payload into the configured Unity project's `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`.

@@ -11,6 +11,7 @@
     "sea:bundle": "node ./dist/src/sea.js bundle",
     "sea:smoke": "node ./dist/src/sea.js smoke",
     "test": "node --test dist/test",
+    "unity:deploy": "node ./dist/src/unity-deploy.js",
     "typecheck": "tsc -b"
   },
   "devDependencies": {

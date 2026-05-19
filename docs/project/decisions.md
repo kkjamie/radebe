@@ -333,3 +333,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Existing output remains unchanged unless authors opt in, while smoothed geometry writes partial alpha into the real render artifact rather than relying on preview-only canvas smoothing.
 - Related tasks: T-041
 - Supersedes: N/A
+
+---
+
+### DEC-029: Import `.rdb` In Unity Through A CLI-Backed Sprite Artifact
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: T-011 needed to restart Unity integration without creating a parallel C# renderer or baking the local Eddie test project into repo-owned code.
+- Decision: Treat `.rdb` files as Unity source assets handled by a ScriptedImporter that calls the packaged `radebe-cli` through the existing bridge, consumes a `unity-sprite` JSON artifact, and creates generated `Texture2D` plus `Sprite` subassets. Local Unity test deployment is driven by `.env` / environment variables such as `RADEBE_UNITY_PROJECT_PATH`, with Eddie-specific assets kept outside the repo.
+- Consequences: Unity gets a native sprite-facing workflow while the TypeScript renderer remains canonical; the CLI contract now needs to maintain a machine-readable Unity artifact mode; repo automation can deploy into any configured Unity project instead of assuming Eddie; and the next Gate C step must capture a hard Unity-side importer assertion before the gate is marked passed.
+- Related tasks: T-011
+- Supersedes: N/A

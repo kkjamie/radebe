@@ -13,8 +13,17 @@ namespace Radebe.UnityBridge.Editor
     {
         private const string ArtifactBaseName = "radebe";
         private const string ManifestFileName = "artifact-manifest.json";
-        private const string DefaultSmokeSource = "hello";
+        private const string DefaultSmokeSource =
+            "sprite smoke\n" +
+            "  size 4 3\n" +
+            "  background transparent\n\n" +
+            "plot 1 1 white";
+        private const string DefaultSmokeExpectedStdout =
+            "....\n" +
+            ".#..\n" +
+            "....\n";
         private const string DefaultArtifactSourceRoot = "artifacts/radebe-cli/sea";
+        private const string ArtifactSourceRootEnvironmentVariable = "RADEBE_CLI_ARTIFACT_ROOT";
 
         public static RadebeCliInstallValidationResult ValidateInstalledPayload()
         {
@@ -130,12 +139,30 @@ namespace Radebe.UnityBridge.Editor
             return InvokeValidated(validation, arguments, timeoutMilliseconds);
         }
 
+        public static RadebeCliInvocationResult InvokeCompileFile(
+            string sourcePath,
+            int timeoutMilliseconds = 30000)
+        {
+            var validation = ValidateInstalledPayload();
+            var resolvedSourcePath = ResolveProjectRelativePath(sourcePath ?? string.Empty);
+            var arguments = new[] { "compile", resolvedSourcePath, "--format", "unity-json" };
+
+            if (!validation.IsValid)
+            {
+                return RadebeCliInvocationResult.FromValidationFailure(validation, arguments);
+            }
+
+            return InvokeValidated(validation, arguments, timeoutMilliseconds);
+        }
+
         public static RadebeCliSmokeTestResult RunSmokeTest(
             string source = DefaultSmokeSource,
             int timeoutMilliseconds = 30000)
         {
             var invocation = Invoke(source, timeoutMilliseconds);
-            var expectedStdout = $"{source ?? string.Empty}\n";
+            var expectedStdout = string.Equals(source ?? string.Empty, DefaultSmokeSource, StringComparison.Ordinal)
+                ? DefaultSmokeExpectedStdout
+                : $"{source ?? string.Empty}\n";
             var warnings = new List<string>();
 
             if (!string.IsNullOrWhiteSpace(invocation.Stderr) &&
@@ -367,7 +394,23 @@ namespace Radebe.UnityBridge.Editor
 
         private static string GetDefaultArtifactRootDirectory()
         {
+            var configuredRoot = Environment.GetEnvironmentVariable(ArtifactSourceRootEnvironmentVariable);
+            if (!string.IsNullOrWhiteSpace(configuredRoot))
+            {
+                return Path.GetFullPath(configuredRoot);
+            }
+
             return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", DefaultArtifactSourceRoot));
+        }
+
+        private static string ResolveProjectRelativePath(string path)
+        {
+            if (Path.IsPathRooted(path))
+            {
+                return Path.GetFullPath(path);
+            }
+
+            return Path.GetFullPath(Path.Combine(Application.dataPath, "..", path));
         }
 
         private static void CopyDirectory(string sourceDirectory, string destinationDirectory)

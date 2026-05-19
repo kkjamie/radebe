@@ -27,7 +27,8 @@ Last updated: `2026-05-19`
 - The renderer now supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` so existing artifacts remain stable unless authors opt in.
 - The web example surface now treats rounded and cut corners as part of the main `rect` story instead of separate geometry pages, which keeps the current authoring model aligned with the implemented modifier-based shape semantics.
 - The placeholder example audit now keeps only substantive future-feature stubs in the web nav; low-value property/container placeholders that are better covered by their parent pages have been removed.
-- M2 Gate A and Gate B now have working end-to-end evidence; the most natural next step is returning to Gate C to re-exercise the packaged CLI bridge from Unity against the richer spec-aligned language slice now that variables, `circle`, strokable `polygon`, and stroke-first `path` join the current geometry set, shape appearance attachment is capability-driven, and rectangle strokes follow modifier-aware contours.
+- M2 Gate A and Gate B now have working end-to-end evidence, and Gate C is underway. T-011 established the first real Unity plugin import baseline: `.rdb` files are Unity source assets handled by a ScriptedImporter, the packaged CLI can emit a Unity JSON sprite artifact, and local deployment into a configured Unity project is driven by `.env` / environment variables rather than hard-coding Eddie into repo state.
+- The remaining Gate C check is a hard Unity-side assertion that a deployed `.rdb` asset imports as a generated Sprite main asset. Configured-project batchmode compiles the deployed editor plugin and the deployed CLI produces Unity JSON for the smoke asset, but the new `-executeMethod` verifier did not emit its assertion log before exit in this thread.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.

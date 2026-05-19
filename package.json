@@ -13,6 +13,7 @@
     "build": "npm run build --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present",
     "dev:web": "npm run dev -w @radebe/web",
+    "deploy:unity": "npm run package:cli:sea && npm run unity:deploy -w @radebe/scripts",
     "package:cli:sea": "npm run build -w @radebe/scripts && npm run sea:build -w @radebe/scripts",
     "smoke:cli:sea": "npm run build -w @radebe/scripts && npm run sea:smoke -w @radebe/scripts",
     "test": "npm run test --workspaces --if-present",
