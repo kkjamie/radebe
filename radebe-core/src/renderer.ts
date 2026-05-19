@@ -11,6 +11,7 @@ import type {
   PipelineResult,
   RenderArtifact,
   RenderResult,
+  ShadowAppearance,
   SourceDocument,
   StrokeAppearance
 } from "./types.js";
@@ -785,6 +786,73 @@ function drawPolygonFill(
   }
 }
 
+function drawPolygonShadow(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
+  shadow: ShadowAppearance
+): void {
+  if (shadow.fill === null) {
+    return;
+  }
+
+  const points = command.points.map((point) => ({
+    x: point.x + shadow.offsetX,
+    y: point.y + shadow.offsetY
+  }));
+  const baseBounds = getPolygonBounds(points);
+  const expansion = Math.max(shadow.spread, 0);
+  const sampleBounds = {
+    x: baseBounds.x - expansion,
+    y: baseBounds.y - expansion,
+    width: baseBounds.width + expansion * 2,
+    height: baseBounds.height + expansion * 2
+  };
+
+  for (let y = sampleBounds.y; y < sampleBounds.y + sampleBounds.height; y += 1) {
+    for (let x = sampleBounds.x; x < sampleBounds.x + sampleBounds.width; x += 1) {
+      const pointX = x + 0.5;
+      const pointY = y + 0.5;
+      const inside = isPointInsidePolygon(pointX, pointY, points);
+      const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, points);
+
+      if (shadow.spread >= 0) {
+        if (!inside && closestEdge.distance > shadow.spread) {
+          continue;
+        }
+      } else {
+        if (!inside || closestEdge.distance <= -shadow.spread) {
+          continue;
+        }
+      }
+
+      const color =
+        shadow.fill.kind === "solid"
+          ? shadow.fill.color
+          : shadow.fill.kind === "gradient-linear"
+            ? sampleGradientStops(
+                shadow.fill.stops,
+                resolveLinearGradientPosition(shadow.fill, sampleBounds, x, y)
+              )
+            : sampleGradientStops(
+                shadow.fill.stops,
+                resolveRadialGradientPosition(shadow.fill, sampleBounds, x, y)
+              );
+
+      if (color !== null) {
+        setPixel(
+          pixels,
+          drawnPixels,
+          x,
+          y,
+          color,
+          shadow.alpha * shadow.fill.alpha
+        );
+      }
+    }
+  }
+}
+
 function drawPolygonStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
@@ -934,6 +1002,69 @@ function getCircleStrokeBounds(
     innerRadius: Math.max(command.radius - inner, 0),
     outerRadius: command.radius + outer
   };
+}
+
+function drawCircleShadow(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
+  shadow: ShadowAppearance
+): void {
+  if (shadow.fill === null) {
+    return;
+  }
+
+  const radius = command.radius + shadow.spread;
+
+  if (radius < 0) {
+    return;
+  }
+
+  const centerX = command.x + shadow.offsetX;
+  const centerY = command.y + shadow.offsetY;
+  const bounds = {
+    x: centerX - radius,
+    y: centerY - radius,
+    width: radius * 2 + 1,
+    height: radius * 2 + 1
+  };
+
+  for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+    for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+      const pointX = x + 0.5;
+      const pointY = y + 0.5;
+      const sampleCenterX = centerX + 0.5;
+      const sampleCenterY = centerY + 0.5;
+
+      if (Math.hypot(pointX - sampleCenterX, pointY - sampleCenterY) > radius) {
+        continue;
+      }
+
+      const color =
+        shadow.fill.kind === "solid"
+          ? shadow.fill.color
+          : shadow.fill.kind === "gradient-linear"
+            ? sampleGradientStops(
+                shadow.fill.stops,
+                resolveLinearGradientPosition(shadow.fill, bounds, x, y)
+              )
+            : sampleGradientStops(
+                shadow.fill.stops,
+                resolveRadialGradientPosition(shadow.fill, bounds, x, y)
+              );
+
+      if (color !== null) {
+        setPixel(
+          pixels,
+          drawnPixels,
+          x,
+          y,
+          color,
+          shadow.alpha * shadow.fill.alpha
+        );
+      }
+    }
+  }
 }
 
 function drawCircleStroke(
@@ -1140,6 +1271,76 @@ function buildStrokeEnvelopeRect(
     inner,
     outer
   };
+}
+
+function translateRectContour(
+  rect: RectContour,
+  offsetX: number,
+  offsetY: number
+): RectContour {
+  return {
+    ...rect,
+    x: rect.x + offsetX,
+    y: rect.y + offsetY
+  };
+}
+
+function drawRectShadow(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: RectContour,
+  shadow: ShadowAppearance
+): void {
+  if (shadow.fill === null) {
+    return;
+  }
+
+  const expandedContour = buildAdjustedRectContour(command, shadow.spread);
+
+  if (expandedContour === null) {
+    return;
+  }
+
+  const shadowContour = translateRectContour(
+    expandedContour,
+    shadow.offsetX,
+    shadow.offsetY
+  );
+
+  for (let y = shadowContour.y; y < shadowContour.y + shadowContour.height; y += 1) {
+    for (let x = shadowContour.x; x < shadowContour.x + shadowContour.width; x += 1) {
+      const pointX = x + 0.5;
+      const pointY = y + 0.5;
+
+      if (!isPointInsideRectContour(pointX, pointY, shadowContour)) {
+        continue;
+      }
+
+      const color =
+        shadow.fill.kind === "solid"
+          ? shadow.fill.color
+          : shadow.fill.kind === "gradient-linear"
+            ? sampleGradientStops(
+                shadow.fill.stops,
+                resolveLinearGradientPosition(shadow.fill, shadowContour, x, y)
+              )
+            : sampleGradientStops(
+                shadow.fill.stops,
+                resolveRadialGradientPosition(shadow.fill, shadowContour, x, y)
+              );
+
+      if (color !== null) {
+        setPixel(
+          pixels,
+          drawnPixels,
+          x,
+          y,
+          color,
+          shadow.alpha * shadow.fill.alpha
+        );
+      }
+    }
+  }
 }
 
 function drawPlainRectStroke(
@@ -1349,6 +1550,9 @@ function drawCommand(
   }
 
   if (command.kind === "rect") {
+    (command.shadows ?? []).forEach((shadow) => {
+      drawRectShadow(pixels, drawnPixels, command, shadow);
+    });
     command.fills.forEach((fill) => {
       drawRectFill(pixels, drawnPixels, command, fill);
     });
@@ -1359,6 +1563,9 @@ function drawCommand(
   }
 
   if (command.kind === "circle") {
+    (command.shadows ?? []).forEach((shadow) => {
+      drawCircleShadow(pixels, drawnPixels, command, shadow);
+    });
     command.fills.forEach((fill) => {
       drawCircleFill(pixels, drawnPixels, command, fill);
     });
@@ -1369,6 +1576,9 @@ function drawCommand(
   }
 
   if (command.kind === "polygon") {
+    (command.shadows ?? []).forEach((shadow) => {
+      drawPolygonShadow(pixels, drawnPixels, command, shadow);
+    });
     command.fills.forEach((fill) => {
       drawPolygonFill(pixels, drawnPixels, command, fill);
     });

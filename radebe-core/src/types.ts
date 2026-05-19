@@ -122,6 +122,15 @@ export interface StrokeAppearance {
   strokes: StrokeAppearance[];
 }
 
+export interface ShadowAppearance {
+  kind: "shadow";
+  offsetX: number;
+  offsetY: number;
+  spread: number;
+  alpha: number;
+  fill: RectFill | null;
+}
+
 export interface RectCommand {
   kind: "rect";
   lineNumber: number;
@@ -132,6 +141,7 @@ export interface RectCommand {
   cut?: RectCut | null;
   radius?: RectRadius | null;
   fills: RectFill[];
+  shadows?: ShadowAppearance[];
   strokes: StrokeAppearance[];
   sourceCommandName: "rect" | "rect-absolute" | "rect-inset";
 }
@@ -143,6 +153,7 @@ export interface CircleCommand {
   y: number;
   radius: number;
   fills: RectFill[];
+  shadows?: ShadowAppearance[];
   strokes: StrokeAppearance[];
 }
 
@@ -156,6 +167,7 @@ export interface PolygonCommand {
   lineNumber: number;
   points: PolygonPoint[];
   fills: RectFill[];
+  shadows?: ShadowAppearance[];
   strokes: StrokeAppearance[];
 }
 

@@ -300,3 +300,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The near-term language gets simpler, the docs stop implying an extra appearance primitive that does not exist, and future overlay work stays available as a deliberate new feature instead of inherited placeholder baggage.
 - Related tasks: T-038
 - Supersedes: DEC-024
+
+---
+
+### DEC-026: Model `shadow` As One Appearance Command With Offset And Spread
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: The project wanted to design `shadow` with the longer-term soft-shadow direction in mind without forcing blur support into the first implementation slice.
+- Decision: Implement one shared `shadow` appearance command for shape geometry rather than separate hard and soft shadow types, land the first slice with `x`, `y`, `spread`, explicit `alpha`, and either color shorthand or nested `fill`, render it behind the source shape, and defer `blur` to a later follow-up property on the same command.
+- Consequences: The language gets a crisp contour-derived shadow model now for rectangles, circles, and polygons, future blur support has a clear extension point without a surface rename, and the current slice stays aligned with the renderer's pixel-perfect no-antialiasing direction.
+- Related tasks: T-039
+- Supersedes: N/A

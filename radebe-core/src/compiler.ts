@@ -24,6 +24,7 @@ import type {
   RectFill,
   RectRadius,
   RadebeDiagnostic,
+  ShadowAppearance,
   SolidFill,
   StrokeAppearance,
   SpriteHeader
@@ -231,6 +232,20 @@ function readRequiredInteger(
   }
 
   return value;
+}
+
+function readOptionalInteger(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  key: string,
+  diagnostics: RadebeDiagnostic[],
+  options?: { min?: number }
+): number | null {
+  if (!values.has(key)) {
+    return null;
+  }
+
+  return readRequiredInteger(node, values, key, diagnostics, options);
 }
 
 function readRequiredNumber(
@@ -510,8 +525,13 @@ function compileLineCommand(
 function compileShapeAppearances(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[]
-): { fills: RectFill[]; strokes: StrokeAppearance[] } {
+): {
+  fills: RectFill[];
+  shadows: ShadowAppearance[];
+  strokes: StrokeAppearance[];
+} {
   const fills: RectFill[] = [];
+  const shadows: ShadowAppearance[] = [];
   const strokes: StrokeAppearance[] = [];
 
   node.children.forEach((child) => {
@@ -520,6 +540,16 @@ function compileShapeAppearances(
 
       if (fill) {
         fills.push(fill);
+      }
+
+      return;
+    }
+
+    if (child.name === "shadow") {
+      const shadow = compileShadow(child, diagnostics);
+
+      if (shadow) {
+        shadows.push(shadow);
       }
 
       return;
@@ -534,7 +564,7 @@ function compileShapeAppearances(
     }
   });
 
-  return { fills, strokes };
+  return { fills, shadows, strokes };
 }
 
 function compileRectCommand(
@@ -650,6 +680,7 @@ function compileRectCommand(
   const color = readOptionalString(resolvedProperties.values, "color");
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
+  const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
   let cut: RectCut | null = null;
   let radius: RectRadius | null = null;
@@ -673,7 +704,11 @@ function compileRectCommand(
       continue;
     }
 
-    if (child.name === "fill" || child.name === "stroke") {
+    if (
+      child.name === "fill" ||
+      child.name === "shadow" ||
+      child.name === "stroke"
+    ) {
       continue;
     }
   }
@@ -687,10 +722,10 @@ function compileRectCommand(
     return null;
   }
 
-  if (fills.length === 0 && strokes.length === 0) {
+  if (fills.length === 0 && shadows.length === 0 && strokes.length === 0) {
     diagnostics.push(
       createCompilerDiagnostic(
-        `The ${node.name} command requires a color shorthand, a fill child, or a stroke child.`,
+        `The ${node.name} command requires a color shorthand, a fill child, a shadow child, or a stroke child.`,
         node
       )
     );
@@ -776,6 +811,7 @@ function compileRectCommand(
     ...(rectCut === null ? {} : { cut: rectCut }),
     ...(rectRadius === null ? {} : { radius: rectRadius }),
     fills,
+    ...(shadows.length === 0 ? {} : { shadows }),
     strokes,
     sourceCommandName:
       node.name === "rect"
@@ -812,6 +848,7 @@ function compileCircleCommand(
   const color = readOptionalString(resolvedProperties.values, "color");
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
+  const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
 
   if (color !== null) {
@@ -826,10 +863,10 @@ function compileCircleCommand(
     return null;
   }
 
-  if (fills.length === 0 && strokes.length === 0) {
+  if (fills.length === 0 && shadows.length === 0 && strokes.length === 0) {
     diagnostics.push(
       createCompilerDiagnostic(
-        'The circle command requires a color shorthand, a fill child, or a stroke child.',
+        "The circle command requires a color shorthand, a fill child, a shadow child, or a stroke child.",
         node
       )
     );
@@ -843,6 +880,7 @@ function compileCircleCommand(
     y,
     radius,
     fills,
+    ...(shadows.length === 0 ? {} : { shadows }),
     strokes
   };
 }
@@ -987,6 +1025,7 @@ function compilePolygonCommand(
 
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
+  const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
 
   node.children.forEach((child) => {
@@ -1068,10 +1107,10 @@ function compilePolygonCommand(
     return null;
   }
 
-  if (fills.length === 0 && strokes.length === 0) {
+  if (fills.length === 0 && shadows.length === 0 && strokes.length === 0) {
     diagnostics.push(
       createCompilerDiagnostic(
-        "The polygon command requires a color shorthand, a fill child, or a stroke child.",
+        "The polygon command requires a color shorthand, a fill child, a shadow child, or a stroke child.",
         node
       )
     );
@@ -1083,6 +1122,7 @@ function compilePolygonCommand(
     lineNumber: node.lineNumber,
     points,
     fills,
+    ...(shadows.length === 0 ? {} : { shadows }),
     strokes
   };
 }
@@ -1843,6 +1883,84 @@ function compileStroke(
     dotSpacing,
     fill: fills[0] ?? null,
     strokes
+  };
+}
+
+function compileShadow(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): ShadowAppearance | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const offsetX =
+    readOptionalNumber(node, resolvedProperties.values, "x", diagnostics) ?? 0;
+  const offsetY =
+    readOptionalNumber(node, resolvedProperties.values, "y", diagnostics) ?? 0;
+  const color = readOptionalString(resolvedProperties.values, "color");
+  const spread =
+    readOptionalInteger(node, resolvedProperties.values, "spread", diagnostics) ?? 0;
+  const alpha =
+    readOptionalNumber(node, resolvedProperties.values, "alpha", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 1;
+  const fills: RectFill[] = [];
+
+  if (color !== null) {
+    fills.push({
+      kind: "solid",
+      color,
+      alpha: 1
+    });
+  }
+
+  node.children.forEach((child) => {
+    if (child.name !== "fill") {
+      return;
+    }
+
+    const fill = compileFill(child, diagnostics);
+
+    if (fill) {
+      fills.push(fill);
+    }
+  });
+
+  if (fills.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The shadow command requires a color shorthand or a fill child.",
+        node
+      )
+    );
+    return null;
+  }
+
+  if (fills.length > 1) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The first shadow slice supports only one fill per shadow node.",
+        node
+      )
+    );
+    return null;
+  }
+
+  return {
+    kind: "shadow",
+    offsetX,
+    offsetY,
+    spread,
+    alpha,
+    fill: fills[0] ?? null
   };
 }
 

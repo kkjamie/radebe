@@ -134,6 +134,14 @@ const commandDefinitions = [
     allowedChildCommands: ["solid", "gradient", "gradient-linear", "gradient-radial"]
   },
   {
+    name: "shadow",
+    kind: "appearance",
+    capabilities: ["shape-appearance"],
+    propertyArgs: ["x", "y", "color", "alpha", "spread"],
+    shorthandSchema: ["x", "y", "color"],
+    allowedChildCommands: ["x", "y", "spread", "fill"]
+  },
+  {
     name: "stroke",
     kind: "appearance",
     capabilities: ["shape-appearance"],
@@ -207,6 +215,7 @@ const commandDefinitions = [
   createSingleValuePropertyDefinition("angle"),
   createSingleValuePropertyDefinition("center-x"),
   createSingleValuePropertyDefinition("center-y"),
+  createSingleValuePropertyDefinition("spread"),
   createSingleValuePropertyDefinition("radius"),
   createSingleValuePropertyDefinition("align"),
   createSingleValuePropertyDefinition("style"),

@@ -515,6 +515,39 @@ test("compileDocument supports linear gradient shorthand and explicit stops", ()
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports shape shadows through the shared appearance model", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\nrect 1 1 4 3\n  shadow x=1 y=2 spread=1 color=#000000 alpha=0.5"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 5,
+      x: 1,
+      y: 1,
+      width: 4,
+      height: 3,
+      fills: [],
+      shadows: [
+        {
+          kind: "shadow",
+          offsetX: 1,
+          offsetY: 2,
+          spread: 1,
+          alpha: 0.5,
+          fill: { kind: "solid", color: "#000000", alpha: 1 }
+        }
+      ],
+      strokes: [],
+      sourceCommandName: "rect"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
 test("compileDocument supports radial gradient properties and stop children", () => {
   const parsed = parseSource({
     source:
@@ -885,7 +918,8 @@ test("compileDocument requires circle fill coverage", () => {
   assert.deepEqual(result.diagnostics, [
     {
       stage: "compiler",
-      message: "The circle command requires a color shorthand, a fill child, or a stroke child.",
+      message:
+        "The circle command requires a color shorthand, a fill child, a shadow child, or a stroke child.",
       line: 5,
       column: 1
     }
@@ -1366,6 +1400,59 @@ test("renderDocument keeps nested stroke alpha explicit instead of inherited", (
     [null, null, "#0000ff", "#0000ff", "#0000ff", null, null],
     [null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null]
+  ]);
+});
+
+test("renderDocument rasterizes rectangle shadows behind the base shape", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n\nrect 1 1 3 3 white\n  shadow 1 1 black"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    ".....",
+    ".###.",
+    ".####",
+    ".####",
+    "..###"
+  ]);
+  assert.equal(result.artifact.pixels[2]?.[2], "#ffffff");
+  assert.equal(result.artifact.pixels[4]?.[4], "#000000");
+});
+
+test("renderDocument applies positive spread to circle shadows", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 9 9\n  background transparent\n\ncircle 3 3 1 white\n  shadow\n    x 2\n    y 1\n    spread 1\n    fill solid black"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.equal(result.artifact.pixels[2]?.[5], "#000000");
+  assert.equal(result.artifact.pixels[4]?.[7], "#000000");
+  assert.equal(result.artifact.pixels[3]?.[3], "#ffffff");
+});
+
+test("renderDocument applies negative spread to polygon shadows", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 9 9\n  background transparent\n\npolygon 1 1 7 1 4 7\n  shadow\n    y 1\n    spread -1\n    fill solid black"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    ".........",
+    ".........",
+    ".........",
+    "...##....",
+    "...##....",
+    ".........",
+    ".........",
+    ".........",
+    "........."
   ]);
 });
 

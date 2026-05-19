@@ -40,6 +40,7 @@ Use this as the single source of truth for active execution state.
 | T-036 | Add a first stroke-first `path` geometry slice | M2 | Gate B | P1 | Done | `t-036-path-stroke-slice` | None | Hand off to the next thread for Unity Gate C revalidation or deeper path semantics now that open polyline paths render through required `stroke` children |
 | T-037 | Audit placeholder web example pages and trim the low-value stubs | M2 | Gate B | P2 | Done | `t-037-placeholder-page-audit` | None | Keep placeholder pages only for substantive planned features such as `shadow`, `group`, `mask`, and `vars`; remove low-value placeholder stubs that are better covered by parent pages or by future implementation docs |
 | T-038 | Remove `overlay` from the near-term language surface and web docs | M2 | Gate B | P2 | Done | `codex-main` | None | Keep ordered multi-`fill` passes as the current layering model and revisit a separate overlay concept only if future compositing semantics clearly require it |
+| T-039 | Add hard-edged shape shadows with offset and spread | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to the next language thread for deferred shadow blur support or return to Unity Gate C now that `shadow` is a real appearance pass on `rect`, `circle`, and `polygon` |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

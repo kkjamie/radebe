@@ -470,6 +470,7 @@ line 16 24 220 24 #70c8e8
 - The current `@text` and `@repeat` command syntax in the codebase is not part of the recovered canonical language design.
 - The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
+- The current implemented appearance slice also includes hard-edged `shadow` on rectangle-backed shapes, circles, and polygons with `x`, `y`, `spread`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur` remains deferred.
 - The current stroke renderer supports rectangle-backed and circle-backed shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 
 ## Important Non-Goals for MVP
