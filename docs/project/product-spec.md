@@ -300,6 +300,7 @@ Initial geometry types discussed in the recovered spec and current direction:
 - `rect <x> <y> <w> <h>`
 - `rect-inset <amount>`
 - `rect-absolute <x> <y> <w> <h>`
+- `circle <x> <y> <radius>`
 - `rect` with child `cut` or child `radius`
 - `path <name?>`
 - `shape <name?>`
@@ -467,7 +468,9 @@ line 16 24 220 24 #70c8e8
 - The current repo already has a shared TypeScript core, CLI, web preview shell, and Unity CLI bridge baseline.
 - The current browser preview artifact is a temporary text-grid artifact used for fast feedback, not the recovered canonical end-state product output.
 - The current `@text` and `@repeat` command syntax in the codebase is not part of the recovered canonical language design.
-- The next language implementation work should align to the recovered sprite-oriented MVP slice, starting from a small `sprite` header block plus root-level `plot` and `line` commands.
+- The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands.
+- The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
+- The current stroke renderer supports rectangle-backed and circle-backed shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 
 ## Important Non-Goals for MVP
 - full SVG compatibility

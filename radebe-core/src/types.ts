@@ -136,7 +136,21 @@ export interface RectCommand {
   sourceCommandName: "rect" | "rect-absolute" | "rect-inset";
 }
 
-export type CompiledDrawCommand = PlotCommand | LineCommand | RectCommand;
+export interface CircleCommand {
+  kind: "circle";
+  lineNumber: number;
+  x: number;
+  y: number;
+  radius: number;
+  fills: RectFill[];
+  strokes: StrokeAppearance[];
+}
+
+export type CompiledDrawCommand =
+  | PlotCommand
+  | LineCommand
+  | RectCommand
+  | CircleCommand;
 
 export interface CompiledDocument {
   kind: "compiled-document";

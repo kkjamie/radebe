@@ -3,7 +3,9 @@ import type { CommandKind } from "./types.js";
 export interface CommandDefinition {
   name: string;
   kind: CommandKind;
+  capabilities?: string[];
   allowedChildKinds?: CommandKind[];
+  allowedChildCapabilities?: string[];
   allowedChildCommands?: string[];
   propertyArgs?: string[];
   shorthandSchema?: string[];
@@ -12,7 +14,15 @@ export interface CommandDefinition {
 export const FILE_DEFINITION: CommandDefinition = {
   name: "$file",
   kind: "file",
-  allowedChildCommands: ["sprite", "plot", "line", "rect", "rect-absolute", "rect-inset"]
+  allowedChildCommands: [
+    "sprite",
+    "plot",
+    "line",
+    "rect",
+    "rect-absolute",
+    "rect-inset",
+    "circle"
+  ]
 };
 
 function createSingleValuePropertyDefinition(name: string): CommandDefinition {
@@ -61,21 +71,31 @@ const commandDefinitions = [
     kind: "geometry",
     propertyArgs: ["x", "y", "width", "height", "color"],
     shorthandSchema: ["x", "y", "width", "height", "color"],
-    allowedChildCommands: ["fill", "stroke", "cut", "radius"]
+    allowedChildCapabilities: ["shape-appearance"],
+    allowedChildCommands: ["cut", "radius"]
   },
   {
     name: "rect",
     kind: "geometry",
     propertyArgs: ["x", "y", "width", "height", "color"],
     shorthandSchema: ["x", "y", "width", "height", "color"],
-    allowedChildCommands: ["fill", "stroke", "cut", "radius"]
+    allowedChildCapabilities: ["shape-appearance"],
+    allowedChildCommands: ["cut", "radius"]
   },
   {
     name: "rect-inset",
     kind: "geometry",
     propertyArgs: ["inset", "top", "right", "bottom", "left", "color"],
     shorthandSchema: ["inset", "color"],
-    allowedChildCommands: ["fill", "stroke", "cut", "radius"]
+    allowedChildCapabilities: ["shape-appearance"],
+    allowedChildCommands: ["cut", "radius"]
+  },
+  {
+    name: "circle",
+    kind: "geometry",
+    propertyArgs: ["x", "y", "radius", "color"],
+    shorthandSchema: ["x", "y", "radius", "color"],
+    allowedChildCapabilities: ["shape-appearance"]
   },
   {
     name: "cut",
@@ -87,12 +107,14 @@ const commandDefinitions = [
   {
     name: "fill",
     kind: "appearance",
+    capabilities: ["shape-appearance"],
     propertyArgs: ["alpha"],
     allowedChildCommands: ["solid", "gradient", "gradient-linear", "gradient-radial"]
   },
   {
     name: "stroke",
     kind: "appearance",
+    capabilities: ["shape-appearance"],
     propertyArgs: [
       "width",
       "color",
@@ -199,4 +221,11 @@ export function getAllowedPropertyCommands(
   definition: CommandDefinition
 ): string[] {
   return definition.propertyArgs ?? [];
+}
+
+export function hasCapability(
+  definition: CommandDefinition,
+  capability: string
+): boolean {
+  return definition.capabilities?.includes(capability) ?? false;
 }

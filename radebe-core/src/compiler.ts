@@ -2,10 +2,12 @@ import {
   FILE_DEFINITION,
   getAllowedPropertyCommands,
   getCommandDefinition,
+  hasCapability,
   type CommandDefinition
 } from "./schema.js";
 
 import type {
+  CircleCommand,
   CompileResult,
   CompiledDrawCommand,
   GradientStop,
@@ -134,6 +136,14 @@ function allowsChild(
   }
 
   if (getAllowedPropertyCommands(parentDefinition).includes(childDefinition.name)) {
+    return true;
+  }
+
+  if (
+    parentDefinition.allowedChildCapabilities?.some((capability) =>
+      hasCapability(childDefinition, capability)
+    )
+  ) {
     return true;
   }
 
@@ -494,6 +504,36 @@ function compileLineCommand(
   };
 }
 
+function compileShapeAppearances(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): { fills: RectFill[]; strokes: StrokeAppearance[] } {
+  const fills: RectFill[] = [];
+  const strokes: StrokeAppearance[] = [];
+
+  node.children.forEach((child) => {
+    if (child.name === "fill") {
+      const fill = compileFill(child, diagnostics);
+
+      if (fill) {
+        fills.push(fill);
+      }
+
+      return;
+    }
+
+    if (child.name === "stroke") {
+      const stroke = compileStroke(child, diagnostics);
+
+      if (stroke) {
+        strokes.push(stroke);
+      }
+    }
+  });
+
+  return { fills, strokes };
+}
+
 function compileRectCommand(
   node: ParsedCommandNode,
   sprite: SpriteHeader,
@@ -605,13 +645,14 @@ function compileRectCommand(
   }
 
   const color = readOptionalString(resolvedProperties.values, "color");
-  const fills: RectFill[] = [];
-  const strokes: StrokeAppearance[] = [];
+  const appearances = compileShapeAppearances(node, diagnostics);
+  const fills: RectFill[] = appearances.fills;
+  const strokes: StrokeAppearance[] = appearances.strokes;
   let cut: RectCut | null = null;
   let radius: RectRadius | null = null;
 
   if (color !== null) {
-    fills.push({
+    fills.unshift({
       kind: "solid",
       color,
       alpha: 1
@@ -629,24 +670,8 @@ function compileRectCommand(
       continue;
     }
 
-    if (child.name !== "fill") {
-      if (child.name !== "stroke") {
-        continue;
-      }
-
-      const stroke = compileStroke(child, diagnostics);
-
-      if (stroke) {
-        strokes.push(stroke);
-      }
-
+    if (child.name === "fill" || child.name === "stroke") {
       continue;
-    }
-
-    const fill = compileFill(child, diagnostics);
-
-    if (fill) {
-      fills.push(fill);
     }
   }
 
@@ -755,6 +780,67 @@ function compileRectCommand(
         : node.name === "rect-inset"
           ? "rect-inset"
           : "rect-absolute"
+  };
+}
+
+function compileCircleCommand(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): CircleCommand | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const x = readRequiredInteger(node, resolvedProperties.values, "x", diagnostics);
+  const y = readRequiredInteger(node, resolvedProperties.values, "y", diagnostics);
+  const radius = readRequiredInteger(
+    node,
+    resolvedProperties.values,
+    "radius",
+    diagnostics,
+    { min: 1 }
+  );
+  const color = readOptionalString(resolvedProperties.values, "color");
+  const appearances = compileShapeAppearances(node, diagnostics);
+  const fills: RectFill[] = appearances.fills;
+  const strokes: StrokeAppearance[] = appearances.strokes;
+
+  if (color !== null) {
+    fills.unshift({
+      kind: "solid",
+      color,
+      alpha: 1
+    });
+  }
+
+  if (x === null || y === null || radius === null) {
+    return null;
+  }
+
+  if (fills.length === 0 && strokes.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The circle command requires a color shorthand, a fill child, or a stroke child.',
+        node
+      )
+    );
+    return null;
+  }
+
+  return {
+    kind: "circle",
+    lineNumber: node.lineNumber,
+    x,
+    y,
+    radius,
+    fills,
+    strokes
   };
 }
 
@@ -1470,6 +1556,10 @@ function compileRootCommand(
 
   if (node.name === "line") {
     return compileLineCommand(node, diagnostics);
+  }
+
+  if (node.name === "circle") {
+    return compileCircleCommand(node, diagnostics);
   }
 
   if (

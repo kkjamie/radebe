@@ -202,14 +202,28 @@ function buildCutPolygon(
   ];
 }
 
+type RectContour = Pick<
+  Extract<CompiledDrawCommand, { kind: "rect" }>,
+  "x" | "y" | "width" | "height" | "cut" | "radius"
+>;
+
 function isPointInsideRoundedRect(
   pointX: number,
   pointY: number,
-  rect: Pick<
-    Extract<CompiledDrawCommand, { kind: "rect" }>,
-    "x" | "y" | "width" | "height" | "radius"
-  >
+  rect: Pick<RectContour, "x" | "y" | "width" | "height" | "radius">
 ): boolean {
+  const right = rect.x + rect.width;
+  const bottom = rect.y + rect.height;
+
+  if (
+    pointX < rect.x ||
+    pointX > right ||
+    pointY < rect.y ||
+    pointY > bottom
+  ) {
+    return false;
+  }
+
   const radius = rect.radius?.value ?? 0;
 
   if (radius <= 0) {
@@ -233,6 +247,142 @@ function isPointInsideRoundedRect(
   const cornerCenterY = pointY < innerTop ? innerTop : innerBottom;
 
   return Math.hypot(pointX - cornerCenterX, pointY - cornerCenterY) <= radius;
+}
+
+function isPointInsideRectContour(
+  pointX: number,
+  pointY: number,
+  rect: RectContour
+): boolean {
+  const polygon = buildCutPolygon(rect);
+
+  if (polygon !== null && !isPointInsidePolygon(pointX, pointY, polygon)) {
+    return false;
+  }
+
+  return isPointInsideRoundedRect(pointX, pointY, rect);
+}
+
+function normalizeRectCut(
+  cut: NonNullable<RectContour["cut"]>,
+  width: number,
+  height: number
+): NonNullable<RectContour["cut"]> {
+  let topLeft = Math.max(0, Math.min(cut.topLeft, width - 1, height - 1));
+  let topRight = Math.max(0, Math.min(cut.topRight, width - 1, height - 1));
+  let bottomRight = Math.max(0, Math.min(cut.bottomRight, width - 1, height - 1));
+  let bottomLeft = Math.max(0, Math.min(cut.bottomLeft, width - 1, height - 1));
+
+  const horizontalLimit = Math.max(width - 1, 0);
+  const verticalLimit = Math.max(height - 1, 0);
+
+  const topSum = topLeft + topRight;
+  if (topSum > horizontalLimit && topSum > 0) {
+    const scale = horizontalLimit / topSum;
+    topLeft = Math.floor(topLeft * scale);
+    topRight = Math.floor(topRight * scale);
+  }
+
+  const bottomSum = bottomLeft + bottomRight;
+  if (bottomSum > horizontalLimit && bottomSum > 0) {
+    const scale = horizontalLimit / bottomSum;
+    bottomLeft = Math.floor(bottomLeft * scale);
+    bottomRight = Math.floor(bottomRight * scale);
+  }
+
+  const leftSum = topLeft + bottomLeft;
+  if (leftSum > verticalLimit && leftSum > 0) {
+    const scale = verticalLimit / leftSum;
+    topLeft = Math.floor(topLeft * scale);
+    bottomLeft = Math.floor(bottomLeft * scale);
+  }
+
+  const rightSum = topRight + bottomRight;
+  if (rightSum > verticalLimit && rightSum > 0) {
+    const scale = verticalLimit / rightSum;
+    topRight = Math.floor(topRight * scale);
+    bottomRight = Math.floor(bottomRight * scale);
+  }
+
+  return {
+    topLeft,
+    topRight,
+    bottomRight,
+    bottomLeft
+  };
+}
+
+function buildAdjustedRectContour(
+  rect: RectContour,
+  delta: number
+): RectContour | null {
+  const x = rect.x - delta;
+  const y = rect.y - delta;
+  const width = rect.width + delta * 2;
+  const height = rect.height + delta * 2;
+
+  if (width < 1 || height < 1) {
+    return null;
+  }
+
+  let cut: RectContour["cut"] | undefined;
+  if (rect.cut) {
+    cut = normalizeRectCut(
+      {
+        topLeft: Math.max(rect.cut.topLeft + delta, 0),
+        topRight: Math.max(rect.cut.topRight + delta, 0),
+        bottomRight: Math.max(rect.cut.bottomRight + delta, 0),
+        bottomLeft: Math.max(rect.cut.bottomLeft + delta, 0)
+      },
+      width,
+      height
+    );
+  }
+
+  let radius: RectContour["radius"] | undefined;
+  if (rect.radius) {
+    radius = {
+      value: Math.max(
+        0,
+        Math.min(rect.radius.value + delta, Math.floor(Math.min(width, height) / 2))
+      )
+    };
+  }
+
+  return {
+    x,
+    y,
+    width,
+    height,
+    ...(cut ? { cut } : {}),
+    ...(radius && radius.value > 0 ? { radius } : {})
+  };
+}
+
+function getRectContourPatternPosition(
+  x: number,
+  y: number,
+  rect: Pick<RectContour, "x" | "y" | "width" | "height">
+): number {
+  const leftDistance = x - rect.x;
+  const topDistance = y - rect.y;
+  const rightDistance = rect.x + rect.width - 1 - x;
+  const bottomDistance = rect.y + rect.height - 1 - y;
+  const minimum = Math.min(leftDistance, topDistance, rightDistance, bottomDistance);
+
+  if (minimum === topDistance) {
+    return x - rect.x;
+  }
+
+  if (minimum === rightDistance) {
+    return rect.width + (y - rect.y);
+  }
+
+  if (minimum === bottomDistance) {
+    return rect.width + rect.height + (rect.x + rect.width - 1 - x);
+  }
+
+  return rect.width * 2 + rect.height + (rect.y + rect.height - 1 - y);
 }
 
 function sampleGradientStops(
@@ -400,6 +550,149 @@ function drawRectFill(
   }
 }
 
+function drawCircleFill(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
+  fill: RectFill
+): void {
+  const bounds = {
+    x: command.x - command.radius,
+    y: command.y - command.radius,
+    width: command.radius * 2 + 1,
+    height: command.radius * 2 + 1
+  };
+
+  for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+    for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+      const pointX = x + 0.5;
+      const pointY = y + 0.5;
+      const centerX = command.x + 0.5;
+      const centerY = command.y + 0.5;
+
+      if (Math.hypot(pointX - centerX, pointY - centerY) > command.radius) {
+        continue;
+      }
+
+      const color =
+        fill.kind === "solid"
+          ? fill.color
+          : fill.kind === "gradient-linear"
+            ? sampleGradientStops(
+                fill.stops,
+                resolveLinearGradientPosition(fill, bounds, x, y)
+              )
+            : sampleGradientStops(
+                fill.stops,
+                resolveRadialGradientPosition(fill, bounds, x, y)
+              );
+
+      if (color !== null) {
+        setPixel(pixels, drawnPixels, x, y, color, fill.alpha);
+      }
+    }
+  }
+}
+
+function getCircleStrokeBounds(
+  command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
+  stroke: StrokeAppearance
+): { x: number; y: number; width: number; height: number; innerRadius: number; outerRadius: number } {
+  const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
+
+  return {
+    x: command.x - command.radius - outer,
+    y: command.y - command.radius - outer,
+    width: (command.radius + outer) * 2 + 1,
+    height: (command.radius + outer) * 2 + 1,
+    innerRadius: Math.max(command.radius - inner, 0),
+    outerRadius: command.radius + outer
+  };
+}
+
+function drawCircleStroke(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
+  stroke: StrokeAppearance
+): void {
+  const bounds = getCircleStrokeBounds(command, stroke);
+  const centerX = command.x + 0.5;
+  const centerY = command.y + 0.5;
+  const averageRadius = (bounds.innerRadius + bounds.outerRadius) / 2;
+  const circumference = Math.max(1, Math.round(2 * Math.PI * averageRadius));
+
+  if (stroke.fill !== null) {
+    for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+      for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+        const pointX = x + 0.5;
+        const pointY = y + 0.5;
+        const distance = Math.hypot(pointX - centerX, pointY - centerY);
+
+        if (distance > bounds.outerRadius || distance <= bounds.innerRadius) {
+          continue;
+        }
+
+        const angle = Math.atan2(pointY - centerY, pointX - centerX);
+        const normalizedAngle = angle < 0 ? angle + Math.PI * 2 : angle;
+        const patternPosition = Math.round(
+          (normalizedAngle / (Math.PI * 2)) * circumference
+        );
+
+        if (
+          !getStrokePatternState(
+            stroke.style,
+            patternPosition,
+            stroke.width,
+            stroke.dashLength,
+            stroke.gapLength,
+            stroke.dotSpacing
+          )
+        ) {
+          continue;
+        }
+
+        const color =
+          stroke.fill.kind === "solid"
+            ? stroke.fill.color
+            : stroke.fill.kind === "gradient-linear"
+              ? sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveLinearGradientPosition(stroke.fill, bounds, x, y)
+                )
+              : sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveRadialGradientPosition(stroke.fill, bounds, x, y)
+                );
+
+        if (color !== null) {
+          setPixel(
+            pixels,
+            drawnPixels,
+            x,
+            y,
+            color,
+            stroke.alpha * stroke.fill.alpha
+          );
+        }
+      }
+    }
+  }
+
+  stroke.strokes.forEach((nestedStroke) => {
+    drawCircleStroke(
+      pixels,
+      drawnPixels,
+      {
+        x: command.x,
+        y: command.y,
+        radius: bounds.outerRadius
+      },
+      nestedStroke
+    );
+  });
+}
+
 function resolveStrokeExtents(
   width: number,
   align: "inside" | "center" | "outside"
@@ -508,7 +801,7 @@ function drawStrokeRectBand(
 }
 
 function buildStrokeEnvelopeRect(
-  rect: Pick<Extract<CompiledDrawCommand, { kind: "rect" }>, "x" | "y" | "width" | "height">,
+  rect: Pick<RectContour, "x" | "y" | "width" | "height">,
   stroke: StrokeAppearance
 ): { x: number; y: number; width: number; height: number; inner: number; outer: number } {
   const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
@@ -523,10 +816,10 @@ function buildStrokeEnvelopeRect(
   };
 }
 
-function drawRectStroke(
+function drawPlainRectStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
-  command: Pick<Extract<CompiledDrawCommand, { kind: "rect" }>, "x" | "y" | "width" | "height">,
+  command: Pick<RectContour, "x" | "y" | "width" | "height">,
   stroke: StrokeAppearance
 ): void {
   const outerRect = buildStrokeEnvelopeRect(command, stroke);
@@ -623,8 +916,100 @@ function drawRectStroke(
   }
 
   stroke.strokes.forEach((nestedStroke) => {
-    drawRectStroke(pixels, drawnPixels, outerRect, nestedStroke);
+    drawPlainRectStroke(pixels, drawnPixels, outerRect, nestedStroke);
   });
+}
+
+function drawContourAwareRectStroke(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: RectContour,
+  stroke: StrokeAppearance
+): void {
+  const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
+  const outerContour = buildAdjustedRectContour(command, outer);
+  const innerContour = buildAdjustedRectContour(command, -inner);
+
+  if (outerContour === null) {
+    return;
+  }
+
+  if (stroke.fill !== null) {
+    for (let y = outerContour.y; y < outerContour.y + outerContour.height; y += 1) {
+      for (let x = outerContour.x; x < outerContour.x + outerContour.width; x += 1) {
+        const pointX = x + 0.5;
+        const pointY = y + 0.5;
+
+        if (!isPointInsideRectContour(pointX, pointY, outerContour)) {
+          continue;
+        }
+
+        if (
+          innerContour !== null &&
+          isPointInsideRectContour(pointX, pointY, innerContour)
+        ) {
+          continue;
+        }
+
+        const patternPosition = getRectContourPatternPosition(x, y, outerContour);
+
+        if (
+          !getStrokePatternState(
+            stroke.style,
+            patternPosition,
+            stroke.width,
+            stroke.dashLength,
+            stroke.gapLength,
+            stroke.dotSpacing
+          )
+        ) {
+          continue;
+        }
+
+        const color =
+          stroke.fill.kind === "solid"
+            ? stroke.fill.color
+            : stroke.fill.kind === "gradient-linear"
+              ? sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveLinearGradientPosition(stroke.fill, outerContour, x, y)
+                )
+              : sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveRadialGradientPosition(stroke.fill, outerContour, x, y)
+                );
+
+        if (color !== null) {
+          setPixel(
+            pixels,
+            drawnPixels,
+            x,
+            y,
+            color,
+            stroke.alpha * stroke.fill.alpha
+          );
+        }
+      }
+    }
+  }
+
+  stroke.strokes.forEach((nestedStroke) => {
+    drawRectStroke(pixels, drawnPixels, outerContour, nestedStroke);
+  });
+}
+
+function drawRectStroke(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: RectContour,
+  stroke: StrokeAppearance
+): void {
+  if (!command.cut && !command.radius) {
+    drawPlainRectStroke(pixels, drawnPixels, command, stroke);
+    return;
+  }
+
+  drawContourAwareRectStroke(pixels, drawnPixels, command, stroke);
 }
 
 function drawCommand(
@@ -643,6 +1028,16 @@ function drawCommand(
     });
     command.strokes.forEach((stroke) => {
       drawRectStroke(pixels, drawnPixels, command, stroke);
+    });
+    return;
+  }
+
+  if (command.kind === "circle") {
+    command.fills.forEach((fill) => {
+      drawCircleFill(pixels, drawnPixels, command, fill);
+    });
+    command.strokes.forEach((stroke) => {
+      drawCircleStroke(pixels, drawnPixels, command, stroke);
     });
     return;
   }

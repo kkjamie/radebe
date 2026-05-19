@@ -171,6 +171,13 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "rect-inset 8",
         "  stroke 1 #d8f8ff",
         "",
+        "# Circular indicator glow",
+        "circle 220 28 10",
+        "  fill",
+        "    gradient-radial",
+        "      stop #d8f8ffcc 0",
+        "      stop #70c8e800 1",
+        "",
         "# Accent and baseline",
         "plot 28 24 #d8f8ff",
         "line 40 54 216 54 #70c8e8"
@@ -363,14 +370,43 @@ const exampleDocs: ExampleDoc[] = [
       }
     ]
   },
-  createComingSoonDoc({
+  {
     id: "circle",
     title: "Circle",
     navGroup: "Geometry",
-    summary: "Defines a circular coverage region for fills, overlays, and stroke-like treatments.",
-    args: ["center", "radius"],
-    childCommands: ["fill", "overlay", "stroke", "shadow"]
-  }),
+    summary:
+      "Defines a circular coverage region from a center point and radius. It now shares the current fill and stroke appearance model used by shape geometry.",
+    args: ["x", "y", "radius", "color shorthand", "fill"],
+    childCommands: ["fill", "stroke"],
+    notes: [
+      "The current center uses integer pixel coordinates.",
+      "Direct color shorthand lowers into an implicit solid fill.",
+      "Circle fill variants reuse the same solid, linear-gradient, and radial-gradient model as rectangles.",
+      "Circle strokes now use the shared `stroke` command model, including shorthand, align, style, and nested stroke support."
+    ],
+    examples: [
+      {
+        id: "circle-basic",
+        title: "Solid Circles",
+        summary: "A direct shorthand circle next to an expanded form with an explicit fill child.",
+        source: [
+          "sprite circle-demo",
+          "  size 384 192",
+          "  background #0f1318",
+          "",
+          "# Shorthand solid circle",
+          "circle 80 96 40 #d8f8ff",
+          "",
+          "# Expanded property form with explicit fill",
+          "circle",
+          "  x 256",
+          "  y 96",
+          "  radius 48",
+          "  fill solid #70c8e8"
+        ].join("\n")
+      }
+    ]
+  },
   createComingSoonDoc({
     id: "polygon",
     title: "Polygon",
@@ -400,7 +436,8 @@ const exampleDocs: ExampleDoc[] = [
       "Width and height must be positive integers.",
       "Direct color shorthand lowers into an implicit solid fill.",
       "`cut` and `radius` are geometry modifiers on the same base rectangle model.",
-      'A rectangle currently cannot use both `cut` and `radius` at the same time.'
+      'A rectangle currently cannot use both `cut` and `radius` at the same time.',
+      "Rectangle-backed strokes now follow cut and rounded contours instead of the plain rectangle envelope."
     ],
     examples: [
       {
@@ -482,6 +519,28 @@ const exampleDocs: ExampleDoc[] = [
           "    top-right 8",
           "    bottom-right 12",
           "    bottom-left 8"
+        ].join("\n")
+      },
+      {
+        id: "rect-contour-stroke",
+        title: "Contour-Aware Stroke",
+        summary: "Stroke now follows the modified rectangle silhouette instead of ignoring cut and radius.",
+        source: [
+          "sprite rect-stroke-contour-demo",
+          "  size 128 72",
+          "  background #0f1318",
+          "",
+          "# Rounded plate with a matching outline",
+          "rect 14 14 44 44 #18242c",
+          "  radius 8",
+          "  stroke 2 #d8f8ff",
+          "",
+          "# Chamfered plate with a contour-aware warning ring",
+          "rect 70 14 44 44 #18242c",
+          "  cut 6",
+          "  stroke",
+          "    width 2",
+          "    fill solid #ffcc88"
         ].join("\n")
       }
     ]
@@ -693,17 +752,45 @@ const exampleDocs: ExampleDoc[] = [
     title: "Stroke",
     navGroup: "Appearance",
     summary:
-      "Defines a generated stroked region around a rectangle-backed shape. The first slice supports solid, dashed, and dotted rectangle strokes with fill-based color.",
+      "Defines a generated stroked region around supported shapes. The current slice supports solid, dashed, and dotted strokes with fill-based color.",
     args: ["width", "color", "align", "style", "dash-length", "gap-length", "dot-spacing"],
     childCommands: ["fill"],
     notes: [
         "`stroke 2 white` is shorthand for width plus an implicit solid fill color.",
-        "Current rendering support is rectangle-backed only.",
+        "Current rendering support covers rectangle-backed shapes and circle geometry.",
         "Supported align values are `inside`, `center`, and `outside`.",
         "Supported style values are `solid`, `dashed`, and `dotted`.",
         "Nested `stroke` is supported on the generated stroke envelope in this first recursive slice."
       ],
     examples: [
+      {
+        id: "stroke-shape-showcase",
+        title: "All Supported Shapes",
+        summary: "One sprite showing every currently supported stroked shape type: plain rectangle, cut rectangle, rounded rectangle, and circle.",
+        source: [
+          "sprite stroke-shape-showcase",
+          "  size 448 264",
+          "  background #0f1318",
+          "",
+          "# Plain rectangle",
+          "rect 24 36 80 60 #18242c",
+          "  stroke 2 #d8f8ff",
+          "",
+          "# Cut rectangle",
+          "rect 132 36 80 60 #18242c",
+          "  cut 14",
+          "  stroke 2 #ffcc88",
+          "",
+          "# Rounded rectangle",
+          "rect 240 36 80 60 #18242c",
+          "  radius 14",
+          "  stroke 2 #70c8e8",
+          "",
+          "# Circle",
+          "circle 388 66 30 #18242c",
+          "  stroke 2 white"
+        ].join("\n")
+      },
       {
         id: "stroke-solid-basic",
         title: "Solid Stroke",

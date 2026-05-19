@@ -212,3 +212,36 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Rectangle authoring stays consistent around one base shape plus modifiers, the web docs/examples can collapse rounded and cut cases under the `rect` page, and future mixed-corner semantics remain available without committing to ambiguous precedence rules now.
 - Related tasks: T-030
 - Supersedes: N/A
+
+---
+
+### DEC-018: Land `circle` as a Fill-First Geometry Primitive
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The product spec already lists `circle` as part of the early geometry vocabulary, and M2 needed one more distinct shape that could reuse the existing shared fill pipeline without forcing a premature generalization of stroke behavior.
+- Decision: Implement the first `circle` slice with integer `x`, `y`, and `radius` geometry, color shorthand lowering, and the existing `fill` variants (`solid`, `gradient-linear`, and `gradient-radial`), while leaving circle-specific `stroke` support for a later shape-general stroke pass.
+- Consequences: The language gets a useful non-rectangular primitive immediately, renderer and docs stay aligned around the current fill model, and future stroke work can target circle and non-rect shapes deliberately instead of overextending the rectangle-backed stroke slice.
+- Related tasks: T-031
+- Supersedes: N/A
+
+---
+
+### DEC-019: Use a Shared `shape-appearance` Capability for Shape-Level `fill` and `stroke`
+- Date: `2026-05-18`
+- Status: Accepted
+- Context: The schema already distinguished command kinds, but shape appearance support still had to be enabled command-by-command, which made the implementation drift from the intended capability-based model.
+- Decision: Add a `shape-appearance` capability in the command schema so geometry commands can opt into shared `fill` and `stroke` children through capability matching, and route shape appearance compilation through a common compiler pass while keeping geometry-specific contour rendering where needed.
+- Consequences: `circle` and rectangle geometry now share the same appearance-child compilation model, future shape commands can adopt `fill` and `stroke` with less bespoke compiler plumbing, and renderer work can focus on contour support rather than child-schema duplication.
+- Related tasks: T-032
+- Supersedes: N/A
+
+---
+
+### DEC-020: Make Rectangle Stroke Contours Follow `cut` and `radius`
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: After `stroke` became shared across multiple shapes, the largest remaining fidelity gap was that rectangle-backed strokes still used the plain rectangle envelope instead of following cut and rounded-corner silhouettes.
+- Decision: Keep the existing band-based rectangle stroke path for unmodified rectangles, and add a contour-aware rectangle stroke path for `cut` and `radius` cases so stroke rendering follows the same modified silhouette as the underlying rectangle fill.
+- Consequences: Plain rectangle stroke behavior stays stable, modified rectangle strokes now visually match their geometry, and future refinement can focus on contour precision rather than basic modifier support.
+- Related tasks: T-033
+- Supersedes: N/A

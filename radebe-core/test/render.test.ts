@@ -177,6 +177,70 @@ test("compileDocument supports side-specific rect-inset overrides", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports circle shorthand and explicit fills", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 9 9\n  background transparent\n\ncircle 4 4 3 #70c8e8\ncircle\n  x 4\n  y 4\n  radius 2\n  fill solid #ffffff"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "circle",
+      lineNumber: 5,
+      x: 4,
+      y: 4,
+      radius: 3,
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: []
+    },
+    {
+      kind: "circle",
+      lineNumber: 6,
+      x: 4,
+      y: 4,
+      radius: 2,
+      fills: [{ kind: "solid", color: "#ffffff", alpha: 1 }],
+      strokes: []
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument supports circle strokes through the shared appearance model", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 11 11\n  background transparent\n\ncircle 5 5 3\n  stroke 1 white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "circle",
+      lineNumber: 5,
+      x: 5,
+      y: 5,
+      radius: 3,
+      fills: [],
+      strokes: [
+        {
+          kind: "stroke",
+          width: 1,
+          align: "center",
+          style: "solid",
+          alpha: 1,
+          dashLength: null,
+          gapLength: null,
+          dotSpacing: null,
+          fill: { kind: "solid", color: "white", alpha: 1 },
+          strokes: []
+        }
+      ]
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
 test("compileDocument lowers rectangle color shorthand into fill solid", () => {
   const parsed = parseSource({
     source:
@@ -687,6 +751,22 @@ test("compileDocument reports duplicate values across inline and child forms", (
   ]);
 });
 
+test("compileDocument requires circle fill coverage", () => {
+  const parsed = parseSource({
+    source: "sprite panel\n  size 5 5\n  background transparent\n\ncircle 2 2 1"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message: "The circle command requires a color shorthand, a fill child, or a stroke child.",
+      line: 5,
+      column: 1
+    }
+  ]);
+});
+
 test("renderDocument rasterizes plot and line commands into a sprite grid", () => {
   const parsed = parseSource({
     source:
@@ -817,6 +897,78 @@ test("renderDocument rasterizes rounded rectangles from radius-modified rects", 
   ]);
 });
 
+test("renderDocument rasterizes circle fills around the configured center", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 7 7\n  background transparent\n\ncircle 3 3 3 #ffffff"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    "...#...",
+    ".#####.",
+    ".#####.",
+    "#######",
+    ".#####.",
+    ".#####.",
+    "...#..."
+  ]);
+});
+
+test("renderDocument rasterizes circle gradients across the circle bounds", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n\ncircle 2 2 2\n  fill gradient-linear #ff0000 #0000ff"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, "#800080", null, null],
+    [null, "#bf0040", "#800080", "#4000bf", null],
+    ["#ff0000", "#bf0040", "#800080", "#4000bf", "#0000ff"],
+    [null, "#bf0040", "#800080", "#4000bf", null],
+    [null, null, "#800080", null, null]
+  ]);
+});
+
+test("renderDocument rasterizes solid circle strokes", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 9 9\n  background transparent\n\ncircle 4 4 3\n  stroke 1 white"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    ".........",
+    "....#....",
+    "..##.##..",
+    "..#...#..",
+    ".#.....#.",
+    "..#...#..",
+    "..##.##..",
+    "....#....",
+    "........."
+  ]);
+});
+
+test("renderDocument rasterizes dashed circle strokes", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 11 11\n  background transparent\n\ncircle 5 5 4\n  stroke width=1 color=white style=dashed dash-length=2 gap-length=1"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.equal(
+    result.artifact.rows.some((row) => row.includes("#")),
+    true
+  );
+  assert.equal(result.artifact.pixels[5]?.[5], null);
+});
+
 test("renderDocument applies multiple rectangle fills in order", () => {
   const parsed = parseSource({
     source:
@@ -945,6 +1097,44 @@ test("renderDocument rasterizes dashed rectangle strokes", () => {
     ".##.##..",
     ".##.##..",
     "........"
+  ]);
+});
+
+test("renderDocument makes rectangle strokes follow cut contours", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 7 7\n  background transparent\n\nrect 1 1 5 5\n  cut 2 0 2 0\n  stroke 1 white"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    ".......",
+    "..####.",
+    ".#...#.",
+    ".#...#.",
+    ".#..#..",
+    ".###...",
+    "......."
+  ]);
+});
+
+test("renderDocument makes rectangle strokes follow rounded contours", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 7 7\n  background transparent\n\nrect 1 1 5 5\n  radius 2\n  stroke 1 white"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    ".......",
+    "..#.#..",
+    ".#...#.",
+    ".......",
+    ".#...#.",
+    "..#.#..",
+    "......."
   ]);
 });
 
