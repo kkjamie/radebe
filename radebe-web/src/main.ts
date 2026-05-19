@@ -46,6 +46,7 @@ syntaxStyles.textContent = `
 .syntax-property-command { color: #f0b35f; font-weight: 700; }
 .syntax-property { color: #ffc66d; }
 .syntax-value { color: #d8e6b3; }
+.syntax-variable { color: #84e6a7; font-weight: 700; }
 .syntax-comment { color: #7f948a; font-style: italic; }
 .syntax-punctuation { color: #9d9183; }
 .syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
@@ -77,18 +78,45 @@ function highlightCommandToken(token: string): string {
   return spanSyntax("syntax-command", token);
 }
 
-function highlightArgumentToken(token: string): string {
+function isVariableUsageToken(token: string): boolean {
+  return /^\$[A-Za-z][A-Za-z0-9_-]*$/.test(token);
+}
+
+function highlightValueToken(token: string): string {
+  return isVariableUsageToken(token)
+    ? spanSyntax("syntax-variable", token)
+    : spanSyntax("syntax-value", token);
+}
+
+function highlightArgumentToken(
+  token: string,
+  context: { commandName: string; argumentIndex: number }
+): string {
   const equalsIndex = token.indexOf("=");
 
   if (equalsIndex > 0) {
     const key = token.slice(0, equalsIndex);
     const value = token.slice(equalsIndex + 1);
+    const valueClass =
+      context.commandName === "var" && key === "name"
+        ? "syntax-variable"
+        : isVariableUsageToken(value)
+          ? "syntax-variable"
+          : "syntax-value";
 
     return [
       spanSyntax("syntax-property", key),
       spanSyntax("syntax-punctuation", "="),
-      value.length === 0 ? "" : spanSyntax("syntax-value", value)
+      value.length === 0 ? "" : spanSyntax(valueClass, value)
     ].join("");
+  }
+
+  if (context.commandName === "var" && context.argumentIndex === 0) {
+    return spanSyntax("syntax-variable", token);
+  }
+
+  if (isVariableUsageToken(token)) {
+    return spanSyntax("syntax-variable", token);
   }
 
   const definition = getCommandDefinition(token);
@@ -97,7 +125,7 @@ function highlightArgumentToken(token: string): string {
     return spanSyntax("syntax-child-command", token);
   }
 
-  return spanSyntax("syntax-value", token);
+  return highlightValueToken(token);
 }
 
 function highlightSourceLine(line: string): string {
@@ -107,6 +135,8 @@ function highlightSourceLine(line: string): string {
 
   const tokens = line.match(/\s+|\S+/g) ?? [];
   let hasCommandToken = false;
+  let commandName = "";
+  let argumentIndex = 0;
 
   return tokens
     .map((token) => {
@@ -116,10 +146,16 @@ function highlightSourceLine(line: string): string {
 
       if (!hasCommandToken) {
         hasCommandToken = true;
+        commandName = token;
         return highlightCommandToken(token);
       }
 
-      return highlightArgumentToken(token);
+      const highlighted = highlightArgumentToken(token, {
+        commandName,
+        argumentIndex
+      });
+      argumentIndex += 1;
+      return highlighted;
     })
     .join("");
 }
@@ -153,12 +189,17 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "  size 256 80",
         "  background transparent",
         "",
+        "var pad 8",
+        "var panel-fill #101820",
+        "var accent #70c8e8",
+        "var glow #d8f8ff",
+        "",
         "# Base button shape",
-        "rect 8 8 240 64",
-        "  fill gradient-linear #101820 #365266",
+        "rect $pad $pad 240 64",
+        "  fill gradient-linear $panel-fill #365266",
         "",
         "# Radial glow from the left side",
-        "rect 8 8 240 64",
+        "rect $pad $pad 240 64",
         "  fill",
         "    gradient-radial",
         "      center-x 0.22",
@@ -168,8 +209,8 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "      stop #70c8e800 1",
         "",
         "# Outer frame stroke",
-        "rect-inset 8",
-        "  stroke 1 #d8f8ff",
+        "rect-inset $pad",
+        "  stroke 1 $glow",
         "",
         "# Circular indicator glow",
         "circle 220 28 10",
@@ -179,8 +220,8 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "      stop #70c8e800 1",
         "",
         "# Accent and baseline",
-        "plot 28 24 #d8f8ff",
-        "line 40 54 216 54 #70c8e8"
+        "plot 28 24 $glow",
+        "line 40 54 216 54 $accent"
       ].join("\n")
     }
   ]
@@ -1146,14 +1187,63 @@ const exampleDocs: ExampleDoc[] = [
     childCommands: ["draw", "geometry", "appearance"],
     notes: ["Planned mask modes include intersect, subtract, replace, and add."]
   }),
-  createComingSoonDoc({
+  {
     id: "vars",
     title: "Vars",
     navGroup: "Structure",
-    summary: "Defines future named values or reusable variables for larger sprite sources.",
-    args: [],
-    childCommands: ["variable definitions"]
-  })
+    summary:
+      "Defines reusable file-scoped values for later commands. Use root `var` declarations for small files or a `vars` block when grouping makes the source easier to scan.",
+    args: ["var name value", "$name usage"],
+    childCommands: ["vars", "var"],
+    notes: [
+      "`var` is the semantic declaration command and can appear at the file root after the sprite header.",
+      "`vars` is an optional grouping command that accepts `var` children.",
+      "Variables must be defined before they are used.",
+      "A variable reference must occupy a whole value token such as `$accent`; embedded expressions remain future work."
+    ],
+    examples: [
+      {
+        id: "vars-root",
+        title: "Root Variables",
+        summary: "Small files can keep declarations directly at root before the commands that use them.",
+        source: [
+          "sprite vars-root-demo",
+          "  size 96 40",
+          "  background transparent",
+          "",
+          "var pad 6",
+          "var panel-fill #101820",
+          "var accent #70c8e8",
+          "var glow #d8f8ff",
+          "",
+          "rect-inset $pad $panel-fill",
+          "  stroke 2 $accent",
+          "",
+          "line 16 28 80 28 $glow"
+        ].join("\n")
+      },
+      {
+        id: "vars-group",
+        title: "Grouped Variables",
+        summary: "A `vars` block keeps larger token sets together without changing how references work.",
+        source: [
+          "sprite vars-group-demo",
+          "  size 120 56",
+          "  background #0f1318",
+          "",
+          "vars",
+          "  var inset 8",
+          "  var stroke-size 2",
+          "  var frame #d8f8ff",
+          "  var fill-color #18242c",
+          "",
+          "rect-inset $inset $fill-color",
+          "  cut 6",
+          "  stroke $stroke-size $frame"
+        ].join("\n")
+      }
+    ]
+  }
 ];
 
 const pages: PageDefinition[] = [

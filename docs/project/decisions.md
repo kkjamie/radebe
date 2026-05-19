@@ -311,3 +311,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The language gets a crisp contour-derived shadow model now for rectangles, circles, and polygons, future blur support has a clear extension point without a surface rename, and the current slice stays aligned with the renderer's pixel-perfect no-antialiasing direction.
 - Related tasks: T-039
 - Supersedes: N/A
+
+---
+
+### DEC-027: Make `var` The Declaration Command And `vars` An Optional Group
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: The language needed reusable values without making small files pay an unnecessary grouping tax or weakening the schema-driven command model with dynamic child command names.
+- Decision: Support root-level `var name value` declarations as the real semantic variable command, support `vars` only as an optional structural grouping wrapper for `var` children, resolve variables top-to-bottom before use, and limit the first slice to whole-token references such as `$accent`.
+- Consequences: Small files can stay terse, larger files can group variables when helpful, diagnostics remain schema-backed, and embedded expression forms such as `left+$pad` remain a future expression-system concern.
+- Related tasks: T-040
+- Supersedes: N/A

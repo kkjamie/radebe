@@ -167,6 +167,7 @@ Structural Commands:
   mask
   path
   draw
+  var
   vars
 ```
 
@@ -289,6 +290,43 @@ Those belong to the schema registry and semantic resolver.
   - `center-y`
 - Planned expressions include forms such as `left+8`, `right-8`, and `bottom-12`.
 - MVP may start with integer coordinates only.
+
+## Variables
+- `var` defines a file-scoped reusable value for later commands.
+- `var` may appear at the file root after the `sprite` header and before or between draw commands.
+- `vars` is an optional structural grouping command for multiple `var` children.
+- Variables resolve top-to-bottom and must be defined before use.
+- The current implementation supports whole-token references such as `$accent`, including named argument values like `color=$accent`.
+- Embedded expression references such as `left+$pad` are intentionally deferred until the expression system lands.
+
+Examples:
+
+```text
+sprite panel
+  size 128 48
+  background transparent
+
+var pad 6
+var accent #70c8e8
+var panel-fill #101820
+
+rect-inset $pad $panel-fill
+  stroke 2 $accent
+```
+
+```text
+sprite panel
+  size 128 48
+  background transparent
+
+vars
+  var pad 6
+  var accent #70c8e8
+  var panel-fill #101820
+
+rect-inset $pad $panel-fill
+  stroke 2 $accent
+```
 
 ## Geometry Model
 Geometry defines coverage or edges.
@@ -471,6 +509,7 @@ line 16 24 220 24 #70c8e8
 - The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
 - The current implemented appearance slice also includes hard-edged `shadow` on rectangle-backed shapes, circles, and polygons with `x`, `y`, `spread`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur` remains deferred.
+- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse.
 - The current stroke renderer supports rectangle-backed and circle-backed shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 
 ## Important Non-Goals for MVP

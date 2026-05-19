@@ -23,7 +23,9 @@ export const FILE_DEFINITION: CommandDefinition = {
     "rect-inset",
     "circle",
     "polygon",
-    "path"
+    "path",
+    "var",
+    "vars"
   ]
 };
 
@@ -112,6 +114,17 @@ const commandDefinitions = [
     propertyArgs: ["name"],
     shorthandSchema: ["name"],
     allowedChildCommands: ["point", "stroke"]
+  },
+  {
+    name: "var",
+    kind: "structural",
+    propertyArgs: ["name", "value"],
+    shorthandSchema: ["name", "value"]
+  },
+  {
+    name: "vars",
+    kind: "structural",
+    allowedChildCommands: ["var"]
   },
   {
     name: "point",
@@ -203,6 +216,7 @@ const commandDefinitions = [
     allowedChildCommands: ["color", "position"]
   },
   createSingleValuePropertyDefinition("name"),
+  createSingleValuePropertyDefinition("value"),
   createSingleValuePropertyDefinition("width"),
   createSingleValuePropertyDefinition("height"),
   createSingleValuePropertyDefinition("alpha"),

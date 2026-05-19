@@ -347,6 +347,98 @@ test("compileDocument supports path as a stroke-only polyline", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument resolves root var declarations before later commands", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 6 4\n  background transparent\n\nvar pad 1\nvar panel-fill #18242c\nvar accent #70c8e8\n\nrect-inset $pad $panel-fill\n  stroke 1 $accent"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 9,
+      x: 1,
+      y: 1,
+      width: 4,
+      height: 2,
+      fills: [{ kind: "solid", color: "#18242c", alpha: 1 }],
+      strokes: [
+        {
+          kind: "stroke",
+          width: 1,
+          align: "center",
+          style: "solid",
+          alpha: 1,
+          dashLength: null,
+          gapLength: null,
+          dotSpacing: null,
+          fill: { kind: "solid", color: "#70c8e8", alpha: 1 },
+          strokes: []
+        }
+      ],
+      sourceCommandName: "rect-inset"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument resolves grouped vars and named argument usage", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 3\n  background transparent\n\nvars\n  var accent #ffffff\n  var x-pos 2\n\nplot x=$x-pos y=1 color=$accent"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    { kind: "plot", lineNumber: 9, x: 2, y: 1, color: "#ffffff" }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument allows vars to be defined between draw commands", () => {
+  const result = renderSource({
+    source:
+      "sprite panel\n  size 3 1\n  background transparent\n\nvar first #ffffff\nplot 0 0 $first\nvar second #70c8e8\nplot 2 0 $second"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    ["#ffffff", null, "#70c8e8"]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument reports variable definition and usage diagnostics", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 3\n  background transparent\n\nvar accent #ffffff\nvar accent #70c8e8\nplot 1 1 $missing\nplot left+$accent 1 white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, []);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message: 'Variable "$accent" is already defined.',
+      line: 6,
+      column: 1
+    },
+    {
+      stage: "compiler",
+      message: 'Unknown variable "$missing".',
+      line: 7,
+      column: 1
+    },
+    {
+      stage: "compiler",
+      message:
+        'Variable references must occupy a whole value token, such as "$accent". Received "left+$accent".',
+      line: 8,
+      column: 1
+    }
+  ]);
+});
+
 test("compileDocument requires stroke visibility for path", () => {
   const parsed = parseSource({
     source:
