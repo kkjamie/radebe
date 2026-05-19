@@ -21,7 +21,8 @@ export const FILE_DEFINITION: CommandDefinition = {
     "rect",
     "rect-absolute",
     "rect-inset",
-    "circle"
+    "circle",
+    "polygon"
   ]
 };
 
@@ -96,6 +97,19 @@ const commandDefinitions = [
     propertyArgs: ["x", "y", "radius", "color"],
     shorthandSchema: ["x", "y", "radius", "color"],
     allowedChildCapabilities: ["shape-appearance"]
+  },
+  {
+    name: "polygon",
+    kind: "geometry",
+    propertyArgs: ["color"],
+    allowedChildCapabilities: ["shape-appearance"],
+    allowedChildCommands: ["point"]
+  },
+  {
+    name: "point",
+    kind: "structural",
+    propertyArgs: ["x", "y"],
+    shorthandSchema: ["x", "y"]
   },
   {
     name: "cut",

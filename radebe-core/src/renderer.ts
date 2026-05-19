@@ -5,6 +5,7 @@ import type {
   CompiledDocument,
   CompiledDrawCommand,
   LinearGradientFill,
+  PolygonPoint,
   RadialGradientFill,
   RectFill,
   PipelineResult,
@@ -594,6 +595,217 @@ function drawCircleFill(
   }
 }
 
+function getPolygonBounds(
+  points: PolygonPoint[]
+): { x: number; y: number; width: number; height: number } {
+  const xValues = points.map((point) => point.x);
+  const yValues = points.map((point) => point.y);
+  const minX = Math.min(...xValues);
+  const maxX = Math.max(...xValues);
+  const minY = Math.min(...yValues);
+  const maxY = Math.max(...yValues);
+
+  return {
+    x: minX,
+    y: minY,
+    width: Math.max(maxX - minX, 1),
+    height: Math.max(maxY - minY, 1)
+  };
+}
+
+type PolygonStrokeBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  inner: number;
+  outer: number;
+};
+
+type ClosestPolygonEdgeSample = {
+  distance: number;
+  perimeterPosition: number;
+};
+
+function getPolygonStrokeBounds(
+  points: PolygonPoint[],
+  stroke: StrokeAppearance
+): PolygonStrokeBounds {
+  const bounds = getPolygonBounds(points);
+  const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
+
+  return {
+    x: bounds.x - outer,
+    y: bounds.y - outer,
+    width: bounds.width + outer * 2,
+    height: bounds.height + outer * 2,
+    inner,
+    outer
+  };
+}
+
+function getDistanceToSegment(
+  pointX: number,
+  pointY: number,
+  start: PolygonPoint,
+  end: PolygonPoint
+): { distance: number; projection: number } {
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
+  const lengthSquared = deltaX * deltaX + deltaY * deltaY;
+
+  if (lengthSquared === 0) {
+    return {
+      distance: Math.hypot(pointX - start.x, pointY - start.y),
+      projection: 0
+    };
+  }
+
+  const projection = clampUnit(
+    ((pointX - start.x) * deltaX + (pointY - start.y) * deltaY) / lengthSquared
+  );
+  const closestX = start.x + deltaX * projection;
+  const closestY = start.y + deltaY * projection;
+
+  return {
+    distance: Math.hypot(pointX - closestX, pointY - closestY),
+    projection
+  };
+}
+
+function getClosestPolygonEdgeSample(
+  pointX: number,
+  pointY: number,
+  points: PolygonPoint[]
+): ClosestPolygonEdgeSample {
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let bestPerimeterPosition = 0;
+  let traversedLength = 0;
+
+  for (let index = 0; index < points.length; index += 1) {
+    const start = points[index]!;
+    const end = points[(index + 1) % points.length]!;
+    const segmentLength = Math.hypot(end.x - start.x, end.y - start.y);
+    const sample = getDistanceToSegment(pointX, pointY, start, end);
+
+    if (sample.distance < bestDistance) {
+      bestDistance = sample.distance;
+      bestPerimeterPosition = traversedLength + segmentLength * sample.projection;
+    }
+
+    traversedLength += segmentLength;
+  }
+
+  return {
+    distance: bestDistance,
+    perimeterPosition: Math.round(bestPerimeterPosition)
+  };
+}
+
+function drawPolygonFill(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
+  fill: RectFill
+): void {
+  const bounds = getPolygonBounds(command.points);
+
+  for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+    for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+      const pointX = x + 0.5;
+      const pointY = y + 0.5;
+
+      if (!isPointInsidePolygon(pointX, pointY, command.points)) {
+        continue;
+      }
+
+      const color =
+        fill.kind === "solid"
+          ? fill.color
+          : fill.kind === "gradient-linear"
+            ? sampleGradientStops(
+                fill.stops,
+                resolveLinearGradientPosition(fill, bounds, x, y)
+              )
+            : sampleGradientStops(
+                fill.stops,
+                resolveRadialGradientPosition(fill, bounds, x, y)
+              );
+
+      if (color !== null) {
+        setPixel(pixels, drawnPixels, x, y, color, fill.alpha);
+      }
+    }
+  }
+}
+
+function drawPolygonStroke(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
+  stroke: StrokeAppearance
+): void {
+  const bounds = getPolygonStrokeBounds(command.points, stroke);
+
+  if (stroke.fill !== null) {
+    for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+      for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+        const pointX = x + 0.5;
+        const pointY = y + 0.5;
+        const inside = isPointInsidePolygon(pointX, pointY, command.points);
+        const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, command.points);
+        const inInnerBand = inside && bounds.inner > 0 && closestEdge.distance <= bounds.inner;
+        const inOuterBand = !inside && bounds.outer > 0 && closestEdge.distance <= bounds.outer;
+
+        if (!inInnerBand && !inOuterBand) {
+          continue;
+        }
+
+        if (
+          !getStrokePatternState(
+            stroke.style,
+            closestEdge.perimeterPosition,
+            stroke.width,
+            stroke.dashLength,
+            stroke.gapLength,
+            stroke.dotSpacing
+          )
+        ) {
+          continue;
+        }
+
+        const color =
+          stroke.fill.kind === "solid"
+            ? stroke.fill.color
+            : stroke.fill.kind === "gradient-linear"
+              ? sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveLinearGradientPosition(stroke.fill, bounds, x, y)
+                )
+              : sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveRadialGradientPosition(stroke.fill, bounds, x, y)
+                );
+
+        if (color !== null) {
+          setPixel(
+            pixels,
+            drawnPixels,
+            x,
+            y,
+            color,
+            stroke.alpha * stroke.fill.alpha
+          );
+        }
+      }
+    }
+  }
+
+  stroke.strokes.forEach((nestedStroke) => {
+    drawPolygonStroke(pixels, drawnPixels, command, nestedStroke);
+  });
+}
+
 function getCircleStrokeBounds(
   command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
   stroke: StrokeAppearance
@@ -1038,6 +1250,16 @@ function drawCommand(
     });
     command.strokes.forEach((stroke) => {
       drawCircleStroke(pixels, drawnPixels, command, stroke);
+    });
+    return;
+  }
+
+  if (command.kind === "polygon") {
+    command.fills.forEach((fill) => {
+      drawPolygonFill(pixels, drawnPixels, command, fill);
+    });
+    command.strokes.forEach((stroke) => {
+      drawPolygonStroke(pixels, drawnPixels, command, stroke);
     });
     return;
   }

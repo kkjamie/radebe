@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-05-18`
+Last updated: `2026-05-19`
 
 ## Planning Horizon
 - Current: `2026-05-17` to `2026-05-24`
@@ -21,9 +21,9 @@ Last updated: `2026-05-18`
 
 ## Current Focus
 - M1 Gate C remains passed with the shared core/web render contract, SEA packaging pipeline, and Unity payload install/update plus smoke helper baseline in place.
-- The recovered source product spec has now been realigned in code through a schema-backed `sprite` header block, root-level `plot` and `line` commands, rectangle geometry spanning `rect`, `rect-absolute`, `rect-inset`, and child `cut` plus child `radius` modifiers, the first `circle` geometry primitive, filled shapes with `solid`, `gradient-linear`, and `gradient-radial` appearance variants, explicit per-pass `alpha` on `fill` and `stroke`, a `shape-appearance` capability path that lets geometry commands opt into shared `fill` / `stroke` children, circle stroke support, rectangle stroke contours that now follow `cut` and `radius` silhouettes, and a shared sprite-grid render artifact consumed by `radebe-core`, `radebe-cli`, `radebe-web`, and the SEA smoke path.
+- The recovered source product spec has now been realigned in code through a schema-backed `sprite` header block, root-level `plot` and `line` commands, rectangle geometry spanning `rect`, `rect-absolute`, `rect-inset`, and child `cut` plus child `radius` modifiers, the first `circle` geometry primitive, a `polygon` geometry slice using whitespace-separated `x y` point pairs or canonical child `point` nodes, filled shapes with `solid`, `gradient-linear`, and `gradient-radial` appearance variants, explicit per-pass `alpha` on `fill` and `stroke`, a `shape-appearance` capability path that lets geometry commands opt into shared `fill` / `stroke` children, circle stroke support, polygon stroke support, rectangle stroke contours that now follow `cut` and `radius` silhouettes, and a shared sprite-grid render artifact consumed by `radebe-core`, `radebe-cli`, `radebe-web`, and the SEA smoke path.
 - The web example surface now treats rounded and cut corners as part of the main `rect` story instead of separate geometry pages, which keeps the current authoring model aligned with the implemented modifier-based shape semantics.
-- M2 Gate A and Gate B now have working end-to-end evidence; the most natural next step is returning to Gate C to re-exercise the packaged CLI bridge from Unity against the richer spec-aligned language slice now that `circle` joins the current geometry set, shape appearance attachment is capability-driven, and rectangle strokes follow modifier-aware contours.
+- M2 Gate A and Gate B now have working end-to-end evidence; the most natural next step is returning to Gate C to re-exercise the packaged CLI bridge from Unity against the richer spec-aligned language slice now that `circle` and strokable `polygon` join the current geometry set, shape appearance attachment is capability-driven, and rectangle strokes follow modifier-aware contours.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.

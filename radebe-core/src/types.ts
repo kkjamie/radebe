@@ -146,11 +146,25 @@ export interface CircleCommand {
   strokes: StrokeAppearance[];
 }
 
+export interface PolygonPoint {
+  x: number;
+  y: number;
+}
+
+export interface PolygonCommand {
+  kind: "polygon";
+  lineNumber: number;
+  points: PolygonPoint[];
+  fills: RectFill[];
+  strokes: StrokeAppearance[];
+}
+
 export type CompiledDrawCommand =
   | PlotCommand
   | LineCommand
   | RectCommand
-  | CircleCommand;
+  | CircleCommand
+  | PolygonCommand;
 
 export interface CompiledDocument {
   kind: "compiled-document";

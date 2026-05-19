@@ -241,6 +241,76 @@ test("compileDocument supports circle strokes through the shared appearance mode
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports polygon shorthand and point children without comma-separated pairs", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon 1 1 7 1 4 6 #70c8e8\npolygon\n  point 1 7\n  point 4 3\n  point 7 7\n  fill solid #ffffff"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "polygon",
+      lineNumber: 5,
+      points: [
+        { x: 1, y: 1 },
+        { x: 7, y: 1 },
+        { x: 4, y: 6 }
+      ],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: []
+    },
+    {
+      kind: "polygon",
+      lineNumber: 6,
+      points: [
+        { x: 1, y: 7 },
+        { x: 4, y: 3 },
+        { x: 7, y: 7 }
+      ],
+      fills: [{ kind: "solid", color: "#ffffff", alpha: 1 }],
+      strokes: []
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument supports polygon strokes through the shared appearance model", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\npolygon 1 1 6 1 3 6\n  stroke 1 white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "polygon",
+      lineNumber: 5,
+      points: [
+        { x: 1, y: 1 },
+        { x: 6, y: 1 },
+        { x: 3, y: 6 }
+      ],
+      fills: [],
+      strokes: [
+        {
+          kind: "stroke",
+          width: 1,
+          align: "center",
+          style: "solid",
+          alpha: 1,
+          dashLength: null,
+          gapLength: null,
+          dotSpacing: null,
+          fill: { kind: "solid", color: "white", alpha: 1 },
+          strokes: []
+        }
+      ]
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
 test("compileDocument lowers rectangle color shorthand into fill solid", () => {
   const parsed = parseSource({
     source:
@@ -933,6 +1003,54 @@ test("renderDocument rasterizes circle gradients across the circle bounds", () =
   ]);
 });
 
+test("renderDocument rasterizes polygon fills from whitespace-separated point pairs", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\npolygon 1 1 7 1 4 7 #ffffff"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    "........",
+    ".######.",
+    "..####..",
+    "..####..",
+    "...##...",
+    "...##...",
+    "........",
+    "........"
+  ]);
+});
+
+test("renderDocument rasterizes polygon gradients across the polygon bounds", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\npolygon\n  point 1 1\n  point 7 1\n  point 4 7\n  fill gradient-linear #ff0000 #0000ff"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.equal(result.artifact.pixels[1]?.[1], "#ff0000");
+  assert.equal(result.artifact.pixels[1]?.[6], "#0000ff");
+  assert.equal(result.artifact.pixels[3]?.[3], "#990066");
+  assert.equal(result.artifact.pixels[0]?.[0], null);
+});
+
+test("renderDocument rasterizes solid polygon strokes", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\npolygon 1 1 7 1 4 7\n  stroke 1 white"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.equal(result.artifact.pixels[1]?.[1], "#ffffff");
+  assert.equal(result.artifact.pixels[1]?.[6], "#ffffff");
+  assert.equal(result.artifact.pixels[6]?.[3], "#ffffff");
+  assert.equal(result.artifact.pixels[3]?.[3], null);
+});
+
 test("renderDocument rasterizes solid circle strokes", () => {
   const parsed = parseSource({
     source:
@@ -1129,11 +1247,11 @@ test("renderDocument makes rectangle strokes follow rounded contours", () => {
 
   assert.deepEqual(result.artifact.rows, [
     ".......",
-    "..#.#..",
+    "..###..",
     ".#...#.",
-    ".......",
     ".#...#.",
-    "..#.#..",
+    ".#...#.",
+    "..###..",
     "......."
   ]);
 });

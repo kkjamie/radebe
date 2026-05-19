@@ -1,7 +1,7 @@
 # Product Spec
 
 Owner: `Main Thread`
-Last updated: `2026-05-18`
+Last updated: `2026-05-19`
 
 ## Product Summary
 - Radebe is a language and toolchain for authoring procedural UI sprites as text-first source files that compile into raster outputs and optional metadata.
@@ -301,6 +301,8 @@ Initial geometry types discussed in the recovered spec and current direction:
 - `rect-inset <amount>`
 - `rect-absolute <x> <y> <w> <h>`
 - `circle <x> <y> <radius>`
+- `polygon <x1> <y1> <x2> <y2> <x3> <y3> ...`
+- `polygon` with child `point <x> <y>`
 - `rect` with child `cut` or child `radius`
 - `path <name?>`
 - `shape <name?>`
@@ -405,7 +407,6 @@ Deferred features:
 - stroke joins
 - stroke caps
 - arbitrary line angles
-- polygon fills
 - path winding rules
 - subpixel coordinates
 

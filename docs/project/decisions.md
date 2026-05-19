@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-18`
+Last updated: `2026-05-19`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -244,4 +244,26 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Keep the existing band-based rectangle stroke path for unmodified rectangles, and add a contour-aware rectangle stroke path for `cut` and `radius` cases so stroke rendering follows the same modified silhouette as the underlying rectangle fill.
 - Consequences: Plain rectangle stroke behavior stays stable, modified rectangle strokes now visually match their geometry, and future refinement can focus on contour precision rather than basic modifier support.
 - Related tasks: T-033
+- Supersedes: N/A
+
+---
+
+### DEC-021: Keep The First `polygon` Slice On Whitespace-Separated Point Syntax
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: The language direction already listed `polygon`, but the repo had not introduced any comma-delimited tuple syntax and needed to choose whether polygon should be the first exception.
+- Decision: Land the first `polygon` geometry slice using either flat whitespace-separated `x y` point pairs or canonical child `point` commands, keep color shorthand lowering into `fill`, and defer polygon `stroke` until explicit contour semantics are designed.
+- Consequences: Polygon authoring stays consistent with the parser's current whitespace token model, the compiler avoids a one-off comma tuple grammar, and future path or polygon stroke work can build on the same point representation without inheriting premature join behavior.
+- Related tasks: T-034
+- Supersedes: N/A
+
+---
+
+### DEC-022: Add Polygon To The Shared `stroke` Model With Edge-Distance Contour Sampling
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: After the first polygon fill slice landed, the next question was whether polygon should remain fill-only until a future `path` system or join model existed.
+- Decision: Extend `polygon` to accept the shared `stroke` command now, and render its stroke as an edge-distance contour band sampled around the polygon perimeter using the existing align, style, and fill rules.
+- Consequences: Polygon authoring now matches the shared shape appearance model more closely, the first stroke behavior is useful without introducing comma tuple syntax or a full path system, and future work can refine joins or nested-envelope semantics without changing the surface syntax again.
+- Related tasks: T-035
 - Supersedes: N/A

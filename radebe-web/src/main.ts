@@ -407,14 +407,72 @@ const exampleDocs: ExampleDoc[] = [
       }
     ]
   },
-  createComingSoonDoc({
+  {
     id: "polygon",
     title: "Polygon",
     navGroup: "Geometry",
-    summary: "Defines a polygon coverage region for later complex panels and badges.",
-    args: ["point list"],
-    childCommands: ["fill", "overlay", "stroke", "shadow"]
-  }),
+    summary:
+      "Defines a polygon coverage region from at least three points. It now supports the shared fill and stroke appearance model while keeping the syntax on the same whitespace-based token rules as the rest of the language.",
+    args: ["x y point pairs", "optional color shorthand"],
+    childCommands: ["point", "fill", "stroke"],
+    notes: [
+      "Inline shorthand uses whitespace-separated `x y` pairs, not comma-separated tuples.",
+      "The canonical readable form is repeated `point` children under `polygon`.",
+      "A trailing color shorthand lowers into an implicit solid fill.",
+      "Polygon stroke now uses the shared `stroke` command model, including align, style, and gradient fill support."
+    ],
+    examples: [
+      {
+        id: "polygon-basic",
+        title: "Inline Point Pairs",
+        summary: "A compact wedge using flat whitespace-separated point pairs and trailing color shorthand.",
+        source: [
+          "sprite polygon-demo",
+          "  size 96 64",
+          "  background transparent",
+          "",
+          "# Compact shorthand with a trailing color",
+          "polygon 12 10 76 10 56 50 24 50 #18242c"
+        ].join("\n")
+      },
+      {
+        id: "polygon-gradient",
+        title: "Expanded Point Children",
+        summary: "The expanded form reads more clearly in larger files and works with the shared fill variants.",
+        source: [
+          "sprite polygon-gradient-demo",
+          "  size 120 72",
+          "  background transparent",
+          "",
+          "polygon",
+          "  point 16 12",
+          "  point 92 12",
+          "  point 104 32",
+          "  point 64 56",
+          "  point 20 44",
+          "  fill gradient-linear #101820 #70c8e8"
+        ].join("\n")
+      },
+      {
+        id: "polygon-stroke",
+        title: "Polygon Stroke",
+        summary: "A stroke-only polygon wedge using the same appearance model as the other supported shapes.",
+        source: [
+          "sprite polygon-stroke-demo",
+          "  size 120 72",
+          "  background #0f1318",
+          "",
+          "polygon",
+          "  point 16 14",
+          "  point 92 14",
+          "  point 104 32",
+          "  point 62 58",
+          "  point 20 44",
+          "  stroke 2 #d8f8ff"
+        ].join("\n")
+      }
+    ]
+  },
   createComingSoonDoc({
     id: "path",
     title: "Path",
@@ -757,7 +815,7 @@ const exampleDocs: ExampleDoc[] = [
     childCommands: ["fill"],
     notes: [
         "`stroke 2 white` is shorthand for width plus an implicit solid fill color.",
-        "Current rendering support covers rectangle-backed shapes and circle geometry.",
+        "Current rendering support covers rectangle-backed shapes, circle geometry, and polygon geometry.",
         "Supported align values are `inside`, `center`, and `outside`.",
         "Supported style values are `solid`, `dashed`, and `dotted`.",
         "Nested `stroke` is supported on the generated stroke envelope in this first recursive slice."
@@ -766,10 +824,10 @@ const exampleDocs: ExampleDoc[] = [
       {
         id: "stroke-shape-showcase",
         title: "All Supported Shapes",
-        summary: "One sprite showing every currently supported stroked shape type: plain rectangle, cut rectangle, rounded rectangle, and circle.",
+        summary: "One sprite showing every currently supported stroked shape type: plain rectangle, cut rectangle, rounded rectangle, circle, and polygon.",
         source: [
           "sprite stroke-shape-showcase",
-          "  size 448 264",
+          "  size 568 264",
           "  background #0f1318",
           "",
           "# Plain rectangle",
@@ -788,7 +846,11 @@ const exampleDocs: ExampleDoc[] = [
           "",
           "# Circle",
           "circle 388 66 30 #18242c",
-          "  stroke 2 white"
+          "  stroke 2 white",
+          "",
+          "# Polygon",
+          "polygon 456 36 528 36 540 66 494 96 452 78 #18242c",
+          "  stroke 2 #ff8f70"
         ].join("\n")
       },
       {

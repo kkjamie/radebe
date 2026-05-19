@@ -1,7 +1,7 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-05-18`
+Last updated: `2026-05-19`
 
 Use this as the single source of truth for active execution state.
 
@@ -35,6 +35,8 @@ Use this as the single source of truth for active execution state.
 | T-031 | Add the first `circle` geometry primitive with shared fill variants | M2 | Gate B | P1 | Done | `t-031-circle-geometry` | None | Hand off to the next language thread for either circle-aware stroke support or modifier-aware rectangle stroke contours now that `circle` supports shorthand or explicit `fill` with solid, linear-gradient, and radial-gradient variants through the shared core, CLI, and web docs/playground flow |
 | T-032 | Make shape appearance children capability-driven and extend `stroke` to `circle` | M2 | Gate B | P1 | Done | `t-032-shape-stroke-followup` | None | Hand off to the next language thread for modifier-aware rectangle stroke contours now that `fill` and `stroke` attach through the shared `shape-appearance` capability model and both rectangle and circle geometry participate in the same compiler appearance pass |
 | T-033 | Make rectangle-backed `stroke` follow `cut` and `radius` contours | M2 | Gate B | P1 | Done | `t-033-rect-stroke-contours` | None | Hand off to the next thread for Unity Gate C revalidation or one more language increment now that rectangle strokes follow the same cut and rounded silhouettes as the underlying fill contour |
+| T-034 | Add a first `polygon` geometry slice without comma-separated tuple syntax | M2 | Gate B | P1 | Done | `t-034-polygon-geometry` | None | Hand off to the next thread for polygon stroke/path follow-up or return to Unity Gate C now that polygon fill authoring works through shorthand point pairs and canonical `point` children |
+| T-035 | Extend `polygon` into the shared `stroke` model | M2 | Gate B | P1 | Done | `t-035-polygon-stroke` | None | Hand off to the next thread for Unity Gate C revalidation or `path`/polygon contour refinements now that polygon participates in the same fill and stroke authoring model as the other supported shapes |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

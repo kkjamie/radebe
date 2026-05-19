@@ -15,6 +15,8 @@ import type {
   ParsedCommandNode,
   ParsedDocument,
   PlotCommand,
+  PolygonCommand,
+  PolygonPoint,
   RadialGradientFill,
   RectCommand,
   RectCut,
@@ -844,6 +846,246 @@ function compileCircleCommand(
   };
 }
 
+function compilePolygonPoint(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): PolygonPoint | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const x = readRequiredInteger(node, resolvedProperties.values, "x", diagnostics);
+  const y = readRequiredInteger(node, resolvedProperties.values, "y", diagnostics);
+
+  if (x === null || y === null) {
+    return null;
+  }
+
+  return { x, y };
+}
+
+function compilePolygonCommand(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): PolygonCommand | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  validateChildren(node, definition, diagnostics);
+
+  const coordinateTokens: string[] = [];
+  const points: PolygonPoint[] = [];
+  let color: string | null = null;
+
+  node.args.forEach((token) => {
+    const equalsIndex = token.indexOf("=");
+
+    if (equalsIndex > 0) {
+      const key = token.slice(0, equalsIndex);
+      const value = token.slice(equalsIndex + 1);
+
+      if (key !== "color") {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            `The polygon command does not support named argument "${key}".`,
+            node
+          )
+        );
+        return;
+      }
+
+      if (value.length === 0) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            'The polygon command received an empty value for "color".',
+            node
+          )
+        );
+        return;
+      }
+
+      if (color !== null) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            'The polygon command received duplicate "color" values.',
+            node
+          )
+        );
+        return;
+      }
+
+      color = value;
+      return;
+    }
+
+    coordinateTokens.push(token);
+  });
+
+  if (coordinateTokens.length % 2 !== 0) {
+    const trailingToken = coordinateTokens[coordinateTokens.length - 1] ?? null;
+    const trailingNumber =
+      trailingToken === null ? Number.NaN : Number.parseInt(trailingToken, 10);
+
+    if (
+      trailingToken !== null &&
+      !Number.isInteger(trailingNumber) &&
+      color === null &&
+      coordinateTokens.length >= 7
+    ) {
+      color = trailingToken;
+      coordinateTokens.pop();
+    } else {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          "The polygon command expects point coordinates as whitespace-separated x y pairs, with an optional trailing color shorthand.",
+          node
+        )
+      );
+      return null;
+    }
+  }
+
+  for (let index = 0; index < coordinateTokens.length; index += 2) {
+    const xToken = coordinateTokens[index]!;
+    const yToken = coordinateTokens[index + 1]!;
+    const x = Number.parseInt(xToken, 10);
+    const y = Number.parseInt(yToken, 10);
+
+    if (!Number.isInteger(x)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The polygon command expects point x values to be integers, but received "${xToken}".`,
+          node
+        )
+      );
+      return null;
+    }
+
+    if (!Number.isInteger(y)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The polygon command expects point y values to be integers, but received "${yToken}".`,
+          node
+        )
+      );
+      return null;
+    }
+
+    points.push({ x, y });
+  }
+
+  const appearances = compileShapeAppearances(node, diagnostics);
+  const fills: RectFill[] = appearances.fills;
+  const strokes: StrokeAppearance[] = appearances.strokes;
+
+  node.children.forEach((child) => {
+    if (child.name === "point") {
+      const point = compilePolygonPoint(child, diagnostics);
+
+      if (point !== null) {
+        points.push(point);
+      }
+
+      return;
+    }
+
+    if (child.name === "color") {
+      const childDefinition = getCommandDefinition(child.name);
+
+      if (!childDefinition) {
+        return;
+      }
+
+      const childArguments = parseArguments(child, childDefinition);
+      diagnostics.push(...childArguments.diagnostics);
+      const value = childArguments.values.get("value");
+
+      if (!value) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            'The color command requires "value".',
+            child
+          )
+        );
+        return;
+      }
+
+      if (color !== null) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            'The polygon command received duplicate "color" values.',
+            node
+          )
+        );
+        return;
+      }
+
+      color = value;
+    }
+  });
+
+  if (color !== null) {
+    fills.unshift({
+      kind: "solid",
+      color,
+      alpha: 1
+    });
+  }
+
+  if (points.length < 3) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The polygon command requires at least three points.",
+        node
+      )
+    );
+    return null;
+  }
+
+  const doubledArea = points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length]!;
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0);
+
+  if (doubledArea === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The polygon command requires points that enclose a non-zero area.",
+        node
+      )
+    );
+    return null;
+  }
+
+  if (fills.length === 0 && strokes.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The polygon command requires a color shorthand, a fill child, or a stroke child.",
+        node
+      )
+    );
+    return null;
+  }
+
+  return {
+    kind: "polygon",
+    lineNumber: node.lineNumber,
+    points,
+    fills,
+    strokes
+  };
+}
+
 function compileSolid(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[],
@@ -1560,6 +1802,10 @@ function compileRootCommand(
 
   if (node.name === "circle") {
     return compileCircleCommand(node, diagnostics);
+  }
+
+  if (node.name === "polygon") {
+    return compilePolygonCommand(node, diagnostics);
   }
 
   if (
