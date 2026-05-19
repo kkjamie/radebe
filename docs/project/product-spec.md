@@ -305,6 +305,7 @@ Initial geometry types discussed in the recovered spec and current direction:
 - `polygon` with child `point <x> <y>`
 - `rect` with child `cut` or child `radius`
 - `path <name?>`
+- `path` with child `point <x> <y>` and child `stroke`
 - `shape <name?>`
 
 Example:

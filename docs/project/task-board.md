@@ -37,6 +37,7 @@ Use this as the single source of truth for active execution state.
 | T-033 | Make rectangle-backed `stroke` follow `cut` and `radius` contours | M2 | Gate B | P1 | Done | `t-033-rect-stroke-contours` | None | Hand off to the next thread for Unity Gate C revalidation or one more language increment now that rectangle strokes follow the same cut and rounded silhouettes as the underlying fill contour |
 | T-034 | Add a first `polygon` geometry slice without comma-separated tuple syntax | M2 | Gate B | P1 | Done | `t-034-polygon-geometry` | None | Hand off to the next thread for polygon stroke/path follow-up or return to Unity Gate C now that polygon fill authoring works through shorthand point pairs and canonical `point` children |
 | T-035 | Extend `polygon` into the shared `stroke` model | M2 | Gate B | P1 | Done | `t-035-polygon-stroke` | None | Hand off to the next thread for Unity Gate C revalidation or `path`/polygon contour refinements now that polygon participates in the same fill and stroke authoring model as the other supported shapes |
+| T-036 | Add a first stroke-first `path` geometry slice | M2 | Gate B | P1 | Done | `t-036-path-stroke-slice` | None | Hand off to the next thread for Unity Gate C revalidation or deeper path semantics now that open polyline paths render through required `stroke` children |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

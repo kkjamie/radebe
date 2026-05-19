@@ -267,3 +267,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Polygon authoring now matches the shared shape appearance model more closely, the first stroke behavior is useful without introducing comma tuple syntax or a full path system, and future work can refine joins or nested-envelope semantics without changing the surface syntax again.
 - Related tasks: T-035
 - Supersedes: N/A
+
+---
+
+### DEC-023: Land `path` As A Stroke-First Open Polyline Primitive
+- Date: `2026-05-19`
+- Status: Accepted
+- Context: The language direction already listed `path`, but the project still lacked a minimal implementation that avoided overcommitting to fillable contours, winding rules, or reusable path references.
+- Decision: Implement the first `path` slice as an open polyline defined by child `point` commands, require at least one `stroke` child for visibility, and support only `stroke` align `center` in this initial version.
+- Consequences: The language gets a useful multi-segment line primitive now, `path` stays distinct from filled region shapes such as `polygon`, and future path work can add closing, fill, winding, or reusable-name semantics without rewriting the initial stroke-first surface.
+- Related tasks: T-036
+- Supersedes: N/A

@@ -16,6 +16,7 @@ Last updated: `2026-05-19`
 - Rectangle-backed `stroke` is now available as the first generated-region appearance slice, including `stroke <width> <color>` shorthand, optional `align`, optional `style`, rectangle rendering for `solid`, `dashed`, and `dotted` styles, nested child `stroke` support on the generated stroke envelope, and modifier-aware contour following for `cut` and `radius`.
 - `circle` is now available as the first non-rectangular shape primitive using integer `x`, `y`, and `radius` geometry plus color shorthand or explicit `fill`, and it now also participates in the shared `stroke` model.
 - `polygon` is now available as a shared-shape geometry primitive using either flat whitespace-separated `x y` point pairs or canonical child `point` commands, plus color shorthand or explicit `fill`, and it now also participates in the shared `stroke` model while still keeping polygon syntax on the existing whitespace token model.
+- `path` is now available as a stroke-first open polyline primitive using canonical child `point` commands and required `stroke`; the first slice intentionally limits path to `stroke` align `center` and does not yet treat paths as fillable or closable regions.
 - Source comments now use hash-prefixed lines only. The parser ignores lines whose trimmed text starts with `#`; `//` is no longer a comment marker and will be parsed as ordinary source.
 - The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, the SEA smoke path still exercises the same spec-aligned sample contract, and the web shell has grown into a left-nav docs/playground surface with an experimental page plus per-feature example pages that now support multiple editable live scenarios on a single page.
 - The web source editor now keeps native textarea editing while rendering a synchronized syntax-highlight layer for comments, command tokens, property-command child args, named argument keys, argument values, and unknown command tokens.
@@ -25,11 +26,11 @@ Last updated: `2026-05-19`
 
 ## Open Decisions / Blockers
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
-- No active blocker remains on the language or web-dev tooling side. The main open execution step is choosing between deeper polygon/path contour refinement and Unity-side revalidation of the packaged CLI bridge against the richer source syntax.
+- No active blocker remains on the language or web-dev tooling side. The main open execution step is choosing between deeper path semantics and Unity-side revalidation of the packaged CLI bridge against the richer source syntax.
 
 ## Best Next Tasks
-1. Re-exercise the packaged Unity CLI bridge with the current richer geometry set, now including strokable `polygon`.
-2. If Unity Gate C is intentionally deferred again, choose the next geometry follow-up between deeper polygon contour behavior and early path work.
+1. Re-exercise the packaged Unity CLI bridge with the current richer geometry set, now including strokable `polygon` and stroke-first `path`.
+2. If Unity Gate C is intentionally deferred again, choose the next geometry follow-up between deeper path semantics and further contour refinement.
 3. Continue widening the capability-driven shape model after the Unity checkpoint is re-established.
 
 ## Resume Checklist

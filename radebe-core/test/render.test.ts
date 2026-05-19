@@ -311,6 +311,61 @@ test("compileDocument supports polygon strokes through the shared appearance mod
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports path as a stroke-only polyline", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 12 12\n  background transparent\n\npath rail\n  point 1 1\n  point 5 1\n  point 8 4\n  stroke 1 white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "path",
+      lineNumber: 5,
+      name: "rail",
+      points: [
+        { x: 1, y: 1 },
+        { x: 5, y: 1 },
+        { x: 8, y: 4 }
+      ],
+      strokes: [
+        {
+          kind: "stroke",
+          width: 1,
+          align: "center",
+          style: "solid",
+          alpha: 1,
+          dashLength: null,
+          gapLength: null,
+          dotSpacing: null,
+          fill: { kind: "solid", color: "white", alpha: 1 },
+          strokes: []
+        }
+      ]
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument requires stroke visibility for path", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 12 12\n  background transparent\n\npath\n  point 1 1\n  point 5 1"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, []);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message:
+        "The path command requires at least one stroke child because open paths are only visible through stroke in the current slice.",
+      line: 5,
+      column: 1
+    }
+  ]);
+});
+
 test("compileDocument lowers rectangle color shorthand into fill solid", () => {
   const parsed = parseSource({
     source:
@@ -1045,10 +1100,34 @@ test("renderDocument rasterizes solid polygon strokes", () => {
   const compiled = compileDocument(parsed.document);
   const result = renderDocument(compiled.document);
 
+  assert.deepEqual(result.artifact.rows, [
+    "........",
+    ".######.",
+    "..#..#..",
+    "..#..#..",
+    "...##...",
+    "...##...",
+    "........",
+    "........"
+  ]);
   assert.equal(result.artifact.pixels[1]?.[1], "#ffffff");
   assert.equal(result.artifact.pixels[1]?.[6], "#ffffff");
-  assert.equal(result.artifact.pixels[6]?.[3], "#ffffff");
+  assert.equal(result.artifact.pixels[4]?.[3], "#ffffff");
   assert.equal(result.artifact.pixels[3]?.[3], null);
+});
+
+test("renderDocument rasterizes stroked open paths", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 10 7\n  background transparent\n\npath\n  point 1 1\n  point 6 1\n  point 8 4\n  stroke 1 white"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.equal(result.artifact.pixels[1]?.[1], "#ffffff");
+  assert.equal(result.artifact.pixels[1]?.[5], "#ffffff");
+  assert.equal(result.artifact.pixels[3]?.[7], "#ffffff");
+  assert.equal(result.artifact.pixels[5]?.[5], null);
 });
 
 test("renderDocument rasterizes solid circle strokes", () => {

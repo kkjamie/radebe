@@ -159,12 +159,21 @@ export interface PolygonCommand {
   strokes: StrokeAppearance[];
 }
 
+export interface PathCommand {
+  kind: "path";
+  lineNumber: number;
+  name: string | null;
+  points: PolygonPoint[];
+  strokes: StrokeAppearance[];
+}
+
 export type CompiledDrawCommand =
   | PlotCommand
   | LineCommand
   | RectCommand
   | CircleCommand
-  | PolygonCommand;
+  | PolygonCommand
+  | PathCommand;
 
 export interface CompiledDocument {
   kind: "compiled-document";

@@ -644,6 +644,23 @@ function getPolygonStrokeBounds(
   };
 }
 
+function getPathStrokeBounds(
+  points: PolygonPoint[],
+  stroke: StrokeAppearance
+): { x: number; y: number; width: number; height: number; radius: number } {
+  const bounds = getPolygonBounds(points);
+  const radius = Math.max(stroke.width / 2, 0.5);
+  const margin = Math.ceil(radius);
+
+  return {
+    x: bounds.x - margin,
+    y: bounds.y - margin,
+    width: bounds.width + margin * 2,
+    height: bounds.height + margin * 2,
+    radius
+  };
+}
+
 function getDistanceToSegment(
   pointX: number,
   pointY: number,
@@ -685,6 +702,35 @@ function getClosestPolygonEdgeSample(
   for (let index = 0; index < points.length; index += 1) {
     const start = points[index]!;
     const end = points[(index + 1) % points.length]!;
+    const segmentLength = Math.hypot(end.x - start.x, end.y - start.y);
+    const sample = getDistanceToSegment(pointX, pointY, start, end);
+
+    if (sample.distance < bestDistance) {
+      bestDistance = sample.distance;
+      bestPerimeterPosition = traversedLength + segmentLength * sample.projection;
+    }
+
+    traversedLength += segmentLength;
+  }
+
+  return {
+    distance: bestDistance,
+    perimeterPosition: Math.round(bestPerimeterPosition)
+  };
+}
+
+function getClosestPathSegmentSample(
+  pointX: number,
+  pointY: number,
+  points: PolygonPoint[]
+): ClosestPolygonEdgeSample {
+  let bestDistance = Number.POSITIVE_INFINITY;
+  let bestPerimeterPosition = 0;
+  let traversedLength = 0;
+
+  for (let index = 0; index < points.length - 1; index += 1) {
+    const start = points[index]!;
+    const end = points[index + 1]!;
     const segmentLength = Math.hypot(end.x - start.x, end.y - start.y);
     const sample = getDistanceToSegment(pointX, pointY, start, end);
 
@@ -803,6 +849,74 @@ function drawPolygonStroke(
 
   stroke.strokes.forEach((nestedStroke) => {
     drawPolygonStroke(pixels, drawnPixels, command, nestedStroke);
+  });
+}
+
+function drawPathStroke(
+  pixels: (RgbaColor | null)[][],
+  drawnPixels: boolean[][],
+  command: Pick<Extract<CompiledDrawCommand, { kind: "path" }>, "points">,
+  stroke: StrokeAppearance
+): void {
+  const bounds = getPathStrokeBounds(command.points, stroke);
+
+  if (stroke.fill !== null) {
+    for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+      for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+        const pointX = x + 0.5;
+        const pointY = y + 0.5;
+        const closestSegment = getClosestPathSegmentSample(
+          pointX,
+          pointY,
+          command.points
+        );
+
+        if (closestSegment.distance > bounds.radius) {
+          continue;
+        }
+
+        if (
+          !getStrokePatternState(
+            stroke.style,
+            closestSegment.perimeterPosition,
+            stroke.width,
+            stroke.dashLength,
+            stroke.gapLength,
+            stroke.dotSpacing
+          )
+        ) {
+          continue;
+        }
+
+        const color =
+          stroke.fill.kind === "solid"
+            ? stroke.fill.color
+            : stroke.fill.kind === "gradient-linear"
+              ? sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveLinearGradientPosition(stroke.fill, bounds, x, y)
+                )
+              : sampleGradientStops(
+                  stroke.fill.stops,
+                  resolveRadialGradientPosition(stroke.fill, bounds, x, y)
+                );
+
+        if (color !== null) {
+          setPixel(
+            pixels,
+            drawnPixels,
+            x,
+            y,
+            color,
+            stroke.alpha * stroke.fill.alpha
+          );
+        }
+      }
+    }
+  }
+
+  stroke.strokes.forEach((nestedStroke) => {
+    drawPathStroke(pixels, drawnPixels, command, nestedStroke);
   });
 }
 
@@ -1260,6 +1374,13 @@ function drawCommand(
     });
     command.strokes.forEach((stroke) => {
       drawPolygonStroke(pixels, drawnPixels, command, stroke);
+    });
+    return;
+  }
+
+  if (command.kind === "path") {
+    command.strokes.forEach((stroke) => {
+      drawPathStroke(pixels, drawnPixels, command, stroke);
     });
     return;
   }
