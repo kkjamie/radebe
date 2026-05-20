@@ -18,9 +18,17 @@
       "types": "./dist/src/compiler.d.ts",
       "default": "./dist/src/compiler.js"
     },
+    "./language-service": {
+      "types": "./dist/src/language-service.d.ts",
+      "default": "./dist/src/language-service.js"
+    },
     "./renderer": {
       "types": "./dist/src/renderer.d.ts",
       "default": "./dist/src/renderer.js"
+    },
+    "./schema": {
+      "types": "./dist/src/schema.d.ts",
+      "default": "./dist/src/schema.js"
     },
     "./types": {
       "types": "./dist/src/types.d.ts",

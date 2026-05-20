@@ -1,7 +1,7 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-05-19`
+Last updated: `2026-05-20`
 
 Use this as the single source of truth for active execution state.
 
@@ -46,10 +46,13 @@ Use this as the single source of truth for active execution state.
 | T-042 | Remove standalone `align` and `style` pages from the web docs nav | M2 | Gate B | P2 | Done | `codex-main` | None | Keep `align` and `style` documented only where they apply, currently inside the `stroke` examples and notes |
 | T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Done | `codex-main` | None | Hand off to the next thread to choose the next Unity slice now that local deploy plus manual Unity verification confirmed the `.rdb` importer produces a generated Sprite in Eddie |
 | T-043 | Add Unity importer options for sprite settings and slicing metadata | M2 | Gate C | P1 | In Progress | `codex-main` | Needs in-editor Unity confirmation that the new importer inspector preview and settings behave correctly for 9-slice, pivot, and filtering in Eddie | Open a deployed `.rdb` asset in Eddie, confirm the live preview shows border guides and pivot updates immediately, and verify reimport behavior for border/9-slice, pivot, PPU, and point vs bilinear filtering |
+| T-044 | Add editor-oriented schema metadata for language assistance | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-045 to build a headless language-service slice for completions, argument help, indentation, and future smart edits using the shared schema metadata |
+| T-045 | Build the first headless language service for editor completions and indentation | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-046 to wire the headless language-service results into the web editor without changing parser/compiler behavior |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-046 | Wire the headless language service into the web editor | M2 | Gate B | P1 | Ready | Unassigned | None | Add editor UI behavior for command completions, argument help, enum suggestions, and Enter indentation using the T-045 language-service API |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

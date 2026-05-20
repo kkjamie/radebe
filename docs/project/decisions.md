@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-19`
+Last updated: `2026-05-20`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -343,4 +343,15 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Treat `.rdb` files as Unity source assets handled by a ScriptedImporter that calls the packaged `radebe-cli` through the existing bridge, consumes a `unity-sprite` JSON artifact, and creates generated `Texture2D` plus `Sprite` subassets. Local Unity test deployment is driven by `.env` / environment variables such as `RADEBE_UNITY_PROJECT_PATH`, with Eddie-specific assets kept outside the repo.
 - Consequences: Unity gets a native sprite-facing workflow while the TypeScript renderer remains canonical; the CLI contract now needs to maintain a machine-readable Unity artifact mode; repo automation can deploy into any configured Unity project instead of assuming Eddie; and the next Gate C step must capture a hard Unity-side importer assertion before the gate is marked passed.
 - Related tasks: T-011
+- Supersedes: N/A
+
+---
+
+### DEC-030: Drive Editor Intelligence From Shared Schema Metadata
+- Date: `2026-05-20`
+- Status: Accepted
+- Context: The web editor is growing from a smoke-test textarea into an IDE-like authoring surface, and Unity should eventually provide the same live editing behavior without duplicating language knowledge in C#.
+- Decision: Enrich the shared `@radebe/core` command schema with editor-oriented metadata, including argument value kinds, enum values, indentation hints, inline child-command forms, allowed-child helpers, and shorthand-expansion hints, then build future web and Unity editor features on top of that shared metadata.
+- Consequences: The schema becomes a public tooling contract, `@radebe/core/schema` is exported as a subpath, future web and Unity language assistance can share one source of truth, and the next editor slice should implement a headless language service rather than hard-coding completions in a presentation layer.
+- Related tasks: T-044, T-045
 - Supersedes: N/A

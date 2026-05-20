@@ -1,7 +1,7 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-19`
+Last updated: `2026-05-20`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
@@ -24,6 +24,8 @@ Last updated: `2026-05-19`
 - Source comments now use hash-prefixed lines only. The parser ignores lines whose trimmed text starts with `#`; `//` is no longer a comment marker and will be parsed as ordinary source.
 - The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, the SEA smoke path still exercises the same spec-aligned sample contract, and the web shell has grown into a left-nav docs/playground surface with an experimental page plus per-feature example pages that now support multiple editable live scenarios on a single page.
 - The web source editor now keeps native textarea editing while rendering a synchronized syntax-highlight layer for comments, command tokens, property-command child args, named argument keys, argument values, and unknown command tokens.
+- T-044 added editor-oriented metadata to the shared command schema: typed argument definitions, enum values, allowed-child metadata helpers, inline child-command hints for `fill` variants, indentation hints, variadic polygon point-pair metadata, and shorthand-expansion hints for color forms that lower into `fill solid`. This is the foundation for a headless language service before the web editor or Unity editor window grow richer UI behavior.
+- T-045 added a headless `@radebe/core` language-service API for cursor context, schema-driven command completions, argument help, enum completions, inline `fill` variant completions, contextual property argument help, and Enter indentation. It is exported from the root package and from `@radebe/core/language-service`.
 - The web examples now fold cut and rounded-corner rectangle cases into the main `rect` page instead of keeping separate `cut` or `rounded-rect` pages, and `polygon` now has real live examples instead of a placeholder page.
 - The web example nav now keeps placeholder pages only for substantive planned features; low-value stubs such as `size`, `background`, `fill`, `inset`, `blend`, `draw`, `overlay`, and standalone `align` / `style` property pages were removed so those concepts can instead live under parent pages or command-specific pages.
 - The web docs/playground now has a real `shadow` page instead of a placeholder, including examples for simple offset use plus positive and negative `spread`.
@@ -36,14 +38,16 @@ Last updated: `2026-05-19`
 ## Open Decisions / Blockers
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
+- DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
+- T-046 is ready as the next editor-thread follow-up: wire the headless language-service results into the web editor for visible completions, argument help, enum suggestions, and indentation behavior.
 - No active blocker remains on T-011. The remaining Unity follow-on work is product choice, not integration failure.
 - The current leading Unity follow-on is importer options for sprite authoring ergonomics: border/9-slice metadata, pivot, pixels per unit, and filter mode surfaced through the existing ScriptedImporter settings.
 - T-043 is now in progress. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector now also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. The updated plugin has been redeployed to Eddie through `npm run deploy:unity`, but the settings still need a hands-on Unity editor check.
 
 ## Best Next Tasks
-1. Open a deployed `.rdb` asset in Eddie and verify the new importer preview plus inspector options for pivot, PPU, border/9-slice metadata, mesh type, extrude edges, and point/bilinear filtering.
-2. If the importer options behave correctly, move T-043 to `Done` and document the validated Unity workflow.
-3. Decide whether any of those options should later move into `.rdb` source metadata versus staying Unity-import-only.
+1. If continuing the editor track, start T-046 and wire the T-045 language-service API into the web source editor.
+2. Decide during T-046 whether to keep the current textarea for the first visible behavior or move directly to CodeMirror 6.
+3. Return to T-043 when ready to close the active Unity importer-options task with hands-on Eddie validation.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

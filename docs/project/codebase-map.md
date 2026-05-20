@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-05-17`
+Last updated: `2026-05-20`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -19,6 +19,8 @@ Last updated: `2026-05-17`
 - `radebe-core/src/index.ts`: root public API that re-exports shared types and the common parse/compile/render helpers.
 - `radebe-core/src/parser.ts`: parser boundary for converting source text into the shared parsed document shape.
 - `radebe-core/src/compiler.ts`: compiler boundary for transforming parsed documents into renderable compiled documents.
+- `radebe-core/src/schema.ts`: command registry, child-capability rules, compiler-facing shorthand/property metadata, and editor-facing argument, enum, indentation, inline-child, and shorthand-expansion metadata.
+- `radebe-core/src/language-service.ts`: headless editor assistance API for cursor context, schema-driven completions, argument help, enum suggestions, and Enter indentation.
 - `radebe-core/src/renderer.ts`: renderer boundary plus the convenience source-to-artifact pipeline helper.
 - `radebe-core/src/types.ts`: shared contracts that define the cross-stage document, render artifact, and diagnostic shapes.
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
