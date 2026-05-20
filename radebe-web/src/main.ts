@@ -1,4 +1,14 @@
-import { getCommandDefinition, renderSource } from "@radebe/core";
+import {
+  getArgumentHelp,
+  getCommandDefinition,
+  getEnterIndentation,
+  getLanguageCompletions,
+  renderSource,
+  type LanguageArgumentHelp,
+  type LanguageCompletionItem,
+  type LanguageCompletionResult,
+  type LanguageServiceRequest
+} from "@radebe/core";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 
@@ -50,6 +60,18 @@ syntaxStyles.textContent = `
 .syntax-comment { color: #7f948a; font-style: italic; }
 .syntax-punctuation { color: #9d9183; }
 .syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
+.editor-assist { position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 3; display: grid; gap: 8px; pointer-events: none; }
+.editor-assist[hidden] { display: none; }
+.completion-list { display: grid; max-width: 380px; max-height: 190px; overflow: auto; border: 1px solid rgba(125,211,252,0.36); background: #191613; box-shadow: 0 18px 40px rgba(0,0,0,0.38); pointer-events: auto; }
+.completion-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 0; border-bottom: 1px solid rgba(255,255,255,0.06); background: transparent; color: #f8f4ec; padding: 8px 10px; font: inherit; text-align: left; }
+.completion-item:last-child { border-bottom: 0; }
+.completion-item[data-active="true"] { background: #26333a; color: #ffffff; }
+.completion-detail { color: #b8c7c6; font-size: 0.86em; }
+.argument-help { max-width: min(760px, 100%); border: 1px solid rgba(255,255,255,0.12); background: #191613; color: #d9cfbf; padding: 8px 10px; box-shadow: 0 18px 40px rgba(0,0,0,0.28); pointer-events: none; }
+.argument-command { color: #7dd3fc; font-weight: 700; margin-right: 10px; }
+.argument-token { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 6px; color: #d8e6b3; }
+.argument-token[data-active="true"] { background: rgba(125,211,252,0.16); color: #ffffff; outline: 1px solid rgba(125,211,252,0.32); }
+.argument-kind { color: #b8c7c6; }
 `;
 document.head.append(syntaxStyles);
 
@@ -171,6 +193,16 @@ function highlightSource(source: string): string {
   }
 
   return source.endsWith("\n") ? `${highlighted} ` : highlighted;
+}
+
+function getLanguagePosition(source: string, offset: number): LanguageServiceRequest["position"] {
+  const beforeCursor = source.slice(0, offset).replace(/\r\n/g, "\n");
+  const lines = beforeCursor.split("\n");
+
+  return {
+    line: lines.length,
+    column: lines[lines.length - 1]!.length + 1
+  };
 }
 
 const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
@@ -1436,6 +1468,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   const sourceEditor = document.createElement("div");
   const sourceHighlight = document.createElement("pre");
   const sourceInput = document.createElement("textarea");
+  const sourceAssist = document.createElement("div");
+  const completionList = document.createElement("div");
+  const argumentHelp = document.createElement("div");
   const status = document.createElement("p");
   const previewLabel = document.createElement("h4");
   const previewMeta = document.createElement("p");
@@ -1448,6 +1483,8 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   const spriteSurface = document.createElement("div");
   const spriteCanvas = document.createElement("canvas");
   let currentArtifactSize = { width: 1, height: 1 };
+  let completionResult: LanguageCompletionResult | null = null;
+  let activeCompletionIndex = 0;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
   heading.textContent = playground.title;
@@ -1472,6 +1509,12 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   sourceInput.setAttribute("spellcheck", "false");
   sourceInput.style.cssText =
     "position: relative; z-index: 1; display: block; width: 100%; min-height: 320px; resize: vertical; box-sizing: border-box; border: 0; outline: none; background: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #f8f4ec; padding: 14px; font: inherit; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2;";
+  sourceAssist.className = "editor-assist";
+  sourceAssist.hidden = true;
+  completionList.className = "completion-list";
+  completionList.hidden = true;
+  argumentHelp.className = "argument-help";
+  argumentHelp.hidden = true;
   status.style.cssText = "margin: 0; color: #cbbda7;";
   previewLabel.textContent = "Preview";
   previewLabel.style.cssText = "margin: 0;";
@@ -1627,18 +1670,189 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
   }
 
-  sourceInput.addEventListener("input", () => {
+  function createLanguageRequest(): LanguageServiceRequest {
+    return {
+      source: sourceInput.value,
+      position: getLanguagePosition(sourceInput.value, sourceInput.selectionStart)
+    };
+  }
+
+  function renderCompletionList(items: LanguageCompletionItem[]): void {
+    completionList.replaceChildren();
+    completionList.hidden = items.length === 0;
+
+    if (items.length === 0) {
+      return;
+    }
+
+    activeCompletionIndex = Math.min(
+      Math.max(activeCompletionIndex, 0),
+      items.length - 1
+    );
+
+    items.slice(0, 12).forEach((item, index) => {
+      const option = document.createElement("button");
+      const label = document.createElement("span");
+      const detail = document.createElement("span");
+
+      option.type = "button";
+      option.className = "completion-item";
+      option.dataset.active = index === activeCompletionIndex ? "true" : "false";
+      label.textContent = item.label;
+      detail.className = "completion-detail";
+      detail.textContent = item.detail ?? item.kind;
+      option.append(label, detail);
+      option.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        applyCompletion(index);
+      });
+      completionList.append(option);
+    });
+  }
+
+  function renderArgumentHelp(help: LanguageArgumentHelp | null): void {
+    argumentHelp.replaceChildren();
+    argumentHelp.hidden = help === null || help.arguments.length === 0;
+
+    if (help === null || help.arguments.length === 0) {
+      return;
+    }
+
+    const command = document.createElement("span");
+    command.className = "argument-command";
+    command.textContent = help.parentCommandName
+      ? `${help.parentCommandName} ${help.commandName}`
+      : help.commandName;
+    argumentHelp.append(command);
+
+    help.arguments.forEach((argument, index) => {
+      const token = document.createElement("span");
+      const kind = document.createElement("span");
+
+      token.className = "argument-token";
+      token.dataset.active = index === help.activeArgumentIndex ? "true" : "false";
+      token.append(argument.name);
+      kind.className = "argument-kind";
+      kind.textContent = `:${argument.valueKind}`;
+      token.append(kind);
+      argumentHelp.append(token);
+    });
+  }
+
+  function updateAssist(): void {
+    if (document.activeElement !== sourceInput) {
+      hideAssist();
+      return;
+    }
+
+    const request = createLanguageRequest();
+    completionResult = getLanguageCompletions(request);
+    renderCompletionList(completionResult.items);
+    renderArgumentHelp(getArgumentHelp(request));
+    sourceAssist.hidden = completionList.hidden && argumentHelp.hidden;
+  }
+
+  function hideAssist(): void {
+    completionResult = null;
+    completionList.hidden = true;
+    argumentHelp.hidden = true;
+    sourceAssist.hidden = true;
+  }
+
+  function replaceSourceRange(start: number, end: number, text: string): void {
+    const nextValue =
+      sourceInput.value.slice(0, start) + text + sourceInput.value.slice(end);
+    const nextCursor = start + text.length;
+
+    sourceInput.value = nextValue;
+    sourceInput.selectionStart = nextCursor;
+    sourceInput.selectionEnd = nextCursor;
+  }
+
+  function insertAtSelection(text: string): void {
+    replaceSourceRange(sourceInput.selectionStart, sourceInput.selectionEnd, text);
+  }
+
+  function applyCompletion(index: number): void {
+    const item = completionResult?.items[index];
+    const prefix = completionResult?.context.prefix ?? "";
+
+    if (!item) {
+      return;
+    }
+
+    const cursor = sourceInput.selectionStart;
+    replaceSourceRange(cursor - prefix.length, cursor, item.insertText);
+    sourceInput.focus();
+    handleSourceChange();
+  }
+
+  function handleSourceChange(): void {
     sourceState.set(playground.id, sourceInput.value);
     updatePreview(sourceInput.value);
+    updateAssist();
+  }
+
+  sourceInput.addEventListener("input", handleSourceChange);
+
+  sourceInput.addEventListener("keydown", (event) => {
+    const completionCount = completionResult?.items.length ?? 0;
+
+    if (event.key === "ArrowDown" && completionCount > 0) {
+      event.preventDefault();
+      activeCompletionIndex = (activeCompletionIndex + 1) % completionCount;
+      renderCompletionList(completionResult?.items ?? []);
+      return;
+    }
+
+    if (event.key === "ArrowUp" && completionCount > 0) {
+      event.preventDefault();
+      activeCompletionIndex =
+        (activeCompletionIndex - 1 + completionCount) % completionCount;
+      renderCompletionList(completionResult?.items ?? []);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      hideAssist();
+      return;
+    }
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+
+      if (!event.shiftKey && completionCount > 0) {
+        applyCompletion(activeCompletionIndex);
+        return;
+      }
+
+      insertAtSelection("  ");
+      handleSourceChange();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      insertAtSelection(`\n${getEnterIndentation(createLanguageRequest())}`);
+      handleSourceChange();
+    }
   });
 
   sourceInput.addEventListener("scroll", syncEditorScroll);
   sourceInput.addEventListener("focus", () => {
     sourceEditor.style.borderColor = "rgba(125,211,252,0.48)";
+    updateAssist();
   });
   sourceInput.addEventListener("blur", () => {
     sourceEditor.style.borderColor = "rgba(255,255,255,0.12)";
+    window.setTimeout(() => {
+      if (document.activeElement !== sourceInput) {
+        hideAssist();
+      }
+    }, 120);
   });
+  sourceInput.addEventListener("keyup", updateAssist);
+  sourceInput.addEventListener("mouseup", updateAssist);
 
   zoomSelect.addEventListener("change", () => {
     applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
@@ -1650,7 +1864,8 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
   }).observe(spriteViewport);
 
-  sourceEditor.append(sourceHighlight, sourceInput);
+  sourceAssist.append(completionList, argumentHelp);
+  sourceEditor.append(sourceHighlight, sourceInput, sourceAssist);
   sourceLabel.append(sourceEditor);
   editorPanel.append(sourceLabel, status);
   zoomLabel.append(zoomSelect);
