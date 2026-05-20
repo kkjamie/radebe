@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-05-19`
+Last updated: `2026-05-20`
 
 ## Planning Horizon
 - Current: `2026-05-17` to `2026-05-24`
@@ -30,6 +30,8 @@ Last updated: `2026-05-19`
 - M2 Gate A, Gate B, and Gate C now all have working evidence. T-011 established the first real Unity plugin import baseline: `.rdb` files are Unity source assets handled by a ScriptedImporter, the packaged CLI can emit a Unity JSON sprite artifact, local deployment into a configured Unity project is driven by `.env` / environment variables rather than hard-coding Eddie into repo state, and manual verification in Eddie confirmed the deployed importer produces a generated Sprite main asset.
 - The next recommended Unity slice is importer-facing asset options: expose and validate inspector controls for sprite pivot, pixels per unit, border/9-slice metadata, and texture filtering so Unity users can tune imported `.rdb` assets without changing the CLI-backed rendering contract.
 - T-043 is now underway in repo code: the importer has explicit pivot presets, custom pivot support, border sanitization for 9-slice, mesh type and extrude controls, and a custom importer inspector that groups sprite, texture, and bridge settings. The remaining work is in-editor confirmation in Eddie that those settings behave as expected on reimport.
+- Phase 5 reusable editor packaging and Phase 6 Unity live-authoring parity are intentionally deferred. They are now tracked as backlog tasks T-054 and T-055 so the next work can be chosen deliberately rather than rolling straight from the web editor migration into packaging or Unity IDE surface design.
+- VS Code language support is tracked separately as T-056. It should aim to provide parity with the web editor's shared-language-service behavior for completions, signature help, diagnostics, smart edits, indentation, and eventually preview/render commands.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.

@@ -64,6 +64,9 @@ Use this as the single source of truth for active execution state.
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-054 | Phase 5: Package the editor as a reusable consumer surface | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred until the product surface settles after the web editor spike | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
+| T-055 | Phase 6: Build Unity editor live-authoring parity | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred; current Unity priority remains importer validation/options rather than an in-Unity IDE surface | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
+| T-056 | Add VS Code language support for `.rdb` files | M2 | Deferred | P1 | Backlog | Unassigned | Needs a deliberate tool-extension architecture choice before implementation | Scope a VS Code extension, preferably using shared `@radebe/core` language-service behavior for completions, signature help, diagnostics, smart edits, indentation, and eventual preview/render commands |
 | T-099 | Track future language and tooling ideas after the first vertical slice | M2 | Gate B | P2 | Backlog | Unassigned | None | Revisit once the core loop is running |
 
 ## Status Vocabulary

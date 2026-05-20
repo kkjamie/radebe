@@ -366,3 +366,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The web editor gains real document state, history, selections, and transaction primitives; custom Radebe assist UI can keep evolving on top of shared language-service APIs; the web bundle is larger; and Unity still needs its own presentation layer or a separate bridge to shared language-service behavior.
 - Related tasks: T-050, T-052
 - Supersedes: N/A
+
+---
+
+### DEC-032: Defer Reusable Editor Packaging And Unity Live Authoring
+- Date: `2026-05-20`
+- Status: Accepted
+- Context: Phase 4 made the web editor substantially more capable, which made Phase 5 reusable editor packaging and Phase 6 Unity live-authoring parity tempting next steps. The project wants those captured without letting them automatically displace nearer-term validation and tooling choices.
+- Decision: Defer Phase 5 and Phase 6 into explicit backlog tasks. Track reusable editor packaging as T-054, Unity editor live-authoring parity as T-055, and VS Code language support as a separate T-056 candidate that should reuse the same `@radebe/core` language-service behavior as the web editor.
+- Consequences: The roadmap keeps the reusable editor and Unity IDE ambitions visible without committing to them immediately; VS Code can be evaluated on its own architecture merits, likely through a VS Code extension and possibly an LSP-shaped adapter; and the current Unity importer-options validation remains the leading Unity follow-on.
+- Related tasks: T-054, T-055, T-056
+- Supersedes: N/A

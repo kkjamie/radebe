@@ -48,14 +48,15 @@ Last updated: `2026-05-20`
 - No active blocker remains on the language or web-dev tooling side.
 - DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
 - T-053 is done after user validation plus the final diagnostic-squiggle polish. Build, tests, and the running dev-server HTTP check pass.
+- DEC-032 records that Phase 5 reusable editor packaging and Phase 6 Unity live-authoring parity are intentionally deferred into backlog tasks T-054 and T-055 instead of being the immediate next work. VS Code language support is now tracked separately as T-056 and should aim to reuse the same core language-service behavior as the web editor.
 - No active blocker remains on T-011. The remaining Unity follow-on work is product choice, not integration failure.
 - The current leading Unity follow-on is importer options for sprite authoring ergonomics: border/9-slice metadata, pivot, pixels per unit, and filter mode surfaced through the existing ScriptedImporter settings.
 - T-043 is now in progress. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector now also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. The updated plugin has been redeployed to Eddie through `npm run deploy:unity`, but the settings still need a hands-on Unity editor check.
 
 ## Best Next Tasks
-1. Choose the next editor-track slice now that Phase 4/T-053 is complete, likely command-specific hover/help or a reusable editor component boundary.
-2. If continuing diagnostics, add richer diagnostic ranges from `@radebe/core` so future underlines do not need web-side token inference.
-3. Return to T-043 when ready to close the active Unity importer-options task with hands-on Eddie validation.
+1. Return to T-043 when ready to close the active Unity importer-options task with hands-on Eddie validation.
+2. Scope T-056 if editor tooling continues next: VS Code language support for `.rdb` files using the shared `@radebe/core` language service, likely through a VS Code extension and possibly an LSP-shaped adapter.
+3. Keep T-054 and T-055 deferred until reusable editor packaging or Unity live-authoring parity is explicitly resumed.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.
