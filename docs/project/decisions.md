@@ -355,3 +355,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The schema becomes a public tooling contract, `@radebe/core/schema` is exported as a subpath, future web and Unity language assistance can share one source of truth, and the next editor slice should implement a headless language service rather than hard-coding completions in a presentation layer.
 - Related tasks: T-044, T-045
 - Supersedes: N/A
+
+---
+
+### DEC-031: Use CodeMirror 6 As The Web Editor Host
+- Date: `2026-05-20`
+- Status: Accepted
+- Context: The textarea/highlight shell supported the first editor-assist slices, but autocomplete, smart edits, undo grouping, cursor-positioned UI, and future diagnostics were already pushing it toward brittle browser-edit workarounds.
+- Decision: Use CodeMirror 6 as the web editor host while continuing to source language intelligence from the shared `@radebe/core` schema and language service.
+- Consequences: The web editor gains real document state, history, selections, and transaction primitives; custom Radebe assist UI can keep evolving on top of shared language-service APIs; the web bundle is larger; and Unity still needs its own presentation layer or a separate bridge to shared language-service behavior.
+- Related tasks: T-050, T-052
+- Supersedes: N/A

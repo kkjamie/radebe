@@ -1,3 +1,17 @@
+import { basicSetup } from "codemirror";
+import {
+  EditorSelection,
+  EditorState,
+  RangeSetBuilder,
+  type Range
+} from "@codemirror/state";
+import {
+  Decoration,
+  type DecorationSet,
+  EditorView,
+  ViewPlugin,
+  type ViewUpdate
+} from "@codemirror/view";
 import {
   getArgumentHelp,
   getCommandDefinition,
@@ -74,6 +88,14 @@ syntaxStyles.textContent = `
 .argument-token { display: inline-block; margin: 1px 3px 1px 0; padding: 1px 4px; color: #c5d4ac; }
 .argument-token[data-active="true"] { background: rgba(125,211,252,0.12); color: #f1ece3; outline: 1px solid rgba(125,211,252,0.24); }
 .argument-kind { color: #8fa09d; }
+.cm-editor { min-height: 320px; background: transparent; color: #f8f4ec; font: inherit; line-height: 1.45; }
+.cm-editor.cm-focused { outline: none; }
+.cm-scroller { min-height: 320px; font-family: inherit; line-height: 1.45; }
+.cm-content { padding: 14px; caret-color: #f8f4ec; tab-size: 2; }
+.cm-line { padding: 0; }
+.cm-gutters { background: #12110f; border-right: 1px solid rgba(255,255,255,0.08); color: #8f8374; }
+.cm-activeLine, .cm-activeLineGutter { background: rgba(255,255,255,0.045); }
+.cm-selectionBackground, .cm-focused .cm-selectionBackground { background: rgba(125,211,252,0.24) !important; }
 `;
 document.head.append(syntaxStyles);
 
@@ -248,6 +270,114 @@ function adjustOffsetForEdit(offset: number, edit: LanguageTextEdit): number {
 
   return offset;
 }
+
+function getCommandTokenSyntaxClass(token: string): string {
+  const definition = getCommandDefinition(token);
+
+  if (!definition) {
+    return "syntax-unknown";
+  }
+
+  return definition.kind === "property"
+    ? "syntax-property-command"
+    : "syntax-command";
+}
+
+function getArgumentTokenSyntaxClass(
+  token: string,
+  context: { commandName: string; argumentIndex: number }
+): string {
+  const equalsIndex = token.indexOf("=");
+
+  if (equalsIndex > 0) {
+    return "syntax-property";
+  }
+
+  if (context.commandName === "var" && context.argumentIndex === 0) {
+    return "syntax-variable";
+  }
+
+  if (isVariableUsageToken(token)) {
+    return "syntax-variable";
+  }
+
+  const definition = getCommandDefinition(token);
+
+  if (definition && definition.kind !== "property") {
+    return "syntax-child-command";
+  }
+
+  return "syntax-value";
+}
+
+function createSourceSyntaxDecorations(view: EditorView): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+
+  for (const { from, to } of view.visibleRanges) {
+    let position = from;
+
+    while (position <= to) {
+      const line = view.state.doc.lineAt(position);
+      const lineText = line.text;
+
+      if (lineText.trimStart().startsWith("#")) {
+        builder.add(line.from, line.to, Decoration.mark({ class: "syntax-comment" }));
+      } else {
+        const tokens = [...lineText.matchAll(/\S+/g)];
+        let commandName = "";
+        let argumentIndex = 0;
+
+        tokens.forEach((match, tokenIndex) => {
+          const token = match[0];
+          const tokenFrom = line.from + (match.index ?? 0);
+          const tokenTo = tokenFrom + token.length;
+          const className =
+            tokenIndex === 0
+              ? getCommandTokenSyntaxClass(token)
+              : getArgumentTokenSyntaxClass(token, {
+                  commandName,
+                  argumentIndex
+                });
+
+          builder.add(tokenFrom, tokenTo, Decoration.mark({ class: className }));
+
+          if (tokenIndex === 0) {
+            commandName = token;
+          } else {
+            argumentIndex += 1;
+          }
+        });
+      }
+
+      if (line.to >= to || line.number === view.state.doc.lines) {
+        break;
+      }
+
+      position = line.to + 1;
+    }
+  }
+
+  return builder.finish();
+}
+
+const sourceSyntaxHighlighter = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+
+    constructor(view: EditorView) {
+      this.decorations = createSourceSyntaxDecorations(view);
+    }
+
+    update(update: ViewUpdate): void {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = createSourceSyntaxDecorations(update.view);
+      }
+    }
+  },
+  {
+    decorations: (plugin) => plugin.decorations
+  }
+);
 
 const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
   id: "experimental",
@@ -1510,8 +1640,6 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   const previewPanel = document.createElement("article");
   const sourceLabel = document.createElement("label");
   const sourceEditor = document.createElement("div");
-  const sourceHighlight = document.createElement("pre");
-  const sourceInput = document.createElement("textarea");
   const sourceAssist = document.createElement("div");
   const completionList = document.createElement("div");
   const argumentHelp = document.createElement("div");
@@ -1526,13 +1654,14 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   const spriteViewport = document.createElement("div");
   const spriteSurface = document.createElement("div");
   const spriteCanvas = document.createElement("canvas");
+  const initialSource = sourceState.get(playground.id) ?? "";
+  let editorView: EditorView;
   let currentArtifactSize = { width: 1, height: 1 };
   let completionResult: LanguageCompletionResult | null = null;
   let activeCompletionIndex = 0;
   let completionListExplicit = false;
   let completionSuppressedUntilInput = false;
   let argumentHelpOpen = false;
-  let applyingProgrammaticEdit = false;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
   heading.textContent = playground.title;
@@ -1549,14 +1678,6 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   sourceLabel.style.cssText = "display: grid; gap: 12px; margin-bottom: 12px; color: #fff3e1;";
   sourceEditor.style.cssText =
     "position: relative; min-height: 320px; border: 1px solid rgba(255,255,255,0.12); background: #12110f; overflow: hidden;";
-  sourceHighlight.setAttribute("aria-hidden", "true");
-  sourceHighlight.style.cssText =
-    "position: absolute; inset: 0; margin: 0; min-height: 320px; box-sizing: border-box; padding: 14px; color: #f8f4ec; font: inherit; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; pointer-events: none;";
-  sourceInput.value = sourceState.get(playground.id) ?? "";
-  sourceInput.setAttribute("aria-label", "Source");
-  sourceInput.setAttribute("spellcheck", "false");
-  sourceInput.style.cssText =
-    "position: relative; z-index: 1; display: block; width: 100%; min-height: 320px; resize: vertical; box-sizing: border-box; border: 0; outline: none; background: transparent; color: transparent; -webkit-text-fill-color: transparent; caret-color: #f8f4ec; padding: 14px; font: inherit; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2;";
   sourceAssist.className = "editor-assist";
   sourceAssist.hidden = true;
   completionList.className = "completion-list";
@@ -1676,18 +1797,15 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     });
   }
 
-  function syncEditorScroll(): void {
-    sourceHighlight.style.transform = `translate(${-sourceInput.scrollLeft}px, ${-sourceInput.scrollTop}px)`;
+  function getEditorSource(): string {
+    return editorView.state.doc.toString();
   }
 
-  function updateEditorHighlight(source: string): void {
-    sourceHighlight.innerHTML = highlightSource(source);
-    syncEditorScroll();
+  function getEditorOffset(): number {
+    return editorView.state.selection.main.head;
   }
 
   function updatePreview(source: string): void {
-    updateEditorHighlight(source);
-
     const result = renderSource({ source });
     const diagnosticsText = result.diagnostics
       .map((diagnostic) => {
@@ -1719,9 +1837,11 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function createLanguageRequest(): LanguageServiceRequest {
+    const source = getEditorSource();
+
     return {
-      source: sourceInput.value,
-      position: getLanguagePosition(sourceInput.value, sourceInput.selectionStart)
+      source,
+      position: getLanguagePosition(source, getEditorOffset())
     };
   }
 
@@ -1734,13 +1854,10 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function updateAssistPosition(): void {
-    const position = getLanguagePosition(sourceInput.value, sourceInput.selectionStart);
-    const inputStyles = window.getComputedStyle(sourceInput);
-    const paddingTop = Number.parseFloat(inputStyles.paddingTop) || 14;
-    const lineHeight = Number.parseFloat(inputStyles.lineHeight) || 20;
-    const rawTop =
-      paddingTop + (position.line - 1) * lineHeight - sourceInput.scrollTop + lineHeight + 6;
-    const top = Math.max(14, rawTop);
+    const coords = editorView.coordsAtPos(getEditorOffset());
+    const editorRect = sourceEditor.getBoundingClientRect();
+    const top =
+      coords === null ? 46 : Math.max(14, coords.bottom - editorRect.top + 6);
 
     sourceAssist.style.top = `${top}px`;
   }
@@ -1808,7 +1925,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function updateAssist(): void {
-    if (document.activeElement !== sourceInput) {
+    if (!editorView.hasFocus) {
       hideAssist();
       return;
     }
@@ -1839,80 +1956,65 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     sourceAssist.hidden = true;
   }
 
-  function applyDirectSourceEdit(edit: LanguageTextEdit): void {
-    const nextValue =
-      sourceInput.value.slice(0, edit.start) +
-      edit.text +
-      sourceInput.value.slice(edit.end);
-
-    sourceInput.value = nextValue;
-  }
-
-  function runUndoableSourceEdit(edit: LanguageTextEdit): boolean {
-    if (document.activeElement !== sourceInput) {
-      return false;
-    }
-
-    let applied = false;
-
-    applyingProgrammaticEdit = true;
-
-    try {
-      sourceInput.selectionStart = edit.start;
-      sourceInput.selectionEnd = edit.end;
-      applied =
-        edit.text.length > 0
-          ? document.execCommand("insertText", false, edit.text)
-          : document.execCommand("delete");
-    } finally {
-      applyingProgrammaticEdit = false;
-    }
-
-    return applied;
-  }
-
   function replaceSourceRange(start: number, end: number, text: string): void {
-    const edit = { start, end, text };
     const nextCursor = start + text.length;
 
-    if (!runUndoableSourceEdit(edit)) {
-      applyDirectSourceEdit(edit);
-    }
-
-    sourceInput.selectionStart = nextCursor;
-    sourceInput.selectionEnd = nextCursor;
+    editorView.dispatch({
+      changes: { from: start, to: end, insert: text },
+      selection: EditorSelection.cursor(nextCursor),
+      scrollIntoView: true
+    });
   }
 
   function insertAtSelection(text: string): void {
-    replaceSourceRange(sourceInput.selectionStart, sourceInput.selectionEnd, text);
+    const selection = editorView.state.selection.main;
+    replaceSourceRange(selection.from, selection.to, text);
   }
 
   function applyLanguageTextEdits(edits: LanguageTextEdit[]): void {
-    const sortedEdits = [...edits].sort((left, right) => right.start - left.start);
-    let nextSelectionStart = sourceInput.selectionStart;
-    let nextSelectionEnd = sourceInput.selectionEnd;
+    const selection = editorView.state.selection.main;
+    const sortedEdits = [...edits].sort((left, right) => left.start - right.start);
+    let nextSelectionStart = selection.from;
+    let nextSelectionEnd = selection.to;
 
-    sortedEdits.forEach((edit) => {
-      if (!runUndoableSourceEdit(edit)) {
-        applyDirectSourceEdit(edit);
-      }
+    [...edits]
+      .sort((left, right) => right.start - left.start)
+      .forEach((edit) => {
+        nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
+        nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
+      });
 
-      nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
-      nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
+    editorView.dispatch({
+      changes: sortedEdits.map((edit) => ({
+        from: edit.start,
+        to: edit.end,
+        insert: edit.text
+      })),
+      selection: EditorSelection.range(nextSelectionStart, nextSelectionEnd),
+      scrollIntoView: true
     });
-
-    sourceInput.selectionStart = nextSelectionStart;
-    sourceInput.selectionEnd = nextSelectionEnd;
   }
 
-  function applySmartEdits(): void {
+  function getSmartTextEdits(): LanguageTextEdit[] {
     const smartEdits = getLanguageSmartEdits(createLanguageRequest()).edits;
 
-    if (smartEdits.length === 0) {
-      return;
+    return smartEdits.map((smartEdit) => smartEdit.edit);
+  }
+
+  function scheduleSmartEdits(): boolean {
+    if (getSmartTextEdits().length === 0) {
+      return false;
     }
 
-    applyLanguageTextEdits(smartEdits.map((smartEdit) => smartEdit.edit));
+    window.setTimeout(() => {
+      const latestEdits = getSmartTextEdits();
+
+      if (latestEdits.length > 0) {
+        applyLanguageTextEdits(latestEdits);
+      }
+    }, 0);
+
+    return true;
   }
 
   function applyCompletion(index: number): void {
@@ -1923,66 +2025,54 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       return;
     }
 
-    const cursor = sourceInput.selectionStart;
+    const cursor = getEditorOffset();
     replaceSourceRange(cursor - prefix.length, cursor, item.insertText);
-    sourceInput.focus();
+    editorView.focus();
     completionListExplicit = false;
     completionSuppressedUntilInput = true;
     argumentHelpOpen = false;
-    handleSourceChange();
   }
 
   function handleSourceChange(): void {
-    applySmartEdits();
-    sourceState.set(playground.id, sourceInput.value);
-    updatePreview(sourceInput.value);
+    if (scheduleSmartEdits()) {
+      return;
+    }
+
+    const source = getEditorSource();
+    sourceState.set(playground.id, source);
+    updatePreview(source);
     updateAssist();
   }
 
-  function shouldOpenArgumentHelpAfterInput(event: Event): boolean {
+  function getInsertedText(update: ViewUpdate): string {
+    let text = "";
+
+    update.changes.iterChanges((_fromA, _toA, _fromB, _toB, inserted) => {
+      text += inserted.toString();
+    });
+
+    return text;
+  }
+
+  function shouldOpenArgumentHelpAfterUpdate(update: ViewUpdate): boolean {
     const help = getArgumentHelp(createLanguageRequest());
 
     if (!help) {
       return false;
     }
 
-    if (!(event instanceof InputEvent)) {
+    if (!update.docChanged) {
       return argumentHelpOpen;
     }
 
-    if (
-      event.inputType.startsWith("delete") ||
-      event.inputType === "insertLineBreak"
-    ) {
+    if (update.transactions.some((transaction) => transaction.isUserEvent("delete"))) {
       return false;
     }
 
-    if (event.inputType === "insertText" && event.data !== null) {
-      return /\s/.test(event.data) || argumentHelpOpen;
-    }
-
-    if (event.inputType === "insertFromPaste") {
-      return /\s$/.test(sourceInput.value.slice(0, sourceInput.selectionStart)) ||
-        argumentHelpOpen;
-    }
-
-    return argumentHelpOpen;
+    return /\s/.test(getInsertedText(update)) || argumentHelpOpen;
   }
 
-  function handleSourceInput(event: Event): void {
-    if (applyingProgrammaticEdit) {
-      return;
-    }
-
-    completionListExplicit = false;
-    completionSuppressedUntilInput = false;
-    argumentHelpOpen = shouldOpenArgumentHelpAfterInput(event);
-    handleSourceChange();
-  }
-
-  sourceInput.addEventListener("input", handleSourceInput);
-
-  sourceInput.addEventListener("keydown", (event) => {
+  function handleEditorKeydown(event: KeyboardEvent): boolean {
     const completionCount = completionList.hidden
       ? 0
       : Math.min(completionResult?.items.length ?? 0, 12);
@@ -1991,7 +2081,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       event.preventDefault();
       activeCompletionIndex = (activeCompletionIndex + 1) % completionCount;
       renderCompletionList(completionResult?.items ?? []);
-      return;
+      return true;
     }
 
     if (event.key === "ArrowUp" && completionCount > 0) {
@@ -1999,18 +2089,18 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       activeCompletionIndex =
         (activeCompletionIndex - 1 + completionCount) % completionCount;
       renderCompletionList(completionResult?.items ?? []);
-      return;
+      return true;
     }
 
     if (event.key === "Escape") {
       hideAssist();
-      return;
+      return false;
     }
 
     if (isCompletionRequestShortcut(event)) {
       event.preventDefault();
       showCompletionListNow();
-      return;
+      return true;
     }
 
     if (event.key === "Tab") {
@@ -2018,15 +2108,14 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
 
       if (!event.shiftKey && completionCount > 0) {
         applyCompletion(activeCompletionIndex);
-        return;
+        return true;
       }
 
       insertAtSelection("  ");
       completionListExplicit = false;
       completionSuppressedUntilInput = false;
       argumentHelpOpen = false;
-      handleSourceChange();
-      return;
+      return true;
     }
 
     if (event.key === "Enter") {
@@ -2034,43 +2123,87 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
 
       if (completionCount > 0) {
         applyCompletion(activeCompletionIndex);
-        return;
+        return true;
       }
 
       insertAtSelection(`\n${getEnterIndentation(createLanguageRequest())}`);
       completionListExplicit = false;
       completionSuppressedUntilInput = false;
       argumentHelpOpen = false;
-      handleSourceChange();
+      return true;
     }
-  });
 
-  sourceInput.addEventListener("scroll", syncEditorScroll);
-  sourceInput.addEventListener("focus", () => {
+    return false;
+  }
+
+  function handleEditorFocus(): void {
     sourceEditor.style.borderColor = "rgba(125,211,252,0.48)";
     completionListExplicit = false;
     completionSuppressedUntilInput = true;
     argumentHelpOpen = false;
     updateAssist();
-  });
-  sourceInput.addEventListener("blur", () => {
+  }
+
+  function handleEditorBlur(): void {
     sourceEditor.style.borderColor = "rgba(255,255,255,0.12)";
     window.setTimeout(() => {
-      if (document.activeElement !== sourceInput) {
+      if (!editorView.hasFocus) {
         hideAssist();
       }
     }, 120);
-  });
-  sourceInput.addEventListener("keyup", (event) => {
+  }
+
+  function handleEditorKeyup(event: KeyboardEvent): void {
     if (isCursorNavigationKey(event)) {
       updateAssist();
     }
-  });
-  sourceInput.addEventListener("mouseup", () => {
+  }
+
+  function handleEditorMouseup(): void {
     completionListExplicit = false;
     completionSuppressedUntilInput = true;
     argumentHelpOpen = false;
     updateAssist();
+  }
+
+  editorView = new EditorView({
+    parent: sourceEditor,
+    state: EditorState.create({
+      doc: initialSource,
+      extensions: [
+        basicSetup,
+        EditorView.lineWrapping,
+        sourceSyntaxHighlighter,
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            completionListExplicit = false;
+            completionSuppressedUntilInput = false;
+            argumentHelpOpen = shouldOpenArgumentHelpAfterUpdate(update);
+            handleSourceChange();
+            return;
+          }
+
+          if (update.selectionSet || update.viewportChanged) {
+            updateAssist();
+          }
+        }),
+        EditorView.domEventHandlers({
+          blur: () => {
+            handleEditorBlur();
+          },
+          focus: () => {
+            handleEditorFocus();
+          },
+          keydown: (event) => handleEditorKeydown(event),
+          keyup: (event) => {
+            handleEditorKeyup(event);
+          },
+          mouseup: () => {
+            handleEditorMouseup();
+          }
+        })
+      ]
+    })
   });
 
   zoomSelect.addEventListener("change", () => {
@@ -2084,7 +2217,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }).observe(spriteViewport);
 
   sourceAssist.append(completionList, argumentHelp);
-  sourceEditor.append(sourceHighlight, sourceInput, sourceAssist);
+  sourceEditor.append(sourceAssist);
   sourceLabel.append(sourceEditor);
   editorPanel.append(sourceLabel, status);
   zoomLabel.append(zoomSelect);
@@ -2101,7 +2234,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   layout.append(editorPanel, previewPanel);
   section.append(heading, summary, layout);
 
-  updatePreview(sourceInput.value);
+  updatePreview(initialSource);
   return section;
 }
 

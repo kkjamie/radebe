@@ -26,7 +26,7 @@ Last updated: `2026-05-20`
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.
-- `radebe-web/src/`: browser authoring shell that imports `radebe-core` and renders the shared preview artifact.
+- `radebe-web/src/`: CodeMirror-backed browser authoring shell that imports `radebe-core`, provides schema-driven editor assists, and renders the shared preview artifact.
 - `radebe-unity/README.md`: bridge direction and planned Unity asset layout.
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
