@@ -33,6 +33,7 @@ Last updated: `2026-05-20`
 - T-051 adjusted that smart-edit behavior after hands-on use: shorthand cleanup now waits until the complete child command name is typed, such as `fill`, rather than firing on partial prefixes like `f`; the web adapter also applies smart-edit removals through the focused textarea edit command path so browser undo can restore removed shorthand where supported.
 - T-052 moved autocomplete replacements plus Tab and smart Enter insertions onto the same undo-aware textarea edit path. This addresses the case where undo restored smart-edit cleanup but could not undo text inserted by autocomplete because completions had been written directly to `textarea.value`.
 - T-050 accepted CodeMirror 6 as the web editor host and migrated the playground source editor from the custom textarea/highlight shell to CodeMirror document state, history, selection, and transaction primitives while keeping the existing schema-driven assist popup and live preview behavior.
+- T-053 repaired regressions found immediately after the CodeMirror migration: Radebe-specific `Enter`, `Tab`, arrow completion navigation, `Ctrl+Space`, and `Escape` handling now sit in a highest-priority CodeMirror keymap above the default editor bindings; autocomplete acceptance explicitly suppresses and hides assist after insertion; and the CodeMirror gutter border plus active-line highlight have been softened.
 - The web examples now fold cut and rounded-corner rectangle cases into the main `rect` page instead of keeping separate `cut` or `rounded-rect` pages, and `polygon` now has real live examples instead of a placeholder page.
 - The web example nav now keeps placeholder pages only for substantive planned features; low-value stubs such as `size`, `background`, `fill`, `inset`, `blend`, `draw`, `overlay`, and standalone `align` / `style` property pages were removed so those concepts can instead live under parent pages or command-specific pages.
 - The web docs/playground now has a real `shadow` page instead of a placeholder, including examples for simple offset use plus positive and negative `spread`.
@@ -46,14 +47,14 @@ Last updated: `2026-05-20`
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
 - DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
-- T-050 is complete; the next editor-track task is T-053, a browser validation and polish pass over the CodeMirror migration.
+- T-053 is in review after the CodeMirror regression repair. Build, tests, and the running dev-server HTTP check pass, but autocomplete acceptance, smart Enter, argument help, smart edits, undo, and popup positioning still need hands-on browser interaction validation.
 - No active blocker remains on T-011. The remaining Unity follow-on work is product choice, not integration failure.
 - The current leading Unity follow-on is importer options for sprite authoring ergonomics: border/9-slice metadata, pivot, pixels per unit, and filter mode surfaced through the existing ScriptedImporter settings.
 - T-043 is now in progress. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector now also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. The updated plugin has been redeployed to Eddie through `npm run deploy:unity`, but the settings still need a hands-on Unity editor check.
 
 ## Best Next Tasks
-1. If continuing the editor track, start T-053 and manually validate autocomplete, undo, smart Enter, argument help, smart edits, and popup positioning on the CodeMirror-backed editor.
-2. Add diagnostics underlining or command-specific hover/help on top of CodeMirror once the migration is validated.
+1. Manually validate T-053 in the browser, especially autocomplete acceptance with `Enter`, `Ctrl+Space` explicit completion, smart Enter indentation, argument help timing, smart shorthand cleanup, undo, and popup placement.
+2. Add diagnostics underlining or command-specific hover/help on top of CodeMirror once the migration repair is confirmed.
 3. Return to T-043 when ready to close the active Unity importer-options task with hands-on Eddie validation.
 
 ## Resume Checklist

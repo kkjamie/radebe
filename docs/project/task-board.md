@@ -55,11 +55,11 @@ Use this as the single source of truth for active execution state.
 | T-051 | Tune smart-edit trigger timing and undo behavior | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-050 now that shorthand cleanup waits for the complete child command and uses the textarea edit path so undo can restore removed shorthand |
 | T-052 | Make autocomplete and editor insertions undoable | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-050 now that autocomplete, Tab indentation, smart Enter, and smart edits all use the same undo-aware textarea edit path |
 | T-050 | Decide the next editor host direction | M2 | Gate B | P1 | Done | `codex-main` | None | Continue editor work on top of CodeMirror 6 and the shared language-service APIs; manually exercise autocomplete, undo, smart edits, and assist positioning in the browser |
+| T-053 | Validate and polish the CodeMirror editor migration | M2 | Gate B | P1 | Review | `codex-main` | Needs hands-on browser interaction validation after the regression repair | High-priority Radebe keybindings and softened CodeMirror styling are implemented and build/tests pass; user/manual pass should confirm autocomplete acceptance, Ctrl+Space, smart Enter, argument help, smart edits, undo, and popup positioning |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-053 | Validate and polish the CodeMirror editor migration | M2 | Gate B | P1 | Ready | Unassigned | None | Manually exercise autocomplete, undo, smart Enter, argument help, smart edits, and popup positioning in the browser, then fix any migration regressions |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

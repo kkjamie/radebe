@@ -2,6 +2,7 @@ import { basicSetup } from "codemirror";
 import {
   EditorSelection,
   EditorState,
+  Prec,
   RangeSetBuilder,
   type Range
 } from "@codemirror/state";
@@ -9,6 +10,7 @@ import {
   Decoration,
   type DecorationSet,
   EditorView,
+  keymap,
   ViewPlugin,
   type ViewUpdate
 } from "@codemirror/view";
@@ -93,8 +95,9 @@ syntaxStyles.textContent = `
 .cm-scroller { min-height: 320px; font-family: inherit; line-height: 1.45; }
 .cm-content { padding: 14px; caret-color: #f8f4ec; tab-size: 2; }
 .cm-line { padding: 0; }
-.cm-gutters { background: #12110f; border-right: 1px solid rgba(255,255,255,0.08); color: #8f8374; }
-.cm-activeLine, .cm-activeLineGutter { background: rgba(255,255,255,0.045); }
+.cm-editor .cm-gutters { background: #12110f !important; border-right: 1px solid rgba(255,255,255,0.035) !important; color: #746a5f !important; }
+.cm-editor .cm-activeLine, .cm-editor .cm-activeLineGutter { background: rgba(255,255,255,0.024) !important; }
+.cm-editor .cm-activeLineGutter { color: #a4998b !important; }
 .cm-selectionBackground, .cm-focused .cm-selectionBackground { background: rgba(125,211,252,0.24) !important; }
 `;
 document.head.append(syntaxStyles);
@@ -1661,6 +1664,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   let activeCompletionIndex = 0;
   let completionListExplicit = false;
   let completionSuppressedUntilInput = false;
+  let suppressAssistForNextChange = false;
   let argumentHelpOpen = false;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
@@ -1956,9 +1960,16 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     sourceAssist.hidden = true;
   }
 
-  function replaceSourceRange(start: number, end: number, text: string): void {
+  function replaceSourceRange(
+    start: number,
+    end: number,
+    text: string,
+    options?: { suppressAssistAfterChange?: boolean }
+  ): void {
     const nextCursor = start + text.length;
 
+    suppressAssistForNextChange =
+      suppressAssistForNextChange || options?.suppressAssistAfterChange === true;
     editorView.dispatch({
       changes: { from: start, to: end, insert: text },
       selection: EditorSelection.cursor(nextCursor),
@@ -1966,12 +1977,18 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     });
   }
 
-  function insertAtSelection(text: string): void {
+  function insertAtSelection(
+    text: string,
+    options?: { suppressAssistAfterChange?: boolean }
+  ): void {
     const selection = editorView.state.selection.main;
-    replaceSourceRange(selection.from, selection.to, text);
+    replaceSourceRange(selection.from, selection.to, text, options);
   }
 
-  function applyLanguageTextEdits(edits: LanguageTextEdit[]): void {
+  function applyLanguageTextEdits(
+    edits: LanguageTextEdit[],
+    options?: { suppressAssistAfterChange?: boolean }
+  ): void {
     const selection = editorView.state.selection.main;
     const sortedEdits = [...edits].sort((left, right) => left.start - right.start);
     let nextSelectionStart = selection.from;
@@ -1984,6 +2001,8 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
         nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
       });
 
+    suppressAssistForNextChange =
+      suppressAssistForNextChange || options?.suppressAssistAfterChange === true;
     editorView.dispatch({
       changes: sortedEdits.map((edit) => ({
         from: edit.start,
@@ -2010,7 +2029,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       const latestEdits = getSmartTextEdits();
 
       if (latestEdits.length > 0) {
-        applyLanguageTextEdits(latestEdits);
+        applyLanguageTextEdits(latestEdits, {
+          suppressAssistAfterChange: true
+        });
       }
     }, 0);
 
@@ -2026,11 +2047,14 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
 
     const cursor = getEditorOffset();
-    replaceSourceRange(cursor - prefix.length, cursor, item.insertText);
-    editorView.focus();
     completionListExplicit = false;
     completionSuppressedUntilInput = true;
     argumentHelpOpen = false;
+    replaceSourceRange(cursor - prefix.length, cursor, item.insertText, {
+      suppressAssistAfterChange: true
+    });
+    editorView.focus();
+    hideAssist();
   }
 
   function handleSourceChange(): void {
@@ -2042,6 +2066,60 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     sourceState.set(playground.id, source);
     updatePreview(source);
     updateAssist();
+  }
+
+  function getVisibleCompletionCount(): number {
+    return completionList.hidden
+      ? 0
+      : Math.min(completionResult?.items.length ?? 0, 12);
+  }
+
+  function moveActiveCompletion(delta: number): boolean {
+    const completionCount = getVisibleCompletionCount();
+
+    if (completionCount === 0) {
+      return false;
+    }
+
+    activeCompletionIndex =
+      (activeCompletionIndex + delta + completionCount) % completionCount;
+    renderCompletionList(completionResult?.items ?? []);
+    return true;
+  }
+
+  function acceptActiveCompletion(): boolean {
+    if (getVisibleCompletionCount() === 0) {
+      return false;
+    }
+
+    applyCompletion(activeCompletionIndex);
+    return true;
+  }
+
+  function handleTabCommand(): boolean {
+    if (acceptActiveCompletion()) {
+      return true;
+    }
+
+    completionListExplicit = false;
+    completionSuppressedUntilInput = false;
+    argumentHelpOpen = false;
+    insertAtSelection("  ", { suppressAssistAfterChange: true });
+    return true;
+  }
+
+  function handleEnterCommand(): boolean {
+    if (acceptActiveCompletion()) {
+      return true;
+    }
+
+    completionListExplicit = false;
+    completionSuppressedUntilInput = false;
+    argumentHelpOpen = false;
+    insertAtSelection(`\n${getEnterIndentation(createLanguageRequest())}`, {
+      suppressAssistAfterChange: true
+    });
+    return true;
   }
 
   function getInsertedText(update: ViewUpdate): string {
@@ -2073,22 +2151,13 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function handleEditorKeydown(event: KeyboardEvent): boolean {
-    const completionCount = completionList.hidden
-      ? 0
-      : Math.min(completionResult?.items.length ?? 0, 12);
-
-    if (event.key === "ArrowDown" && completionCount > 0) {
+    if (event.key === "ArrowDown" && moveActiveCompletion(1)) {
       event.preventDefault();
-      activeCompletionIndex = (activeCompletionIndex + 1) % completionCount;
-      renderCompletionList(completionResult?.items ?? []);
       return true;
     }
 
-    if (event.key === "ArrowUp" && completionCount > 0) {
+    if (event.key === "ArrowUp" && moveActiveCompletion(-1)) {
       event.preventDefault();
-      activeCompletionIndex =
-        (activeCompletionIndex - 1 + completionCount) % completionCount;
-      renderCompletionList(completionResult?.items ?? []);
       return true;
     }
 
@@ -2105,32 +2174,12 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
 
     if (event.key === "Tab") {
       event.preventDefault();
-
-      if (!event.shiftKey && completionCount > 0) {
-        applyCompletion(activeCompletionIndex);
-        return true;
-      }
-
-      insertAtSelection("  ");
-      completionListExplicit = false;
-      completionSuppressedUntilInput = false;
-      argumentHelpOpen = false;
-      return true;
+      return handleTabCommand();
     }
 
     if (event.key === "Enter") {
       event.preventDefault();
-
-      if (completionCount > 0) {
-        applyCompletion(activeCompletionIndex);
-        return true;
-      }
-
-      insertAtSelection(`\n${getEnterIndentation(createLanguageRequest())}`);
-      completionListExplicit = false;
-      completionSuppressedUntilInput = false;
-      argumentHelpOpen = false;
-      return true;
+      return handleEnterCommand();
     }
 
     return false;
@@ -2166,19 +2215,64 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     updateAssist();
   }
 
+  const radebeEditorKeymap = Prec.highest(
+    keymap.of([
+      {
+        key: "ArrowDown",
+        run: () => moveActiveCompletion(1)
+      },
+      {
+        key: "ArrowUp",
+        run: () => moveActiveCompletion(-1)
+      },
+      {
+        key: "Ctrl-Space",
+        run: () => {
+          showCompletionListNow();
+          return true;
+        }
+      },
+      {
+        key: "Escape",
+        run: () => {
+          if (sourceAssist.hidden) {
+            return false;
+          }
+
+          hideAssist();
+          return true;
+        }
+      },
+      {
+        key: "Tab",
+        run: () => handleTabCommand()
+      },
+      {
+        key: "Enter",
+        run: () => handleEnterCommand()
+      }
+    ])
+  );
+
   editorView = new EditorView({
     parent: sourceEditor,
     state: EditorState.create({
       doc: initialSource,
       extensions: [
+        radebeEditorKeymap,
         basicSetup,
         EditorView.lineWrapping,
         sourceSyntaxHighlighter,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
+            const suppressAssist = suppressAssistForNextChange;
+
+            suppressAssistForNextChange = false;
             completionListExplicit = false;
-            completionSuppressedUntilInput = false;
-            argumentHelpOpen = shouldOpenArgumentHelpAfterUpdate(update);
+            completionSuppressedUntilInput = suppressAssist;
+            argumentHelpOpen = suppressAssist
+              ? false
+              : shouldOpenArgumentHelpAfterUpdate(update);
             handleSourceChange();
             return;
           }
