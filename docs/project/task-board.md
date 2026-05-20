@@ -52,6 +52,7 @@ Use this as the single source of truth for active execution state.
 | T-047 | Add schema-driven smart edits for shorthand cleanup | M2 | Gate B | P1 | Done | `codex-main` | None | Decide whether the next editor slice should migrate the textarea editor to CodeMirror 6 or continue adding small language-service-backed assists in place |
 | T-048 | Tune web autocomplete interaction timing and placement | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-047 smart edits now that completions stay quiet on blank lines, Enter accepts visible completions, and the assist UI appears below the active line |
 | T-049 | Polish web assist styling, explicit completion trigger, and argument hints | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-047 smart edits now that completion acceptance stays quiet, Ctrl+Space explicitly requests completions, and argument hints show richer schema metadata only after entering an argument slot |
+| T-051 | Tune smart-edit trigger timing and undo behavior | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-050 now that shorthand cleanup waits for the complete child command and uses the textarea edit path so undo can restore removed shorthand |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

@@ -167,10 +167,10 @@ test("getLanguageCompletions suggests named argument keys by prefix", () => {
   assert.deepEqual(labels("stroke 2 white al|"), ["alpha=", "align="]);
 });
 
-test("getLanguageSmartEdits removes shorthand color when fill is started", () => {
+test("getLanguageSmartEdits removes shorthand color when fill command is complete", () => {
   assert.equal(
-    applySmartEdits("rect 10 10 100 100 black\n  f|"),
-    "rect 10 10 100 100\n  f"
+    applySmartEdits("rect 10 10 100 100 black\n  fill|"),
+    "rect 10 10 100 100\n  fill"
   );
 
   assert.equal(
@@ -179,14 +179,18 @@ test("getLanguageSmartEdits removes shorthand color when fill is started", () =>
   );
 
   assert.equal(
-    applySmartEdits("polygon 0 0 8 0 8 8 black\n  f|"),
-    "polygon 0 0 8 0 8 8\n  f"
+    applySmartEdits("polygon 0 0 8 0 8 8 black\n  fill|"),
+    "polygon 0 0 8 0 8 8\n  fill"
   );
 });
 
 test("getLanguageSmartEdits keeps shorthand when no matching child is started", () => {
   assert.equal(
     getLanguageSmartEdits(atCursor("rect 10 10 100 100 black\n  |")).edits.length,
+    0
+  );
+  assert.equal(
+    getLanguageSmartEdits(atCursor("rect 10 10 100 100 black\n  f|")).edits.length,
     0
   );
   assert.equal(

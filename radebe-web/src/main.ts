@@ -1532,6 +1532,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   let completionListExplicit = false;
   let completionSuppressedUntilInput = false;
   let argumentHelpOpen = false;
+  let applyingSmartEdits = false;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
   heading.textContent = playground.title;
@@ -1857,15 +1858,44 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     let nextValue = sourceInput.value;
     let nextSelectionStart = sourceInput.selectionStart;
     let nextSelectionEnd = sourceInput.selectionEnd;
+    let usedBrowserEditCommand = false;
 
-    sortedEdits.forEach((edit) => {
-      nextValue =
-        nextValue.slice(0, edit.start) + edit.text + nextValue.slice(edit.end);
-      nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
-      nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
-    });
+    if (document.activeElement === sourceInput) {
+      applyingSmartEdits = true;
 
-    sourceInput.value = nextValue;
+      try {
+        sortedEdits.forEach((edit) => {
+          sourceInput.selectionStart = edit.start;
+          sourceInput.selectionEnd = edit.end;
+
+          if (edit.text.length > 0) {
+            usedBrowserEditCommand =
+              document.execCommand("insertText", false, edit.text) ||
+              usedBrowserEditCommand;
+          } else {
+            usedBrowserEditCommand =
+              document.execCommand("delete") || usedBrowserEditCommand;
+          }
+
+          nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
+          nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
+        });
+      } finally {
+        applyingSmartEdits = false;
+      }
+    }
+
+    if (!usedBrowserEditCommand) {
+      sortedEdits.forEach((edit) => {
+        nextValue =
+          nextValue.slice(0, edit.start) + edit.text + nextValue.slice(edit.end);
+        nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
+        nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
+      });
+
+      sourceInput.value = nextValue;
+    }
+
     sourceInput.selectionStart = nextSelectionStart;
     sourceInput.selectionEnd = nextSelectionEnd;
   }
@@ -1935,6 +1965,10 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function handleSourceInput(event: Event): void {
+    if (applyingSmartEdits) {
+      return;
+    }
+
     completionListExplicit = false;
     completionSuppressedUntilInput = false;
     argumentHelpOpen = shouldOpenArgumentHelpAfterInput(event);

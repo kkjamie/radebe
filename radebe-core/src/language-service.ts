@@ -834,7 +834,7 @@ function createShorthandCleanupSmartEdits(
   parentCommand.definition.shorthandExpansions?.forEach((expansion) => {
     if (
       !expansion.removeWhenChildCommandStarted ||
-      !expansion.childCommand.startsWith(context.prefix)
+      expansion.childCommand !== context.prefix
     ) {
       return;
     }
