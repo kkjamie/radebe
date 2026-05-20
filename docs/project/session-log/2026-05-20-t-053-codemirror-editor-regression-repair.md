@@ -16,10 +16,12 @@ Milestone/Gate: `M2 / Gate B`
 - Kept the existing schema-driven completion popup, argument help, smart Enter indentation, and smart-edit flow wired through the CodeMirror document adapter.
 - Tightened completion acceptance ordering so accepted completions explicitly suppress and hide assist after insertion instead of reopening immediately.
 - Reduced the visual contrast of the CodeMirror gutter border, line-number color, and active-line highlight.
+- Switched the CodeMirror caret and drop cursor to the brighter cyan editor accent with a 2px cursor stroke for better contrast against the dark source surface.
 
 ## Verification
 - Ran `npm run build` successfully across the workspace.
 - Ran `npm test` successfully outside the sandbox with the core suite, CLI suite, and SEA smoke test passing.
+- Ran `npm --prefix radebe-web run build` successfully after the caret contrast adjustment.
 - Confirmed the running dev server at `http://127.0.0.1:5173/` returns HTTP 200.
 
 ## Notes

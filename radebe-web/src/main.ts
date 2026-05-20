@@ -93,8 +93,9 @@ syntaxStyles.textContent = `
 .cm-editor { min-height: 320px; background: transparent; color: #f8f4ec; font: inherit; line-height: 1.45; }
 .cm-editor.cm-focused { outline: none; }
 .cm-scroller { min-height: 320px; font-family: inherit; line-height: 1.45; }
-.cm-content { padding: 14px; caret-color: #f8f4ec; tab-size: 2; }
+.cm-content { padding: 14px; caret-color: #7dd3fc; tab-size: 2; }
 .cm-line { padding: 0; }
+.cm-editor .cm-cursor, .cm-editor .cm-dropCursor { border-left-color: #7dd3fc !important; border-left-width: 2px !important; }
 .cm-editor .cm-gutters { background: #12110f !important; border-right: 1px solid rgba(255,255,255,0.035) !important; color: #746a5f !important; }
 .cm-editor .cm-activeLine, .cm-editor .cm-activeLineGutter { background: rgba(255,255,255,0.024) !important; }
 .cm-editor .cm-activeLineGutter { color: #a4998b !important; }
