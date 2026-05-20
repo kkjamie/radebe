@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Radebe",
+  "scopeName": "source.rdb",
+  "patterns": [
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#command"
+    },
+    {
+      "include": "#named-argument"
+    },
+    {
+      "include": "#variable"
+    },
+    {
+      "include": "#color"
+    },
+    {
+      "include": "#number"
+    }
+  ],
+  "repository": {
+    "color": {
+      "match": "#(?:[0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})\\b",
+      "name": "constant.other.color.rgb-value.rdb"
+    },
+    "command": {
+      "captures": {
+        "1": {
+          "name": "entity.name.function.command.rdb"
+        }
+      },
+      "match": "^\\s*([A-Za-z][A-Za-z0-9_-]*)\\b"
+    },
+    "comment": {
+      "match": "^\\s*#.*$",
+      "name": "comment.line.number-sign.rdb"
+    },
+    "named-argument": {
+      "captures": {
+        "1": {
+          "name": "variable.parameter.named.rdb"
+        },
+        "2": {
+          "name": "keyword.operator.assignment.rdb"
+        }
+      },
+      "match": "\\b([A-Za-z][A-Za-z0-9_-]*)(=)"
+    },
+    "number": {
+      "match": "(?<![A-Za-z0-9_-])-?\\d+(?:\\.\\d+)?\\b",
+      "name": "constant.numeric.rdb"
+    },
+    "variable": {
+      "match": "\\$[A-Za-z][A-Za-z0-9_-]*\\b",
+      "name": "variable.other.rdb"
+    }
+  }
+}

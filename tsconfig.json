@@ -11,6 +11,9 @@
       "path": "./radebe-web"
     },
     {
+      "path": "./radebe-vscode"
+    },
+    {
       "path": "./scripts"
     }
   ]

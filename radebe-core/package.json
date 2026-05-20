@@ -18,6 +18,10 @@
       "types": "./dist/src/compiler.d.ts",
       "default": "./dist/src/compiler.js"
     },
+    "./colors": {
+      "types": "./dist/src/colors.d.ts",
+      "default": "./dist/src/colors.js"
+    },
     "./language-service": {
       "types": "./dist/src/language-service.d.ts",
       "default": "./dist/src/language-service.js"

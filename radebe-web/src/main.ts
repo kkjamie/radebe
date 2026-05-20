@@ -14,20 +14,25 @@ import {
   EditorView,
   keymap,
   ViewPlugin,
+  WidgetType,
   type ViewUpdate
 } from "@codemirror/view";
 import {
+  formatRadebeColor,
   getArgumentHelp,
   getCommandDefinition,
   getEnterIndentation,
   getLanguageCompletions,
   getLanguageSmartEdits,
+  getRadebeColorTokens,
+  parseRadebeColorToken,
   renderSource,
   type LanguageArgumentHelp,
   type LanguageCompletionItem,
   type LanguageCompletionResult,
   type LanguageServiceRequest,
   type LanguageTextEdit,
+  type RadebeRgbaColor,
   type RadebeDiagnostic
 } from "@radebe/core";
 
@@ -88,6 +93,9 @@ syntaxStyles.textContent = `
 .syntax-punctuation { color: #9d9183; }
 .syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
 .diagnostic-squiggle { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: #ff6262; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.source-color-swatch { display: inline-block; box-sizing: border-box; width: 0.86em; height: 0.86em; margin: 0 0.34em 0 0.05em; padding: 0; border: 1px solid rgba(255,255,255,0.66); border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,0.45); vertical-align: -0.1em; cursor: pointer; background: transparent; }
+.source-color-swatch:hover { border-color: #f8f4ec; box-shadow: 0 0 0 1px rgba(0,0,0,0.65), 0 0 0 3px rgba(125,211,252,0.2); }
+.source-color-native-picker { position: fixed; z-index: -1; opacity: 0; pointer-events: none; }
 .editor-assist { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 3; display: grid; gap: 6px; pointer-events: none; }
 .editor-assist[hidden] { display: none; }
 .completion-list { display: grid; max-width: 340px; max-height: 168px; overflow: auto; border: 1px solid rgba(125,211,252,0.24); background: #171512; box-shadow: 0 14px 30px rgba(0,0,0,0.34); pointer-events: auto; }
@@ -383,6 +391,189 @@ function createSourceSyntaxDecorations(view: EditorView): DecorationSet {
   return builder.finish();
 }
 
+function formatNativeColorInputValue(color: RadebeRgbaColor): string {
+  return formatRadebeColor({ ...color, a: 1 });
+}
+
+function formatCssColor(color: RadebeRgbaColor): string {
+  return `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${color.a})`;
+}
+
+function applyColorSwatchBackground(element: HTMLElement, color: RadebeRgbaColor): void {
+  const cssColor = formatCssColor(color);
+
+  if (color.a >= 1) {
+    element.style.background = cssColor;
+    element.style.backgroundPosition = "";
+    element.style.backgroundSize = "";
+    return;
+  }
+
+  element.style.background = [
+    `linear-gradient(${cssColor}, ${cssColor})`,
+    "linear-gradient(45deg, #8b8174 25%, transparent 25%)",
+    "linear-gradient(-45deg, #8b8174 25%, transparent 25%)",
+    "linear-gradient(45deg, transparent 75%, #8b8174 75%)",
+    "linear-gradient(-45deg, transparent 75%, #8b8174 75%)"
+  ].join(", ");
+  element.style.backgroundPosition = "0 0, 0 0, 0 4px, 4px -4px, -4px 0";
+  element.style.backgroundSize =
+    "100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px";
+}
+
+let closeActiveNativeColorPicker: (() => void) | null = null;
+
+function openNativeColorPicker(
+  view: EditorView,
+  from: number,
+  to: number,
+  color: RadebeRgbaColor,
+  anchor: DOMRect
+): void {
+  const input = document.createElement("input");
+
+  closeActiveNativeColorPicker?.();
+
+  function cleanup(): void {
+    window.removeEventListener("focus", handleWindowFocus);
+    input.remove();
+    if (closeActiveNativeColorPicker === cleanup) {
+      closeActiveNativeColorPicker = null;
+    }
+  }
+
+  function handleWindowFocus(): void {
+    window.setTimeout(cleanup, 0);
+  }
+
+  input.type = "color";
+  input.className = "source-color-native-picker";
+  input.value = formatNativeColorInputValue(color);
+  input.style.left = `${Math.round(anchor.left)}px`;
+  input.style.top = `${Math.round(anchor.top)}px`;
+  input.style.width = `${Math.max(Math.round(anchor.width), 18)}px`;
+  input.style.height = `${Math.max(Math.round(anchor.height), 18)}px`;
+  input.tabIndex = -1;
+  input.setAttribute("aria-hidden", "true");
+  input.addEventListener("change", () => {
+    const nextColor = parseRadebeColorToken(input.value);
+
+    if (nextColor === null) {
+      cleanup();
+      return;
+    }
+
+    const replacement = formatRadebeColor({ ...nextColor, a: color.a });
+    view.dispatch({
+      changes: { from, to, insert: replacement },
+      selection: EditorSelection.cursor(from + replacement.length)
+    });
+    cleanup();
+    view.focus();
+  });
+  input.addEventListener("cancel", cleanup);
+
+  document.body.append(input);
+  closeActiveNativeColorPicker = cleanup;
+  window.addEventListener("focus", handleWindowFocus);
+  input.focus({ preventScroll: true });
+
+  try {
+    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
+
+    if (typeof pickerInput.showPicker === "function") {
+      pickerInput.showPicker();
+    } else {
+      input.click();
+    }
+  } catch {
+    input.click();
+  }
+}
+
+class SourceColorSwatchWidget extends WidgetType {
+  constructor(
+    readonly from: number,
+    readonly to: number,
+    readonly tokenText: string,
+    readonly color: RadebeRgbaColor
+  ) {
+    super();
+  }
+
+  eq(other: SourceColorSwatchWidget): boolean {
+    return (
+      this.from === other.from &&
+      this.to === other.to &&
+      this.tokenText === other.tokenText &&
+      formatRadebeColor(this.color) === formatRadebeColor(other.color)
+    );
+  }
+
+  toDOM(view: EditorView): HTMLElement {
+    const button = document.createElement("button");
+
+    button.type = "button";
+    button.className = "source-color-swatch";
+    button.title = `Edit color ${this.tokenText}`;
+    button.setAttribute("aria-label", `Edit color ${this.tokenText}`);
+    applyColorSwatchBackground(button, this.color);
+    button.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+    });
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      openNativeColorPicker(
+        view,
+        this.from,
+        this.to,
+        this.color,
+        button.getBoundingClientRect()
+      );
+    });
+
+    return button;
+  }
+
+  ignoreEvent(): boolean {
+    return true;
+  }
+}
+
+function createSourceColorDecorations(view: EditorView): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const source = view.state.doc.toString();
+  const colorTokens = getRadebeColorTokens(source);
+
+  colorTokens.forEach((token) => {
+    const isVisible = view.visibleRanges.some((range) => {
+      return token.start >= range.from && token.start <= range.to;
+    });
+
+    if (!isVisible) {
+      return;
+    }
+
+    builder.add(
+      token.start,
+      token.start,
+      Decoration.widget({
+        side: -1,
+        widget: new SourceColorSwatchWidget(
+          token.start,
+          token.end,
+          token.text,
+          token.color
+        )
+      })
+    );
+  });
+
+  return builder.finish();
+}
+
 function findTokenAtOffset(
   tokens: SourceTokenSpan[],
   offset: number
@@ -576,6 +767,25 @@ const sourceDiagnosticHighlighter = ViewPlugin.fromClass(
     update(update: ViewUpdate): void {
       if (update.docChanged || update.viewportChanged) {
         this.decorations = createSourceDiagnosticDecorations(update.view);
+      }
+    }
+  },
+  {
+    decorations: (plugin) => plugin.decorations
+  }
+);
+
+const sourceColorSwatches = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+
+    constructor(view: EditorView) {
+      this.decorations = createSourceColorDecorations(view);
+    }
+
+    update(update: ViewUpdate): void {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = createSourceColorDecorations(update.view);
       }
     }
   },
@@ -1843,7 +2053,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   const layout = document.createElement("section");
   const editorPanel = document.createElement("article");
   const previewPanel = document.createElement("article");
-  const sourceLabel = document.createElement("label");
+  const sourceLabel = document.createElement("div");
   const sourceEditor = document.createElement("div");
   const sourceAssist = document.createElement("div");
   const completionList = document.createElement("div");
@@ -2493,6 +2703,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
         basicSetup,
         EditorView.lineWrapping,
         sourceSyntaxHighlighter,
+        sourceColorSwatches,
         sourceDiagnosticHighlighter,
         smartEditTransactionFilter,
         EditorView.updateListener.of((update) => {

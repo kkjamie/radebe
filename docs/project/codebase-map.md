@@ -12,6 +12,7 @@ Last updated: `2026-05-20`
 - `radebe-core/`: shared TypeScript engine package for parsing, compiling, and rendering.
 - `radebe-cli/`: Node CLI package that wraps `radebe-core`.
 - `radebe-web/`: Vite-backed browser package that imports `radebe-core`.
+- `radebe-vscode/`: VS Code extension package that registers `.rdb` language support and imports `radebe-core` for editor intelligence.
 - `radebe-unity/`: Unity bridge placeholder that will integrate through the packaged CLI rather than a separate runtime port.
 - `scripts/`: workspace automation package for repo-level tooling.
 
@@ -19,6 +20,7 @@ Last updated: `2026-05-20`
 - `radebe-core/src/index.ts`: root public API that re-exports shared types and the common parse/compile/render helpers.
 - `radebe-core/src/parser.ts`: parser boundary for converting source text into the shared parsed document shape.
 - `radebe-core/src/compiler.ts`: compiler boundary for transforming parsed documents into renderable compiled documents.
+- `radebe-core/src/colors.ts`: shared Radebe color parsing, formatting, named-color registry, and source token range extraction for editor color decorators.
 - `radebe-core/src/schema.ts`: command registry, child-capability rules, compiler-facing shorthand/property metadata, and editor-facing argument, enum, indentation, inline-child, and shorthand-expansion metadata.
 - `radebe-core/src/language-service.ts`: headless editor assistance API for cursor context, schema-driven completions, argument help, enum suggestions, smart edits, and Enter indentation.
 - `radebe-core/src/renderer.ts`: renderer boundary plus the convenience source-to-artifact pipeline helper.
@@ -26,7 +28,10 @@ Last updated: `2026-05-20`
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.
-- `radebe-web/src/`: CodeMirror-backed browser authoring shell that imports `radebe-core`, provides schema-driven editor assists, and renders the shared preview artifact.
+- `radebe-web/src/`: CodeMirror-backed browser authoring shell that imports `radebe-core`, provides schema-driven editor assists, renders the shared preview artifact, and shows shared-core color swatches with picker-backed replacement.
+- `radebe-vscode/src/extension.ts`: VS Code extension activation for `.rdb` completions, signature help, diagnostics, color decorations/picker presentations, smart newline indentation, smart edits, and text render preview.
+- `radebe-vscode/src/language-adapter.ts`: pure adapter layer that converts VS Code-style offsets into shared `@radebe/core` language-service, color-token, and diagnostic-range calls.
+- `radebe-vscode/syntaxes/radebe.tmLanguage.json`: TextMate grammar for `.rdb` syntax highlighting.
 - `radebe-unity/README.md`: bridge direction and planned Unity asset layout.
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
@@ -49,6 +54,7 @@ Last updated: `2026-05-20`
 - `radebe-cli/test/`: command invocation, bundled entrypoint smoke tests, and executable packaging verification.
 - `scripts/test/sea.test.ts`: end-to-end SEA packaging smoke test that builds and runs the generated executable on the current platform.
 - `radebe-web/`: UI and integration tests for authoring and realtime preview flows.
+- `radebe-vscode/test/`: adapter-level coverage for completion, indentation, smart edits, diagnostic ranges, color tokens, and text render preview behavior.
 - `radebe-unity/`: bridge validation and integration smoke tests as the package matures.
 
 ## Agent Notes
@@ -57,3 +63,4 @@ Last updated: `2026-05-20`
 - Workspace tooling is now `npm` workspaces plus TypeScript project references, with `radebe-unity` intentionally kept outside the npm workspace boundary.
 - `radebe-core` now exposes both a root API and subpath exports so downstream packages can choose between whole-pipeline usage and stage-specific integration.
 - The recommended executable path is Node SEA so the repo can stay on the current Node/npm toolchain and only add release-time bundling plus per-platform artifact generation.
+- The first VS Code surface consumes `@radebe/core` directly inside the extension host; introduce an LSP adapter only if multiple editor hosts need the protocol boundary.

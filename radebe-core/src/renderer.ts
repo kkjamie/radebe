@@ -1,4 +1,9 @@
 import { compileDocument } from "./compiler.js";
+import {
+  formatRadebeColor,
+  parseRadebeColorToken,
+  type RadebeRgbaColor
+} from "./colors.js";
 import { parseSource } from "./parser.js";
 
 import type {
@@ -16,12 +21,7 @@ import type {
   StrokeAppearance
 } from "./types.js";
 
-type RgbaColor = {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-};
+type RgbaColor = RadebeRgbaColor;
 
 type RectBounds = {
   x: number;
@@ -47,57 +47,12 @@ const ANTIALIAS_SAMPLE_OFFSETS = Array.from(
   })
 );
 
-const NAMED_COLORS: Record<string, RgbaColor> = {
-  black: { r: 0, g: 0, b: 0, a: 1 },
-  blue: { r: 0, g: 0, b: 255, a: 1 },
-  green: { r: 0, g: 128, b: 0, a: 1 },
-  red: { r: 255, g: 0, b: 0, a: 1 },
-  transparent: { r: 0, g: 0, b: 0, a: 0 },
-  white: { r: 255, g: 255, b: 255, a: 1 }
-};
-
-function clampByte(value: number): number {
-  return Math.max(0, Math.min(255, Math.round(value)));
-}
-
 function clampUnit(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
-function parseHexColor(color: string): RgbaColor | null {
-  const hex = color.slice(1);
-
-  if (hex.length === 3 || hex.length === 4) {
-    const [r = "", g = "", b = "", a = "f"] = hex.split("");
-    return {
-      r: Number.parseInt(`${r}${r}`, 16),
-      g: Number.parseInt(`${g}${g}`, 16),
-      b: Number.parseInt(`${b}${b}`, 16),
-      a: Number.parseInt(`${a}${a}`, 16) / 255
-    };
-  }
-
-  if (hex.length === 6 || hex.length === 8) {
-    const alpha = hex.length === 8 ? hex.slice(6, 8) : "ff";
-    return {
-      r: Number.parseInt(hex.slice(0, 2), 16),
-      g: Number.parseInt(hex.slice(2, 4), 16),
-      b: Number.parseInt(hex.slice(4, 6), 16),
-      a: Number.parseInt(alpha, 16) / 255
-    };
-  }
-
-  return null;
-}
-
 function parseColor(color: string): RgbaColor | null {
-  const normalized = color.trim().toLowerCase();
-
-  if (normalized.startsWith("#")) {
-    return parseHexColor(normalized);
-  }
-
-  return NAMED_COLORS[normalized] ?? null;
+  return parseRadebeColorToken(color);
 }
 
 function blendColors(
@@ -136,12 +91,7 @@ function formatColor(color: RgbaColor | null): string | null {
     return null;
   }
 
-  const r = clampByte(color.r).toString(16).padStart(2, "0");
-  const g = clampByte(color.g).toString(16).padStart(2, "0");
-  const b = clampByte(color.b).toString(16).padStart(2, "0");
-  const alpha = clampByte(color.a * 255).toString(16).padStart(2, "0");
-
-  return alpha === "ff" ? `#${r}${g}${b}` : `#${r}${g}${b}${alpha}`;
+  return formatRadebeColor(color);
 }
 
 function withOpacity(color: RgbaColor, opacity: number): RgbaColor {

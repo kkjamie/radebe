@@ -56,6 +56,8 @@ Use this as the single source of truth for active execution state.
 | T-052 | Make autocomplete and editor insertions undoable | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-050 now that autocomplete, Tab indentation, smart Enter, and smart edits all use the same undo-aware textarea edit path |
 | T-050 | Decide the next editor host direction | M2 | Gate B | P1 | Done | `codex-main` | None | Continue editor work on top of CodeMirror 6 and the shared language-service APIs; manually exercise autocomplete, undo, smart edits, and assist positioning in the browser |
 | T-053 | Validate and polish the CodeMirror editor migration | M2 | Gate B | P1 | Done | `codex-main` | None | Phase 4 editor migration polish is complete: CodeMirror interactions, assist timing, smart edits, undo grouping, caret/gutter styling, and compiler-backed diagnostic squiggles are in place |
+| T-056 | Add VS Code language support for `.rdb` files | M2 | Deferred | P1 | Done | `codex-main` | None | Extension Development Host launch was validated by the user; T-057 followed up on the first named-color editor affordance gap |
+| T-057 | Add shared editor color token swatches and picker support | M2 | Gate B | P1 | Done | `codex-main` | None | VS Code color picker behavior was confirmed by the user; web swatches now use a button-launched native color input outside the editable surface, and the editor wrapper no longer uses label semantics that forwarded normal editor clicks to the swatch |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
@@ -66,7 +68,6 @@ Use this as the single source of truth for active execution state.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-054 | Phase 5: Package the editor as a reusable consumer surface | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred until the product surface settles after the web editor spike | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
 | T-055 | Phase 6: Build Unity editor live-authoring parity | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred; current Unity priority remains importer validation/options rather than an in-Unity IDE surface | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
-| T-056 | Add VS Code language support for `.rdb` files | M2 | Deferred | P1 | Backlog | Unassigned | Needs a deliberate tool-extension architecture choice before implementation | Scope a VS Code extension, preferably using shared `@radebe/core` language-service behavior for completions, signature help, diagnostics, smart edits, indentation, and eventual preview/render commands |
 | T-099 | Track future language and tooling ideas after the first vertical slice | M2 | Gate B | P2 | Backlog | Unassigned | None | Revisit once the core loop is running |
 
 ## Status Vocabulary

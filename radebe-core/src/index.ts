@@ -1,5 +1,11 @@
 export { compileDocument } from "./compiler.js";
 export {
+  formatRadebeColor,
+  getRadebeColorTokens,
+  parseRadebeColorToken,
+  RADEBE_NAMED_COLORS
+} from "./colors.js";
+export {
   getArgumentHelp,
   getEnterIndentation,
   getLanguageCompletions,
@@ -49,6 +55,11 @@ export type {
   LanguageSmartEditResult,
   LanguageTextEdit
 } from "./language-service.js";
+
+export type {
+  RadebeColorToken,
+  RadebeRgbaColor
+} from "./colors.js";
 
 export type {
   CommandKind,

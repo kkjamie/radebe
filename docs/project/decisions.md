@@ -377,3 +377,25 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The roadmap keeps the reusable editor and Unity IDE ambitions visible without committing to them immediately; VS Code can be evaluated on its own architecture merits, likely through a VS Code extension and possibly an LSP-shaped adapter; and the current Unity importer-options validation remains the leading Unity follow-on.
 - Related tasks: T-054, T-055, T-056
 - Supersedes: N/A
+
+---
+
+### DEC-033: Start VS Code Support As A Direct Core-Backed Extension
+- Date: `2026-05-20`
+- Status: Accepted
+- Context: T-056 needed a deliberate architecture choice before adding `.rdb` language support outside the web editor. The shared `@radebe/core` language service already provides the editor intelligence needed for a first VS Code slice.
+- Decision: Add `radebe-vscode` as a first-party VS Code extension workspace that consumes `@radebe/core` directly inside the extension host for completions, signature help, diagnostics, smart edits, indentation, and render-preview behavior. Defer an LSP-shaped adapter until another editor host needs a protocol boundary.
+- Consequences: VS Code support can land quickly without duplicating command/schema knowledge or introducing a separate server process. A future LSP remains available, but it should be justified by multi-host reuse rather than added preemptively.
+- Related tasks: T-056
+- Supersedes: N/A
+
+---
+
+### DEC-034: Share Color Token Metadata From Core
+- Date: `2026-05-20`
+- Status: Accepted
+- Context: VS Code automatically decorated hex colors in `.rdb` files, but named Radebe colors such as `white` were invisible to the color picker, and the web editor had no color swatch affordance.
+- Decision: Move Radebe color parsing, formatting, named-color metadata, and source token range extraction into `@radebe/core/colors`, then have VS Code and web editor surfaces consume that shared metadata for color decorations.
+- Consequences: Editor color affordances stay aligned with renderer-supported colors, named colors and hex colors behave consistently across VS Code and web, and future color vocabulary changes can be made once in core.
+- Related tasks: T-057
+- Supersedes: N/A

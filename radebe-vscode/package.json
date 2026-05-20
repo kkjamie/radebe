@@ -1,0 +1,70 @@
+{
+  "name": "@radebe/vscode",
+  "displayName": "Radebe Language Support",
+  "description": "VS Code language support for Radebe .rdb sprite source files.",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "publisher": "radebe",
+  "engines": {
+    "vscode": "^1.92.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:radebe",
+    "onCommand:radebe.openTextRenderPreview"
+  ],
+  "main": "./dist/src/extension.js",
+  "files": [
+    "dist",
+    "language-configuration.json",
+    "syntaxes",
+    "README.md"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "radebe",
+        "aliases": [
+          "Radebe",
+          "rdb"
+        ],
+        "extensions": [
+          ".rdb"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "radebe",
+        "scopeName": "source.rdb",
+        "path": "./syntaxes/radebe.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "radebe.openTextRenderPreview",
+        "title": "Radebe: Open Text Render Preview"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "radebe.insertSmartNewline",
+        "key": "enter",
+        "when": "editorTextFocus && editorLangId == radebe"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "Remove-Item -Recurse -Force dist, tsconfig.tsbuildinfo -ErrorAction SilentlyContinue",
+    "test": "node --test dist/test",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@radebe/core": "0.1.0"
+  }
+}
