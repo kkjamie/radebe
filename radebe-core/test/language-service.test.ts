@@ -6,6 +6,7 @@ import {
   getEnterIndentation,
   getLanguageCompletions,
   getLanguageContext,
+  getLanguageSmartEdits,
   type LanguageServiceRequest
 } from "../src/index.js";
 
@@ -33,6 +34,17 @@ function labels(markedSource: string): string[] {
   return getLanguageCompletions(atCursor(markedSource)).items.map(
     (item) => item.label
   );
+}
+
+function applySmartEdits(markedSource: string): string {
+  const request = atCursor(markedSource);
+  const edits = getLanguageSmartEdits(request).edits
+    .map((smartEdit) => smartEdit.edit)
+    .sort((left, right) => right.start - left.start);
+
+  return edits.reduce((source, edit) => {
+    return source.slice(0, edit.start) + edit.text + source.slice(edit.end);
+  }, request.source);
 }
 
 test("getLanguageCompletions suggests root commands by prefix", () => {
@@ -153,6 +165,34 @@ test("getLanguageCompletions suggests inline fill variants", () => {
 
 test("getLanguageCompletions suggests named argument keys by prefix", () => {
   assert.deepEqual(labels("stroke 2 white al|"), ["alpha=", "align="]);
+});
+
+test("getLanguageSmartEdits removes shorthand color when fill is started", () => {
+  assert.equal(
+    applySmartEdits("rect 10 10 100 100 black\n  f|"),
+    "rect 10 10 100 100\n  f"
+  );
+
+  assert.equal(
+    applySmartEdits("rect 10 10 100 100 color=black antialias=true\n  fill|"),
+    "rect 10 10 100 100 antialias=true\n  fill"
+  );
+
+  assert.equal(
+    applySmartEdits("polygon 0 0 8 0 8 8 black\n  f|"),
+    "polygon 0 0 8 0 8 8\n  f"
+  );
+});
+
+test("getLanguageSmartEdits keeps shorthand when no matching child is started", () => {
+  assert.equal(
+    getLanguageSmartEdits(atCursor("rect 10 10 100 100 black\n  |")).edits.length,
+    0
+  );
+  assert.equal(
+    getLanguageSmartEdits(atCursor("rect 10 10 100 100 black\n  st|")).edits.length,
+    0
+  );
 });
 
 test("getLanguageContext reports cursor context for editor adapters", () => {

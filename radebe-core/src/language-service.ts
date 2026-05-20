@@ -68,16 +68,44 @@ export interface LanguageArgumentHelp {
   valuePrefix: string;
 }
 
+export interface LanguageTextEdit {
+  start: number;
+  end: number;
+  text: string;
+}
+
+export type LanguageSmartEditKind = "remove-shorthand-expansion";
+
+export interface LanguageSmartEdit {
+  kind: LanguageSmartEditKind;
+  description: string;
+  edit: LanguageTextEdit;
+}
+
+export interface LanguageSmartEditResult {
+  context: LanguageCursorContext;
+  edits: LanguageSmartEdit[];
+}
+
 interface TokenSpan {
   text: string;
   start: number;
   end: number;
 }
 
+interface ParentCommandContext {
+  definition: CommandDefinition;
+  line: number;
+  lineText: string;
+  indentLevel: number;
+  tokens: TokenSpan[];
+}
+
 interface InternalContext extends LanguageCursorContext {
   tokens: TokenSpan[];
   commandDefinition: CommandDefinition | null;
   parentDefinition: CommandDefinition | null;
+  parentCommand: ParentCommandContext | null;
 }
 
 interface ArgumentTokenState {
@@ -87,12 +115,33 @@ interface ArgumentTokenState {
   tokenPrefix: string;
 }
 
+interface ArgumentTokenAssignment {
+  argument: CommandArgumentDefinition;
+  token: TokenSpan;
+  tokenIndex: number;
+}
+
 function normalizeSource(source: string): string {
   return source.replace(/\r\n/g, "\n");
 }
 
 function getSourceLines(source: string): string[] {
   return normalizeSource(source).split("\n");
+}
+
+function getLineStartOffsets(source: string): number[] {
+  const offsets = [0];
+
+  for (let index = 0; index < source.length; index += 1) {
+    if (source[index] === "\r" && source[index + 1] === "\n") {
+      offsets.push(index + 2);
+      index += 1;
+    } else if (source[index] === "\n") {
+      offsets.push(index + 1);
+    }
+  }
+
+  return offsets;
 }
 
 function getLineTokens(lineText: string): TokenSpan[] {
@@ -132,16 +181,16 @@ function clampPosition(
   return { line, column };
 }
 
-function findParentDefinition(
+function findParentCommandContext(
   lines: string[],
   lineIndex: number,
   indentLevel: number
-): CommandDefinition | null {
+): ParentCommandContext | null {
   if (indentLevel === 0) {
-    return FILE_DEFINITION;
+    return null;
   }
 
-  const stack: Array<CommandDefinition | null> = [];
+  const stack: Array<ParentCommandContext | null> = [];
 
   for (let index = 0; index < lineIndex; index += 1) {
     const lineText = lines[index] ?? "";
@@ -158,7 +207,17 @@ function findParentDefinition(
 
     const commandIndentLevel = getIndentLevel(lineText);
     stack.length = commandIndentLevel;
-    stack[commandIndentLevel] = getCommandDefinition(commandName) ?? null;
+    const definition = getCommandDefinition(commandName);
+    stack[commandIndentLevel] =
+      definition === undefined
+        ? null
+        : {
+            definition,
+            line: index + 1,
+            lineText,
+            indentLevel: commandIndentLevel,
+            tokens: getLineTokens(lineText)
+          };
   }
 
   return stack[indentLevel - 1] ?? null;
@@ -199,11 +258,13 @@ function getInternalContext(request: LanguageServiceRequest): InternalContext {
   const tokens = getLineTokens(lineText);
   const indent = getIndent(lineText);
   const indentLevel = getIndentLevel(lineText);
-  const parentDefinition = findParentDefinition(
+  const parentCommand = findParentCommandContext(
     lines,
     position.line - 1,
     indentLevel
   );
+  const parentDefinition =
+    indentLevel === 0 ? FILE_DEFINITION : parentCommand?.definition ?? null;
 
   if (lineText.trimStart().startsWith("#")) {
     return {
@@ -218,7 +279,8 @@ function getInternalContext(request: LanguageServiceRequest): InternalContext {
       parentCommandName: parentDefinition?.name ?? FILE_DEFINITION.name,
       tokens,
       commandDefinition: null,
-      parentDefinition
+      parentDefinition,
+      parentCommand
     };
   }
 
@@ -241,7 +303,8 @@ function getInternalContext(request: LanguageServiceRequest): InternalContext {
       parentCommandName: parentDefinition?.name ?? FILE_DEFINITION.name,
       tokens,
       commandDefinition,
-      parentDefinition
+      parentDefinition,
+      parentCommand
     };
   }
 
@@ -259,7 +322,8 @@ function getInternalContext(request: LanguageServiceRequest): InternalContext {
     parentCommandName: parentDefinition?.name ?? FILE_DEFINITION.name,
     tokens,
     commandDefinition,
-    parentDefinition
+    parentDefinition,
+    parentCommand
   };
 }
 
@@ -646,6 +710,161 @@ function createValueCompletions(
     }));
 }
 
+function getArgumentTokenAssignments(
+  definition: CommandDefinition,
+  tokens: TokenSpan[]
+): Map<string, ArgumentTokenAssignment> {
+  const assignments = new Map<string, ArgumentTokenAssignment>();
+  const shorthandArguments = getShorthandArgumentDefinitions(definition);
+  const positionalTokens: Array<{ token: TokenSpan; tokenIndex: number }> = [];
+  let positionalIndex = 0;
+
+  tokens.slice(1).forEach((token, argumentTokenIndex) => {
+    const tokenIndex = argumentTokenIndex + 1;
+    const equalsIndex = token.text.indexOf("=");
+
+    if (equalsIndex > 0) {
+      const name = token.text.slice(0, equalsIndex);
+      const argument = getCommandArgumentDefinition(definition, name);
+
+      if (argument && !assignments.has(name)) {
+        assignments.set(name, {
+          argument,
+          token,
+          tokenIndex
+        });
+      }
+
+      return;
+    }
+
+    positionalTokens.push({ token, tokenIndex });
+
+    const argument = shorthandArguments[positionalIndex] ?? null;
+    positionalIndex += 1;
+
+    if (argument && !assignments.has(argument.name)) {
+      assignments.set(argument.name, {
+        argument,
+        token,
+        tokenIndex
+      });
+    }
+  });
+
+  const variadic = definition.variadicArguments;
+  const trailingArgument = variadic?.trailingArgument;
+
+  if (variadic && trailingArgument && !assignments.has(trailingArgument.name)) {
+    const minimumTokenCount = (variadic.minRepeats ?? 0) * variadic.sequence.length;
+    const trailingToken = positionalTokens[positionalTokens.length - 1] ?? null;
+
+    if (
+      trailingToken &&
+      positionalTokens.length > minimumTokenCount &&
+      Number.isNaN(Number.parseInt(trailingToken.token.text, 10))
+    ) {
+      assignments.set(trailingArgument.name, {
+        argument: trailingArgument,
+        token: trailingToken.token,
+        tokenIndex: trailingToken.tokenIndex
+      });
+    }
+  }
+
+  return assignments;
+}
+
+function createTokenRemovalEdit(
+  source: string,
+  command: ParentCommandContext,
+  tokenIndex: number
+): LanguageTextEdit | null {
+  const token = command.tokens[tokenIndex] ?? null;
+
+  if (!token) {
+    return null;
+  }
+
+  const lineStart = getLineStartOffsets(source)[command.line - 1];
+
+  if (lineStart === undefined) {
+    return null;
+  }
+
+  const previousToken = command.tokens[tokenIndex - 1] ?? null;
+  const nextToken = command.tokens[tokenIndex + 1] ?? null;
+  let startColumn = token.start - 1;
+  let endColumn = token.end - 1;
+
+  if (nextToken) {
+    endColumn = nextToken.start - 1;
+  } else if (previousToken) {
+    startColumn = previousToken.end - 1;
+  }
+
+  return {
+    start: lineStart + startColumn,
+    end: lineStart + endColumn,
+    text: ""
+  };
+}
+
+function createShorthandCleanupSmartEdits(
+  request: LanguageServiceRequest,
+  context: InternalContext
+): LanguageSmartEdit[] {
+  const parentCommand = context.parentCommand;
+
+  if (
+    !parentCommand ||
+    context.mode !== "command" ||
+    context.prefix.length === 0 ||
+    context.tokens.length !== 1
+  ) {
+    return [];
+  }
+
+  const assignments = getArgumentTokenAssignments(
+    parentCommand.definition,
+    parentCommand.tokens
+  );
+  const edits: LanguageSmartEdit[] = [];
+
+  parentCommand.definition.shorthandExpansions?.forEach((expansion) => {
+    if (
+      !expansion.removeWhenChildCommandStarted ||
+      !expansion.childCommand.startsWith(context.prefix)
+    ) {
+      return;
+    }
+
+    const assignment = assignments.get(expansion.argument);
+
+    if (!assignment) {
+      return;
+    }
+
+    const edit = createTokenRemovalEdit(
+      request.source,
+      parentCommand,
+      assignment.tokenIndex
+    );
+
+    if (!edit) {
+      return;
+    }
+
+    edits.push({
+      kind: "remove-shorthand-expansion",
+      description: expansion.description,
+      edit
+    });
+  });
+
+  return edits;
+}
+
 export function getLanguageContext(
   request: LanguageServiceRequest
 ): LanguageCursorContext {
@@ -686,6 +905,17 @@ export function getLanguageCompletions(
       ...createValueCompletions(help),
       ...createArgumentNameCompletions(context, argumentState)
     ]
+  };
+}
+
+export function getLanguageSmartEdits(
+  request: LanguageServiceRequest
+): LanguageSmartEditResult {
+  const context = getInternalContext(request);
+
+  return {
+    context: createPublicContext(context),
+    edits: createShorthandCleanupSmartEdits(request, context)
   };
 }
 

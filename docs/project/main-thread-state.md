@@ -29,6 +29,7 @@ Last updated: `2026-05-20`
 - T-046 wired that language-service API into the current web textarea editor with a lightweight completion popup, argument helper strip, `Tab` completion acceptance, arrow-key completion navigation, `Escape` dismissal, and smart `Enter` indentation. The implementation intentionally keeps the existing highlight layer and live preview intact.
 - T-048 tuned the first web completion interaction pass so completion lists appear only after a typed prefix unless explicitly requested, `Enter` accepts the active visible completion instead of inserting a newline, accepted completions suppress immediate reopening, and the assist UI positions below the current line.
 - T-049 polished the web assist interaction and display: explicit completion request moved to `Ctrl+Space`, requested completions persist until `Escape` or an edit changes the context, accepted completions no longer reopen immediately, argument help opens only after entering an argument slot such as typing a space, optional arguments are shown with a `?` marker, and enum argument values render inline in the helper.
+- T-047 added the first schema-driven smart edit API to `@radebe/core`: `getLanguageSmartEdits` can remove parent constructor shorthand arguments marked by `shorthandExpansions` when an equivalent child command is started. The web editor now applies that edit immediately, so starting `fill` under a shape with inline color shorthand removes the parent color token before preview and assist refresh.
 - The web examples now fold cut and rounded-corner rectangle cases into the main `rect` page instead of keeping separate `cut` or `rounded-rect` pages, and `polygon` now has real live examples instead of a placeholder page.
 - The web example nav now keeps placeholder pages only for substantive planned features; low-value stubs such as `size`, `background`, `fill`, `inset`, `blend`, `draw`, `overlay`, and standalone `align` / `style` property pages were removed so those concepts can instead live under parent pages or command-specific pages.
 - The web docs/playground now has a real `shadow` page instead of a placeholder, including examples for simple offset use plus positive and negative `spread`.
@@ -42,14 +43,14 @@ Last updated: `2026-05-20`
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
 - DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
-- T-047 is ready as the next editor-thread follow-up: add schema-driven smart edits for shorthand cleanup, starting with removing shape color shorthand when explicit `fill` authoring begins.
+- T-047 is complete; the next editor-track choice is whether to move the textarea shell to CodeMirror 6 for stronger editor primitives or continue with small language-service-backed improvements in the current textarea implementation.
 - No active blocker remains on T-011. The remaining Unity follow-on work is product choice, not integration failure.
 - The current leading Unity follow-on is importer options for sprite authoring ergonomics: border/9-slice metadata, pivot, pixels per unit, and filter mode surfaced through the existing ScriptedImporter settings.
 - T-043 is now in progress. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector now also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. The updated plugin has been redeployed to Eddie through `npm run deploy:unity`, but the settings still need a hands-on Unity editor check.
 
 ## Best Next Tasks
-1. If continuing the editor track, start T-047 and add smart edit support for shorthand cleanup using the T-044 schema metadata.
-2. Decide after T-047 whether the next editor slice should move to CodeMirror 6 for better cursor-positioned UI and edit transactions.
+1. If continuing the editor track, start T-050 and decide whether the next slice should migrate to CodeMirror 6 for better cursor-positioned UI and edit transactions.
+2. If staying on the current textarea shell, add another small language-service-backed assist such as diagnostics underlining or command-specific hover/help.
 3. Return to T-043 when ready to close the active Unity importer-options task with hands-on Eddie validation.
 
 ## Resume Checklist

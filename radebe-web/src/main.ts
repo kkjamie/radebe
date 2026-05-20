@@ -3,11 +3,13 @@ import {
   getCommandDefinition,
   getEnterIndentation,
   getLanguageCompletions,
+  getLanguageSmartEdits,
   renderSource,
   type LanguageArgumentHelp,
   type LanguageCompletionItem,
   type LanguageCompletionResult,
-  type LanguageServiceRequest
+  type LanguageServiceRequest,
+  type LanguageTextEdit
 } from "@radebe/core";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -233,6 +235,18 @@ function isCursorNavigationKey(event: KeyboardEvent): boolean {
     "PageUp",
     "PageDown"
   ].includes(event.key);
+}
+
+function adjustOffsetForEdit(offset: number, edit: LanguageTextEdit): number {
+  if (edit.end <= offset) {
+    return offset + edit.text.length - (edit.end - edit.start);
+  }
+
+  if (edit.start < offset) {
+    return edit.start + edit.text.length;
+  }
+
+  return offset;
 }
 
 const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
@@ -1838,6 +1852,34 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     replaceSourceRange(sourceInput.selectionStart, sourceInput.selectionEnd, text);
   }
 
+  function applyLanguageTextEdits(edits: LanguageTextEdit[]): void {
+    const sortedEdits = [...edits].sort((left, right) => right.start - left.start);
+    let nextValue = sourceInput.value;
+    let nextSelectionStart = sourceInput.selectionStart;
+    let nextSelectionEnd = sourceInput.selectionEnd;
+
+    sortedEdits.forEach((edit) => {
+      nextValue =
+        nextValue.slice(0, edit.start) + edit.text + nextValue.slice(edit.end);
+      nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
+      nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
+    });
+
+    sourceInput.value = nextValue;
+    sourceInput.selectionStart = nextSelectionStart;
+    sourceInput.selectionEnd = nextSelectionEnd;
+  }
+
+  function applySmartEdits(): void {
+    const smartEdits = getLanguageSmartEdits(createLanguageRequest()).edits;
+
+    if (smartEdits.length === 0) {
+      return;
+    }
+
+    applyLanguageTextEdits(smartEdits.map((smartEdit) => smartEdit.edit));
+  }
+
   function applyCompletion(index: number): void {
     const item = completionResult?.items[index];
     const prefix = completionResult?.context.prefix ?? "";
@@ -1856,6 +1898,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function handleSourceChange(): void {
+    applySmartEdits();
     sourceState.set(playground.id, sourceInput.value);
     updatePreview(sourceInput.value);
     updateAssist();

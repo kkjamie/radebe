@@ -49,13 +49,14 @@ Use this as the single source of truth for active execution state.
 | T-044 | Add editor-oriented schema metadata for language assistance | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-045 to build a headless language-service slice for completions, argument help, indentation, and future smart edits using the shared schema metadata |
 | T-045 | Build the first headless language service for editor completions and indentation | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-046 to wire the headless language-service results into the web editor without changing parser/compiler behavior |
 | T-046 | Wire the headless language service into the web editor | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-047 for schema-driven smart edits such as removing inline color shorthand when explicit `fill` authoring begins |
+| T-047 | Add schema-driven smart edits for shorthand cleanup | M2 | Gate B | P1 | Done | `codex-main` | None | Decide whether the next editor slice should migrate the textarea editor to CodeMirror 6 or continue adding small language-service-backed assists in place |
 | T-048 | Tune web autocomplete interaction timing and placement | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-047 smart edits now that completions stay quiet on blank lines, Enter accepts visible completions, and the assist UI appears below the active line |
 | T-049 | Polish web assist styling, explicit completion trigger, and argument hints | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-047 smart edits now that completion acceptance stays quiet, Ctrl+Space explicitly requests completions, and argument hints show richer schema metadata only after entering an argument slot |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-047 | Add schema-driven smart edits for shorthand cleanup | M2 | Gate B | P1 | Ready | Unassigned | None | Use language-service cursor context and schema shorthand-expansion hints to remove constructor shorthand such as shape color when the equivalent child command is inserted |
+| T-050 | Decide the next editor host direction | M2 | Gate B | P1 | Ready | Unassigned | None | Compare migrating the web editor to CodeMirror 6 against continuing incremental language-service-backed assists in the current textarea shell |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

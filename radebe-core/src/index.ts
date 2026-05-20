@@ -3,7 +3,8 @@ export {
   getArgumentHelp,
   getEnterIndentation,
   getLanguageCompletions,
-  getLanguageContext
+  getLanguageContext,
+  getLanguageSmartEdits
 } from "./language-service.js";
 export { parseSource } from "./parser.js";
 export { renderDocument, renderSource } from "./renderer.js";
@@ -42,7 +43,11 @@ export type {
   LanguageCompletionResult,
   LanguageCursorContext,
   LanguagePosition,
-  LanguageServiceRequest
+  LanguageServiceRequest,
+  LanguageSmartEdit,
+  LanguageSmartEditKind,
+  LanguageSmartEditResult,
+  LanguageTextEdit
 } from "./language-service.js";
 
 export type {
