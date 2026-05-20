@@ -49,6 +49,7 @@ Use this as the single source of truth for active execution state.
 | T-044 | Add editor-oriented schema metadata for language assistance | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-045 to build a headless language-service slice for completions, argument help, indentation, and future smart edits using the shared schema metadata |
 | T-045 | Build the first headless language service for editor completions and indentation | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-046 to wire the headless language-service results into the web editor without changing parser/compiler behavior |
 | T-046 | Wire the headless language service into the web editor | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-047 for schema-driven smart edits such as removing inline color shorthand when explicit `fill` authoring begins |
+| T-048 | Tune web autocomplete interaction timing and placement | M2 | Gate B | P1 | Done | `codex-main` | None | Continue with T-047 smart edits now that completions stay quiet on blank lines, Enter accepts visible completions, and the assist UI appears below the active line |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

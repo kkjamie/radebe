@@ -60,7 +60,7 @@ syntaxStyles.textContent = `
 .syntax-comment { color: #7f948a; font-style: italic; }
 .syntax-punctuation { color: #9d9183; }
 .syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
-.editor-assist { position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 3; display: grid; gap: 8px; pointer-events: none; }
+.editor-assist { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 3; display: grid; gap: 8px; pointer-events: none; }
 .editor-assist[hidden] { display: none; }
 .completion-list { display: grid; max-width: 380px; max-height: 190px; overflow: auto; border: 1px solid rgba(125,211,252,0.36); background: #191613; box-shadow: 0 18px 40px rgba(0,0,0,0.38); pointer-events: auto; }
 .completion-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 0; border-bottom: 1px solid rgba(255,255,255,0.06); background: transparent; color: #f8f4ec; padding: 8px 10px; font: inherit; text-align: left; }
@@ -1485,6 +1485,8 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   let currentArtifactSize = { width: 1, height: 1 };
   let completionResult: LanguageCompletionResult | null = null;
   let activeCompletionIndex = 0;
+  let forceNextCompletionList = false;
+  let suppressNextCompletionList = false;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
   heading.textContent = playground.title;
@@ -1677,6 +1679,29 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     };
   }
 
+  function shouldShowCompletionList(
+    result: LanguageCompletionResult,
+    forceCompletions: boolean
+  ): boolean {
+    return (
+      result.items.length > 0 &&
+      !suppressNextCompletionList &&
+      (forceCompletions || result.context.prefix.length > 0)
+    );
+  }
+
+  function updateAssistPosition(): void {
+    const position = getLanguagePosition(sourceInput.value, sourceInput.selectionStart);
+    const inputStyles = window.getComputedStyle(sourceInput);
+    const paddingTop = Number.parseFloat(inputStyles.paddingTop) || 14;
+    const lineHeight = Number.parseFloat(inputStyles.lineHeight) || 20;
+    const rawTop =
+      paddingTop + (position.line - 1) * lineHeight - sourceInput.scrollTop + lineHeight + 6;
+    const top = Math.max(14, rawTop);
+
+    sourceAssist.style.top = `${top}px`;
+  }
+
   function renderCompletionList(items: LanguageCompletionItem[]): void {
     completionList.replaceChildren();
     completionList.hidden = items.length === 0;
@@ -1746,14 +1771,29 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
 
     const request = createLanguageRequest();
+    const forceCompletions = forceNextCompletionList;
+    forceNextCompletionList = false;
     completionResult = getLanguageCompletions(request);
-    renderCompletionList(completionResult.items);
+    updateAssistPosition();
+    renderCompletionList(
+      shouldShowCompletionList(completionResult, forceCompletions)
+        ? completionResult.items
+        : []
+    );
+    suppressNextCompletionList = false;
     renderArgumentHelp(getArgumentHelp(request));
     sourceAssist.hidden = completionList.hidden && argumentHelp.hidden;
   }
 
+  function showCompletionListNow(): void {
+    forceNextCompletionList = true;
+    updateAssist();
+  }
+
   function hideAssist(): void {
     completionResult = null;
+    forceNextCompletionList = false;
+    suppressNextCompletionList = false;
     completionList.hidden = true;
     argumentHelp.hidden = true;
     sourceAssist.hidden = true;
@@ -1784,6 +1824,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     const cursor = sourceInput.selectionStart;
     replaceSourceRange(cursor - prefix.length, cursor, item.insertText);
     sourceInput.focus();
+    suppressNextCompletionList = true;
     handleSourceChange();
   }
 
@@ -1796,7 +1837,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   sourceInput.addEventListener("input", handleSourceChange);
 
   sourceInput.addEventListener("keydown", (event) => {
-    const completionCount = completionResult?.items.length ?? 0;
+    const completionCount = completionList.hidden
+      ? 0
+      : Math.min(completionResult?.items.length ?? 0, 12);
 
     if (event.key === "ArrowDown" && completionCount > 0) {
       event.preventDefault();
@@ -1818,6 +1861,12 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       return;
     }
 
+    if (event.key === "Enter" && event.altKey) {
+      event.preventDefault();
+      showCompletionListNow();
+      return;
+    }
+
     if (event.key === "Tab") {
       event.preventDefault();
 
@@ -1833,6 +1882,12 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
 
     if (event.key === "Enter") {
       event.preventDefault();
+
+      if (completionCount > 0) {
+        applyCompletion(activeCompletionIndex);
+        return;
+      }
+
       insertAtSelection(`\n${getEnterIndentation(createLanguageRequest())}`);
       handleSourceChange();
     }
