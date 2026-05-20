@@ -60,18 +60,18 @@ syntaxStyles.textContent = `
 .syntax-comment { color: #7f948a; font-style: italic; }
 .syntax-punctuation { color: #9d9183; }
 .syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
-.editor-assist { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 3; display: grid; gap: 8px; pointer-events: none; }
+.editor-assist { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 3; display: grid; gap: 6px; pointer-events: none; }
 .editor-assist[hidden] { display: none; }
-.completion-list { display: grid; max-width: 380px; max-height: 190px; overflow: auto; border: 1px solid rgba(125,211,252,0.36); background: #191613; box-shadow: 0 18px 40px rgba(0,0,0,0.38); pointer-events: auto; }
-.completion-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 0; border-bottom: 1px solid rgba(255,255,255,0.06); background: transparent; color: #f8f4ec; padding: 8px 10px; font: inherit; text-align: left; }
+.completion-list { display: grid; max-width: 340px; max-height: 168px; overflow: auto; border: 1px solid rgba(125,211,252,0.24); background: #171512; box-shadow: 0 14px 30px rgba(0,0,0,0.34); pointer-events: auto; }
+.completion-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; border: 0; border-bottom: 1px solid rgba(255,255,255,0.05); background: transparent; color: #d7d0c4; padding: 5px 8px; font: inherit; font-size: 0.94em; text-align: left; }
 .completion-item:last-child { border-bottom: 0; }
-.completion-item[data-active="true"] { background: #26333a; color: #ffffff; }
-.completion-detail { color: #b8c7c6; font-size: 0.86em; }
-.argument-help { max-width: min(760px, 100%); border: 1px solid rgba(255,255,255,0.12); background: #191613; color: #d9cfbf; padding: 8px 10px; box-shadow: 0 18px 40px rgba(0,0,0,0.28); pointer-events: none; }
-.argument-command { color: #7dd3fc; font-weight: 700; margin-right: 10px; }
-.argument-token { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 6px; color: #d8e6b3; }
-.argument-token[data-active="true"] { background: rgba(125,211,252,0.16); color: #ffffff; outline: 1px solid rgba(125,211,252,0.32); }
-.argument-kind { color: #b8c7c6; }
+.completion-item[data-active="true"] { background: #222b2e; color: #f1ece3; }
+.completion-detail { color: #8fa09d; font-size: 0.82em; }
+.argument-help { max-width: min(760px, 100%); border: 1px solid rgba(255,255,255,0.1); background: #171512; color: #c5bbae; padding: 6px 8px; box-shadow: 0 14px 30px rgba(0,0,0,0.26); font-size: 0.92em; pointer-events: none; }
+.argument-command { color: #68b9d7; font-weight: 700; margin-right: 8px; }
+.argument-token { display: inline-block; margin: 1px 3px 1px 0; padding: 1px 4px; color: #c5d4ac; }
+.argument-token[data-active="true"] { background: rgba(125,211,252,0.12); color: #f1ece3; outline: 1px solid rgba(125,211,252,0.24); }
+.argument-kind { color: #8fa09d; }
 `;
 document.head.append(syntaxStyles);
 
@@ -203,6 +203,36 @@ function getLanguagePosition(source: string, offset: number): LanguageServiceReq
     line: lines.length,
     column: lines[lines.length - 1]!.length + 1
   };
+}
+
+type ArgumentHelpDefinition = LanguageArgumentHelp["arguments"][number];
+
+function formatArgumentKind(argument: ArgumentHelpDefinition): string {
+  return argument.enumValues?.join("|") ?? argument.valueKind;
+}
+
+function formatArgumentName(argument: ArgumentHelpDefinition): string {
+  return argument.required ? argument.name : `${argument.name}?`;
+}
+
+function isCompletionRequestShortcut(event: KeyboardEvent): boolean {
+  return (
+    event.ctrlKey &&
+    !event.altKey &&
+    !event.metaKey &&
+    (event.key === " " || event.code === "Space")
+  );
+}
+
+function isCursorNavigationKey(event: KeyboardEvent): boolean {
+  return [
+    "ArrowLeft",
+    "ArrowRight",
+    "Home",
+    "End",
+    "PageUp",
+    "PageDown"
+  ].includes(event.key);
 }
 
 const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
@@ -1485,8 +1515,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   let currentArtifactSize = { width: 1, height: 1 };
   let completionResult: LanguageCompletionResult | null = null;
   let activeCompletionIndex = 0;
-  let forceNextCompletionList = false;
-  let suppressNextCompletionList = false;
+  let completionListExplicit = false;
+  let completionSuppressedUntilInput = false;
+  let argumentHelpOpen = false;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
   heading.textContent = playground.title;
@@ -1679,14 +1710,11 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     };
   }
 
-  function shouldShowCompletionList(
-    result: LanguageCompletionResult,
-    forceCompletions: boolean
-  ): boolean {
+  function shouldShowCompletionList(result: LanguageCompletionResult): boolean {
     return (
       result.items.length > 0 &&
-      !suppressNextCompletionList &&
-      (forceCompletions || result.context.prefix.length > 0)
+      !completionSuppressedUntilInput &&
+      (completionListExplicit || result.context.prefix.length > 0)
     );
   }
 
@@ -1756,9 +1784,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
 
       token.className = "argument-token";
       token.dataset.active = index === help.activeArgumentIndex ? "true" : "false";
-      token.append(argument.name);
+      token.append(formatArgumentName(argument));
       kind.className = "argument-kind";
-      kind.textContent = `:${argument.valueKind}`;
+      kind.textContent = `:${formatArgumentKind(argument)}`;
       token.append(kind);
       argumentHelp.append(token);
     });
@@ -1771,29 +1799,26 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
 
     const request = createLanguageRequest();
-    const forceCompletions = forceNextCompletionList;
-    forceNextCompletionList = false;
     completionResult = getLanguageCompletions(request);
     updateAssistPosition();
     renderCompletionList(
-      shouldShowCompletionList(completionResult, forceCompletions)
-        ? completionResult.items
-        : []
+      shouldShowCompletionList(completionResult) ? completionResult.items : []
     );
-    suppressNextCompletionList = false;
-    renderArgumentHelp(getArgumentHelp(request));
+    renderArgumentHelp(argumentHelpOpen ? getArgumentHelp(request) : null);
     sourceAssist.hidden = completionList.hidden && argumentHelp.hidden;
   }
 
   function showCompletionListNow(): void {
-    forceNextCompletionList = true;
+    completionListExplicit = true;
+    completionSuppressedUntilInput = false;
     updateAssist();
   }
 
   function hideAssist(): void {
     completionResult = null;
-    forceNextCompletionList = false;
-    suppressNextCompletionList = false;
+    completionListExplicit = false;
+    completionSuppressedUntilInput = true;
+    argumentHelpOpen = false;
     completionList.hidden = true;
     argumentHelp.hidden = true;
     sourceAssist.hidden = true;
@@ -1824,7 +1849,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     const cursor = sourceInput.selectionStart;
     replaceSourceRange(cursor - prefix.length, cursor, item.insertText);
     sourceInput.focus();
-    suppressNextCompletionList = true;
+    completionListExplicit = false;
+    completionSuppressedUntilInput = true;
+    argumentHelpOpen = false;
     handleSourceChange();
   }
 
@@ -1834,7 +1861,44 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     updateAssist();
   }
 
-  sourceInput.addEventListener("input", handleSourceChange);
+  function shouldOpenArgumentHelpAfterInput(event: Event): boolean {
+    const help = getArgumentHelp(createLanguageRequest());
+
+    if (!help) {
+      return false;
+    }
+
+    if (!(event instanceof InputEvent)) {
+      return argumentHelpOpen;
+    }
+
+    if (
+      event.inputType.startsWith("delete") ||
+      event.inputType === "insertLineBreak"
+    ) {
+      return false;
+    }
+
+    if (event.inputType === "insertText" && event.data !== null) {
+      return /\s/.test(event.data) || argumentHelpOpen;
+    }
+
+    if (event.inputType === "insertFromPaste") {
+      return /\s$/.test(sourceInput.value.slice(0, sourceInput.selectionStart)) ||
+        argumentHelpOpen;
+    }
+
+    return argumentHelpOpen;
+  }
+
+  function handleSourceInput(event: Event): void {
+    completionListExplicit = false;
+    completionSuppressedUntilInput = false;
+    argumentHelpOpen = shouldOpenArgumentHelpAfterInput(event);
+    handleSourceChange();
+  }
+
+  sourceInput.addEventListener("input", handleSourceInput);
 
   sourceInput.addEventListener("keydown", (event) => {
     const completionCount = completionList.hidden
@@ -1861,7 +1925,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       return;
     }
 
-    if (event.key === "Enter" && event.altKey) {
+    if (isCompletionRequestShortcut(event)) {
       event.preventDefault();
       showCompletionListNow();
       return;
@@ -1876,6 +1940,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       }
 
       insertAtSelection("  ");
+      completionListExplicit = false;
+      completionSuppressedUntilInput = false;
+      argumentHelpOpen = false;
       handleSourceChange();
       return;
     }
@@ -1889,6 +1956,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       }
 
       insertAtSelection(`\n${getEnterIndentation(createLanguageRequest())}`);
+      completionListExplicit = false;
+      completionSuppressedUntilInput = false;
+      argumentHelpOpen = false;
       handleSourceChange();
     }
   });
@@ -1896,6 +1966,9 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   sourceInput.addEventListener("scroll", syncEditorScroll);
   sourceInput.addEventListener("focus", () => {
     sourceEditor.style.borderColor = "rgba(125,211,252,0.48)";
+    completionListExplicit = false;
+    completionSuppressedUntilInput = true;
+    argumentHelpOpen = false;
     updateAssist();
   });
   sourceInput.addEventListener("blur", () => {
@@ -1906,8 +1979,17 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
       }
     }, 120);
   });
-  sourceInput.addEventListener("keyup", updateAssist);
-  sourceInput.addEventListener("mouseup", updateAssist);
+  sourceInput.addEventListener("keyup", (event) => {
+    if (isCursorNavigationKey(event)) {
+      updateAssist();
+    }
+  });
+  sourceInput.addEventListener("mouseup", () => {
+    completionListExplicit = false;
+    completionSuppressedUntilInput = true;
+    argumentHelpOpen = false;
+    updateAssist();
+  });
 
   zoomSelect.addEventListener("change", () => {
     applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);

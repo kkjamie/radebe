@@ -76,6 +76,43 @@ test("getArgumentHelp reports the active positional argument", () => {
   assert.equal(help?.activeArgument?.valueKind, "integer");
 });
 
+test("getArgumentHelp includes optional schema arguments in the signature", () => {
+  const rectHelp = getArgumentHelp(atCursor("rect |"));
+
+  assert.deepEqual(rectHelp?.arguments.map((argument) => argument.name), [
+    "x",
+    "y",
+    "width",
+    "height",
+    "color",
+    "antialias"
+  ]);
+  assert.equal(rectHelp?.activeArgument?.name, "x");
+
+  const fillHelp = getArgumentHelp(atCursor("fill |"));
+
+  assert.deepEqual(fillHelp?.arguments.map((argument) => argument.name), [
+    "variant",
+    "alpha"
+  ]);
+  assert.deepEqual(fillHelp?.activeArgument?.enumValues, [
+    "solid",
+    "gradient",
+    "gradient-linear",
+    "gradient-radial"
+  ]);
+
+  const gradientHelp = getArgumentHelp(atCursor("fill gradient-linear |"));
+
+  assert.deepEqual(gradientHelp?.arguments.map((argument) => argument.name), [
+    "from",
+    "to",
+    "direction",
+    "angle"
+  ]);
+  assert.equal(gradientHelp?.activeArgument?.name, "from");
+});
+
 test("getArgumentHelp uses parent metadata for child property commands", () => {
   const help = getArgumentHelp(atCursor("circle 12 12 8\n  radius |"));
 

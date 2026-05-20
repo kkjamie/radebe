@@ -336,6 +336,22 @@ function getContextualShorthandArguments(
   return getShorthandArgumentDefinitions(commandDefinition);
 }
 
+function getActiveArgumentIndex(
+  argumentsForCommand: CommandArgumentDefinition[],
+  activeArgument: CommandArgumentDefinition | null,
+  fallbackIndex: number
+): number {
+  if (!activeArgument) {
+    return fallbackIndex;
+  }
+
+  const index = argumentsForCommand.findIndex(
+    (argument) => argument.name === activeArgument.name
+  );
+
+  return index < 0 ? fallbackIndex : index;
+}
+
 function getNamedArgumentHelp(
   context: InternalContext,
   token: TokenSpan,
@@ -396,13 +412,21 @@ function getVariadicArgumentHelp(
   const activeArgument = shouldUseTrailingArgument
     ? variadic.trailingArgument!
     : sequence[activeIndex % sequence.length] ?? null;
+  const displayArguments =
+    variadic.trailingArgument === undefined
+      ? sequence
+      : [...sequence, variadic.trailingArgument];
 
   return {
     commandName: commandDefinition.name,
     mode: "positional",
-    activeArgumentIndex: activeIndex,
+    activeArgumentIndex: getActiveArgumentIndex(
+      displayArguments,
+      activeArgument,
+      activeIndex
+    ),
     activeArgument,
-    arguments: sequence,
+    arguments: displayArguments,
     valuePrefix: argumentState.tokenPrefix
   };
 }
@@ -428,13 +452,17 @@ function getInlineChildArgumentHelp(
       inlineChild.argumentName,
       inlineChild.allowedCommands
     );
+    const displayArguments = [
+      activeArgument,
+      ...getContextualArguments(commandDefinition, context.parentDefinition)
+    ];
 
     return {
       commandName: commandDefinition.name,
       mode: "inline-child",
       activeArgumentIndex: 0,
       activeArgument,
-      arguments: [activeArgument],
+      arguments: displayArguments,
       valuePrefix: argumentState.tokenPrefix
     };
   }
@@ -445,15 +473,24 @@ function getInlineChildArgumentHelp(
     return null;
   }
 
-  const childArguments = getShorthandArgumentDefinitions(childDefinition);
+  const childShorthandArguments = getShorthandArgumentDefinitions(childDefinition);
+  const childArguments = getCommandArgumentDefinitions(childDefinition);
   const childArgumentIndex = argumentState.activeArgumentIndex - 1;
+  const activeArgument =
+    childShorthandArguments[childArgumentIndex] ??
+    childArguments[childArgumentIndex] ??
+    null;
 
   return {
     commandName: childDefinition.name,
     parentCommandName: commandDefinition.name,
     mode: "positional",
-    activeArgumentIndex: childArgumentIndex,
-    activeArgument: childArguments[childArgumentIndex] ?? null,
+    activeArgumentIndex: getActiveArgumentIndex(
+      childArguments,
+      activeArgument,
+      childArgumentIndex
+    ),
+    activeArgument,
     arguments: childArguments,
     valuePrefix: argumentState.tokenPrefix
   };
@@ -469,16 +506,28 @@ function getPositionalArgumentHelp(
     return null;
   }
 
-  const argumentsForCommand = getContextualShorthandArguments(
+  const shorthandArguments = getContextualShorthandArguments(
     commandDefinition,
     context.parentDefinition
   );
+  const argumentsForCommand = getContextualArguments(
+    commandDefinition,
+    context.parentDefinition
+  );
+  const activeArgument =
+    shorthandArguments[argumentState.activeArgumentIndex] ??
+    argumentsForCommand[argumentState.activeArgumentIndex] ??
+    null;
 
   return {
     commandName: commandDefinition.name,
     mode: "positional",
-    activeArgumentIndex: argumentState.activeArgumentIndex,
-    activeArgument: argumentsForCommand[argumentState.activeArgumentIndex] ?? null,
+    activeArgumentIndex: getActiveArgumentIndex(
+      argumentsForCommand,
+      activeArgument,
+      argumentState.activeArgumentIndex
+    ),
+    activeArgument,
     arguments: argumentsForCommand,
     valuePrefix: argumentState.tokenPrefix
   };
