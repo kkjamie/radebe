@@ -1532,7 +1532,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   let completionListExplicit = false;
   let completionSuppressedUntilInput = false;
   let argumentHelpOpen = false;
-  let applyingSmartEdits = false;
+  let applyingProgrammaticEdit = false;
 
   section.style.cssText = "display: grid; gap: 14px; margin-bottom: 28px;";
   heading.textContent = playground.title;
@@ -1839,12 +1839,46 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     sourceAssist.hidden = true;
   }
 
-  function replaceSourceRange(start: number, end: number, text: string): void {
+  function applyDirectSourceEdit(edit: LanguageTextEdit): void {
     const nextValue =
-      sourceInput.value.slice(0, start) + text + sourceInput.value.slice(end);
-    const nextCursor = start + text.length;
+      sourceInput.value.slice(0, edit.start) +
+      edit.text +
+      sourceInput.value.slice(edit.end);
 
     sourceInput.value = nextValue;
+  }
+
+  function runUndoableSourceEdit(edit: LanguageTextEdit): boolean {
+    if (document.activeElement !== sourceInput) {
+      return false;
+    }
+
+    let applied = false;
+
+    applyingProgrammaticEdit = true;
+
+    try {
+      sourceInput.selectionStart = edit.start;
+      sourceInput.selectionEnd = edit.end;
+      applied =
+        edit.text.length > 0
+          ? document.execCommand("insertText", false, edit.text)
+          : document.execCommand("delete");
+    } finally {
+      applyingProgrammaticEdit = false;
+    }
+
+    return applied;
+  }
+
+  function replaceSourceRange(start: number, end: number, text: string): void {
+    const edit = { start, end, text };
+    const nextCursor = start + text.length;
+
+    if (!runUndoableSourceEdit(edit)) {
+      applyDirectSourceEdit(edit);
+    }
+
     sourceInput.selectionStart = nextCursor;
     sourceInput.selectionEnd = nextCursor;
   }
@@ -1855,46 +1889,17 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
 
   function applyLanguageTextEdits(edits: LanguageTextEdit[]): void {
     const sortedEdits = [...edits].sort((left, right) => right.start - left.start);
-    let nextValue = sourceInput.value;
     let nextSelectionStart = sourceInput.selectionStart;
     let nextSelectionEnd = sourceInput.selectionEnd;
-    let usedBrowserEditCommand = false;
 
-    if (document.activeElement === sourceInput) {
-      applyingSmartEdits = true;
-
-      try {
-        sortedEdits.forEach((edit) => {
-          sourceInput.selectionStart = edit.start;
-          sourceInput.selectionEnd = edit.end;
-
-          if (edit.text.length > 0) {
-            usedBrowserEditCommand =
-              document.execCommand("insertText", false, edit.text) ||
-              usedBrowserEditCommand;
-          } else {
-            usedBrowserEditCommand =
-              document.execCommand("delete") || usedBrowserEditCommand;
-          }
-
-          nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
-          nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
-        });
-      } finally {
-        applyingSmartEdits = false;
+    sortedEdits.forEach((edit) => {
+      if (!runUndoableSourceEdit(edit)) {
+        applyDirectSourceEdit(edit);
       }
-    }
 
-    if (!usedBrowserEditCommand) {
-      sortedEdits.forEach((edit) => {
-        nextValue =
-          nextValue.slice(0, edit.start) + edit.text + nextValue.slice(edit.end);
-        nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
-        nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
-      });
-
-      sourceInput.value = nextValue;
-    }
+      nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
+      nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
+    });
 
     sourceInput.selectionStart = nextSelectionStart;
     sourceInput.selectionEnd = nextSelectionEnd;
@@ -1965,7 +1970,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function handleSourceInput(event: Event): void {
-    if (applyingSmartEdits) {
+    if (applyingProgrammaticEdit) {
       return;
     }
 
