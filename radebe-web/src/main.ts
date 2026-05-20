@@ -27,7 +27,8 @@ import {
   type LanguageCompletionItem,
   type LanguageCompletionResult,
   type LanguageServiceRequest,
-  type LanguageTextEdit
+  type LanguageTextEdit,
+  type RadebeDiagnostic
 } from "@radebe/core";
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -69,6 +70,12 @@ type PageDefinition =
       doc: ExampleDoc;
     };
 
+type SourceTokenSpan = {
+  text: string;
+  from: number;
+  to: number;
+};
+
 const syntaxStyles = document.createElement("style");
 syntaxStyles.textContent = `
 .syntax-command { color: #7dd3fc; font-weight: 700; }
@@ -80,6 +87,7 @@ syntaxStyles.textContent = `
 .syntax-comment { color: #7f948a; font-style: italic; }
 .syntax-punctuation { color: #9d9183; }
 .syntax-unknown { color: #ff9f9f; text-decoration: underline wavy #ff6262; text-underline-offset: 3px; }
+.diagnostic-squiggle { text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: #ff6262; text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
 .editor-assist { position: absolute; left: 14px; right: 14px; top: 46px; z-index: 3; display: grid; gap: 6px; pointer-events: none; }
 .editor-assist[hidden] { display: none; }
 .completion-list { display: grid; max-width: 340px; max-height: 168px; overflow: auto; border: 1px solid rgba(125,211,252,0.24); background: #171512; box-shadow: 0 14px 30px rgba(0,0,0,0.34); pointer-events: auto; }
@@ -277,6 +285,18 @@ function adjustOffsetForEdit(offset: number, edit: LanguageTextEdit): number {
   return offset;
 }
 
+function getSourceTokenSpans(lineText: string, lineFrom: number): SourceTokenSpan[] {
+  return [...lineText.matchAll(/\S+/g)].map((match) => {
+    const from = lineFrom + (match.index ?? 0);
+
+    return {
+      text: match[0],
+      from,
+      to: from + match[0].length
+    };
+  });
+}
+
 function getCommandTokenSyntaxClass(token: string): string {
   const definition = getCommandDefinition(token);
 
@@ -329,26 +349,23 @@ function createSourceSyntaxDecorations(view: EditorView): DecorationSet {
       if (lineText.trimStart().startsWith("#")) {
         builder.add(line.from, line.to, Decoration.mark({ class: "syntax-comment" }));
       } else {
-        const tokens = [...lineText.matchAll(/\S+/g)];
+        const tokens = getSourceTokenSpans(lineText, line.from);
         let commandName = "";
         let argumentIndex = 0;
 
-        tokens.forEach((match, tokenIndex) => {
-          const token = match[0];
-          const tokenFrom = line.from + (match.index ?? 0);
-          const tokenTo = tokenFrom + token.length;
+        tokens.forEach((token, tokenIndex) => {
           const className =
             tokenIndex === 0
-              ? getCommandTokenSyntaxClass(token)
-              : getArgumentTokenSyntaxClass(token, {
+              ? getCommandTokenSyntaxClass(token.text)
+              : getArgumentTokenSyntaxClass(token.text, {
                   commandName,
                   argumentIndex
                 });
 
-          builder.add(tokenFrom, tokenTo, Decoration.mark({ class: className }));
+          builder.add(token.from, token.to, Decoration.mark({ class: className }));
 
           if (tokenIndex === 0) {
-            commandName = token;
+            commandName = token.text;
           } else {
             argumentIndex += 1;
           }
@@ -366,6 +383,169 @@ function createSourceSyntaxDecorations(view: EditorView): DecorationSet {
   return builder.finish();
 }
 
+function findTokenAtOffset(
+  tokens: SourceTokenSpan[],
+  offset: number
+): SourceTokenSpan | null {
+  return (
+    tokens.find((token) => token.from <= offset && offset <= token.to) ??
+    tokens.find((token) => token.from > offset) ??
+    tokens[0] ??
+    null
+  );
+}
+
+function findTokenMatchingValue(
+  tokens: SourceTokenSpan[],
+  value: string
+): SourceTokenSpan | null {
+  return (
+    tokens.find(
+      (token) =>
+        token.text === value ||
+        (token.text.includes("=") && token.text.split("=").at(-1) === value)
+    ) ?? null
+  );
+}
+
+function findFirstExtraPositionalToken(
+  tokens: SourceTokenSpan[]
+): SourceTokenSpan | null {
+  const commandToken = tokens[0];
+  const definition = commandToken ? getCommandDefinition(commandToken.text) : null;
+  const shorthandLength = definition?.shorthandSchema?.length ?? 0;
+  let positionalIndex = 0;
+
+  for (const token of tokens.slice(1)) {
+    if (token.text.includes("=")) {
+      continue;
+    }
+
+    if (positionalIndex >= shorthandLength) {
+      return token;
+    }
+
+    positionalIndex += 1;
+  }
+
+  return tokens.at(-1) ?? null;
+}
+
+function findArgumentTokenByName(
+  tokens: SourceTokenSpan[],
+  argumentName: string
+): SourceTokenSpan | null {
+  const commandToken = tokens[0];
+  const definition = commandToken ? getCommandDefinition(commandToken.text) : null;
+  let positionalIndex = 0;
+
+  for (const token of tokens.slice(1)) {
+    const equalsIndex = token.text.indexOf("=");
+
+    if (equalsIndex > 0) {
+      if (token.text.slice(0, equalsIndex) === argumentName) {
+        return token;
+      }
+
+      continue;
+    }
+
+    const shorthandName = definition?.shorthandSchema?.[positionalIndex];
+
+    if (shorthandName === argumentName) {
+      return token;
+    }
+
+    positionalIndex += 1;
+  }
+
+  return null;
+}
+
+function getReceivedDiagnosticToken(message: string): string | null {
+  return message.match(/Received "([^"]+)"/)?.[1] ?? null;
+}
+
+function getQuotedDiagnosticToken(message: string): string | null {
+  return message.match(/"([^"]+)"/)?.[1] ?? null;
+}
+
+function getDiagnosticTokenRange(
+  view: EditorView,
+  diagnostic: RadebeDiagnostic
+): { from: number; to: number } | null {
+  if (
+    diagnostic.line === undefined ||
+    diagnostic.line < 1 ||
+    diagnostic.line > view.state.doc.lines
+  ) {
+    return null;
+  }
+
+  const line = view.state.doc.line(diagnostic.line);
+  const tokens = getSourceTokenSpans(line.text, line.from);
+
+  if (tokens.length === 0) {
+    return null;
+  }
+
+  const receivedToken = getReceivedDiagnosticToken(diagnostic.message);
+  const quotedToken = getQuotedDiagnosticToken(diagnostic.message);
+  const inferredToken =
+    (receivedToken ? findTokenMatchingValue(tokens, receivedToken) : null) ??
+    (diagnostic.message.includes("too many positional arguments")
+      ? findFirstExtraPositionalToken(tokens)
+      : null) ??
+    (quotedToken ? findArgumentTokenByName(tokens, quotedToken) : null) ??
+    (quotedToken ? findTokenMatchingValue(tokens, quotedToken) : null) ??
+    findTokenAtOffset(
+      tokens,
+      line.from + Math.max((diagnostic.column ?? 1) - 1, 0)
+    );
+
+  if (!inferredToken) {
+    return null;
+  }
+
+  return {
+    from: inferredToken.from,
+    to: inferredToken.to
+  };
+}
+
+function createSourceDiagnosticDecorations(view: EditorView): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const source = view.state.doc.toString();
+  const ranges = renderSource({ source }).diagnostics
+    .map((diagnostic) => {
+      const range = getDiagnosticTokenRange(view, diagnostic);
+
+      return range === null
+        ? null
+        : {
+            ...range,
+            message: diagnostic.message
+          };
+    })
+    .filter((range): range is { from: number; to: number; message: string } => {
+      return range !== null && range.from < range.to;
+    })
+    .sort((left, right) => left.from - right.from || left.to - right.to);
+
+  ranges.forEach((range) => {
+    builder.add(
+      range.from,
+      range.to,
+      Decoration.mark({
+        attributes: { title: range.message },
+        class: "diagnostic-squiggle"
+      })
+    );
+  });
+
+  return builder.finish();
+}
+
 const sourceSyntaxHighlighter = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
@@ -377,6 +557,25 @@ const sourceSyntaxHighlighter = ViewPlugin.fromClass(
     update(update: ViewUpdate): void {
       if (update.docChanged || update.viewportChanged) {
         this.decorations = createSourceSyntaxDecorations(update.view);
+      }
+    }
+  },
+  {
+    decorations: (plugin) => plugin.decorations
+  }
+);
+
+const sourceDiagnosticHighlighter = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+
+    constructor(view: EditorView) {
+      this.decorations = createSourceDiagnosticDecorations(view);
+    }
+
+    update(update: ViewUpdate): void {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = createSourceDiagnosticDecorations(update.view);
       }
     }
   },
@@ -2294,6 +2493,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
         basicSetup,
         EditorView.lineWrapping,
         sourceSyntaxHighlighter,
+        sourceDiagnosticHighlighter,
         smartEditTransactionFilter,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {

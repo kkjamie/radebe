@@ -9,6 +9,7 @@ Milestone/Gate: `M2 / Gate B`
 - Respond to the immediate CodeMirror migration regressions reported in the web editor.
 - Restore the Radebe-specific editor interactions that were working before the host migration.
 - Soften the CodeMirror line-number gutter and current-line highlight contrast.
+- Add inline red squiggles for parser/compiler diagnostics so invalid arguments and extra tokens are visible without reading the diagnostics panel.
 
 ## Completed
 - Added a highest-priority CodeMirror keymap for Radebe editor behavior so default CodeMirror bindings no longer swallow custom interactions.
@@ -19,12 +20,15 @@ Milestone/Gate: `M2 / Gate B`
 - Switched the CodeMirror caret and drop cursor to the brighter cyan editor accent with a 2px cursor stroke for better contrast against the dark source surface.
 - Moved shorthand cleanup into a CodeMirror transaction filter so completing `fill` by typing or autocomplete and removing the parent convenience color are recorded as one undoable editor transaction.
 - Skipped smart cleanup on undo, redo, and delete transactions so undo does not immediately re-trigger the cleanup it is trying to reverse.
+- Added a CodeMirror diagnostic decoration layer that maps parser/compiler diagnostics onto the most likely offending source token, including bad positional arguments such as `rect hello ...`, extra positional arguments, unknown commands, named arguments, and variable tokens.
+- Marked T-053 / Phase 4 editor migration polish complete after user validation of the repaired interactions.
 
 ## Verification
 - Ran `npm run build` successfully across the workspace.
 - Ran `npm test` successfully outside the sandbox with the core suite, CLI suite, and SEA smoke test passing.
 - Ran `npm --prefix radebe-web run build` successfully after the caret contrast adjustment.
 - Ran `npm --prefix radebe-web run build` and `npm test` successfully after the CodeMirror smart-edit transaction-filter change.
+- Ran `npm --prefix radebe-web run build` and `npm test` successfully after adding diagnostic squiggle decorations.
 - Confirmed the running dev server at `http://127.0.0.1:5173/` returns HTTP 200.
 
 ## Notes
@@ -32,36 +36,33 @@ Milestone/Gate: `M2 / Gate B`
 - This repair keeps the custom Radebe assist UI rather than switching to CodeMirror's built-in completion UI mid-stream.
 
 ## Remaining
-- Hands-on browser interaction validation is still needed for autocomplete acceptance, smart Enter indentation, argument help timing, smart shorthand cleanup, undo behavior, and popup placement.
-- Specifically confirm that undoing a typed final `l` in `fill` or an autocomplete from `f` to `fill` restores the parent shorthand color and reverts the child command change as a single editor action.
-- If any interaction still feels off after that pass, continue T-053 before adding new editor features.
+- T-053 has no remaining blocker.
+- Future diagnostics could become more precise if `@radebe/core` carries token ranges instead of only line/column plus message text.
 
 ## Risks / Blockers
-- No build or test blocker.
-- Browser interaction behavior was repaired by code path and verified through build/test, but not fully exercised by an automated browser test in this worker.
+- No active blocker.
+- Diagnostic underline ranges are inferred in the web adapter from the source line, command schema, and diagnostic message text. This is good enough for the current editor polish, but a future core diagnostic range model would be cleaner.
 
 ## Exact Next 3 Steps
-1. In the running web app, type prefixes such as `rec` and accept completions with `Enter`.
-2. Check `Ctrl+Space`, argument help after typed spaces, smart Enter indentation, and shorthand cleanup when adding `fill` under a shorthand-filled shape.
-3. Confirm undo covers accepted completion text and smart-edit removals, then move T-053 from `Review` to `Done` if the browser pass feels right.
+1. Decide the next editor-track slice: command hover/help, richer diagnostics, or reusable editor packaging.
+2. If improving diagnostics further, add explicit token ranges to `@radebe/core` diagnostics and simplify the web adapter.
+3. If packaging the editor, define the reusable component boundary around CodeMirror host state, assist UI, preview wiring, and language-service inputs.
 
 ## Paste-Ready Next Thread Prompt
 ```md
-You are working in worker thread `t-053-codemirror-editor-validation`.
+You are working in worker thread `post-t-053-editor-next-slice`.
 
 Objective:
-- Manually validate and, if needed, finish the CodeMirror-backed editor regression repair.
+- Pick and implement the next editor-track slice now that T-053 / Phase 4 CodeMirror migration polish is complete.
 
 Done criteria:
-- Browser confirms autocomplete appears at the right time and accepts with `Enter`.
-- `Ctrl+Space`, `Escape`, arrow completion navigation, `Tab`, smart Enter indentation, argument help, smart shorthand cleanup, undo, and popup positioning all behave correctly.
-- Any remaining regressions are fixed.
+- Scope the next editor increment, likely command hover/help, richer diagnostic ranges, or reusable editor packaging.
+- Keep the CodeMirror editor interactions from T-053 intact.
 - Build and tests pass.
-- T-053 is moved from `Review` to `Done`.
 
 Read order:
 1) AGENTS.md
-2) docs/project/task-board.md (item: T-053)
+2) docs/project/task-board.md
 3) docs/project/session-log/2026-05-20-t-053-codemirror-editor-regression-repair.md
 4) docs/project/session-log/2026-05-20-t-050-codemirror-editor-host.md
 5) radebe-web/src/main.ts
