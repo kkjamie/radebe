@@ -4,6 +4,8 @@ import {
   EditorState,
   Prec,
   RangeSetBuilder,
+  Transaction,
+  type TransactionSpec,
   type Range
 } from "@codemirror/state";
 import {
@@ -1841,13 +1843,18 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     }
   }
 
-  function createLanguageRequest(): LanguageServiceRequest {
-    const source = getEditorSource();
-
+  function createLanguageRequestFor(
+    source: string,
+    offset: number
+  ): LanguageServiceRequest {
     return {
       source,
-      position: getLanguagePosition(source, getEditorOffset())
+      position: getLanguagePosition(source, offset)
     };
+  }
+
+  function createLanguageRequest(): LanguageServiceRequest {
+    return createLanguageRequestFor(getEditorSource(), getEditorOffset());
   }
 
   function shouldShowCompletionList(result: LanguageCompletionResult): boolean {
@@ -1986,57 +1993,27 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     replaceSourceRange(selection.from, selection.to, text, options);
   }
 
-  function applyLanguageTextEdits(
-    edits: LanguageTextEdit[],
-    options?: { suppressAssistAfterChange?: boolean }
-  ): void {
-    const selection = editorView.state.selection.main;
-    const sortedEdits = [...edits].sort((left, right) => left.start - right.start);
-    let nextSelectionStart = selection.from;
-    let nextSelectionEnd = selection.to;
-
-    [...edits]
-      .sort((left, right) => right.start - left.start)
-      .forEach((edit) => {
-        nextSelectionStart = adjustOffsetForEdit(nextSelectionStart, edit);
-        nextSelectionEnd = adjustOffsetForEdit(nextSelectionEnd, edit);
-      });
-
-    suppressAssistForNextChange =
-      suppressAssistForNextChange || options?.suppressAssistAfterChange === true;
-    editorView.dispatch({
-      changes: sortedEdits.map((edit) => ({
-        from: edit.start,
-        to: edit.end,
-        insert: edit.text
-      })),
-      selection: EditorSelection.range(nextSelectionStart, nextSelectionEnd),
-      scrollIntoView: true
-    });
-  }
-
-  function getSmartTextEdits(): LanguageTextEdit[] {
-    const smartEdits = getLanguageSmartEdits(createLanguageRequest()).edits;
+  function getSmartTextEditsFor(source: string, offset: number): LanguageTextEdit[] {
+    const smartEdits = getLanguageSmartEdits(
+      createLanguageRequestFor(source, offset)
+    ).edits;
 
     return smartEdits.map((smartEdit) => smartEdit.edit);
   }
 
-  function scheduleSmartEdits(): boolean {
-    if (getSmartTextEdits().length === 0) {
-      return false;
-    }
-
-    window.setTimeout(() => {
-      const latestEdits = getSmartTextEdits();
-
-      if (latestEdits.length > 0) {
-        applyLanguageTextEdits(latestEdits, {
-          suppressAssistAfterChange: true
-        });
-      }
-    }, 0);
-
-    return true;
+  function getSelectionAfterTextEdits(
+    selection: EditorSelection,
+    edits: LanguageTextEdit[]
+  ): EditorSelection {
+    return EditorSelection.create(
+      selection.ranges.map((range) =>
+        EditorSelection.range(
+          edits.reduce(adjustOffsetForEdit, range.anchor),
+          edits.reduce(adjustOffsetForEdit, range.head)
+        )
+      ),
+      selection.mainIndex
+    );
   }
 
   function applyCompletion(index: number): void {
@@ -2059,10 +2036,6 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
   }
 
   function handleSourceChange(): void {
-    if (scheduleSmartEdits()) {
-      return;
-    }
-
     const source = getEditorSource();
     sourceState.set(playground.id, source);
     updatePreview(source);
@@ -2255,6 +2228,63 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
     ])
   );
 
+  const smartEditTransactionFilter = EditorState.transactionFilter.of(
+    (transaction) => {
+      if (
+        !transaction.docChanged ||
+        transaction.isUserEvent("undo") ||
+        transaction.isUserEvent("redo") ||
+        transaction.isUserEvent("delete") ||
+        transaction.annotation(Transaction.remote) === true ||
+        transaction.annotation(Transaction.addToHistory) === false
+      ) {
+        return transaction as unknown as TransactionSpec;
+      }
+
+      const source = transaction.newDoc.toString();
+      const smartEdits = getSmartTextEditsFor(
+        source,
+        transaction.newSelection.main.head
+      );
+
+      if (smartEdits.length === 0) {
+        return transaction as unknown as TransactionSpec;
+      }
+
+      const userEvent = transaction.annotation(Transaction.userEvent);
+      const addToHistory = transaction.annotation(Transaction.addToHistory);
+      const originalSpec: TransactionSpec = {
+        changes: transaction.changes,
+        effects: transaction.effects,
+        scrollIntoView: transaction.scrollIntoView,
+        selection: transaction.selection,
+        ...(userEvent === undefined ? {} : { userEvent }),
+        ...(addToHistory === undefined
+          ? {}
+          : { annotations: Transaction.addToHistory.of(addToHistory) })
+      };
+      const sortedEdits = [...smartEdits].sort(
+        (left, right) => left.start - right.start
+      );
+
+      return [
+        originalSpec,
+        {
+          changes: sortedEdits.map((edit) => ({
+            from: edit.start,
+            to: edit.end,
+            insert: edit.text
+          })),
+          selection: getSelectionAfterTextEdits(
+            transaction.newSelection,
+            smartEdits
+          ),
+          sequential: true
+        }
+      ];
+    }
+  );
+
   editorView = new EditorView({
     parent: sourceEditor,
     state: EditorState.create({
@@ -2264,6 +2294,7 @@ function createPlayground(playground: ExamplePlayground): HTMLElement {
         basicSetup,
         EditorView.lineWrapping,
         sourceSyntaxHighlighter,
+        smartEditTransactionFilter,
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const suppressAssist = suppressAssistForNextChange;

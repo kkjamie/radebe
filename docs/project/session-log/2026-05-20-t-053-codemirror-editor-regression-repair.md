@@ -17,11 +17,14 @@ Milestone/Gate: `M2 / Gate B`
 - Tightened completion acceptance ordering so accepted completions explicitly suppress and hide assist after insertion instead of reopening immediately.
 - Reduced the visual contrast of the CodeMirror gutter border, line-number color, and active-line highlight.
 - Switched the CodeMirror caret and drop cursor to the brighter cyan editor accent with a 2px cursor stroke for better contrast against the dark source surface.
+- Moved shorthand cleanup into a CodeMirror transaction filter so completing `fill` by typing or autocomplete and removing the parent convenience color are recorded as one undoable editor transaction.
+- Skipped smart cleanup on undo, redo, and delete transactions so undo does not immediately re-trigger the cleanup it is trying to reverse.
 
 ## Verification
 - Ran `npm run build` successfully across the workspace.
 - Ran `npm test` successfully outside the sandbox with the core suite, CLI suite, and SEA smoke test passing.
 - Ran `npm --prefix radebe-web run build` successfully after the caret contrast adjustment.
+- Ran `npm --prefix radebe-web run build` and `npm test` successfully after the CodeMirror smart-edit transaction-filter change.
 - Confirmed the running dev server at `http://127.0.0.1:5173/` returns HTTP 200.
 
 ## Notes
@@ -30,6 +33,7 @@ Milestone/Gate: `M2 / Gate B`
 
 ## Remaining
 - Hands-on browser interaction validation is still needed for autocomplete acceptance, smart Enter indentation, argument help timing, smart shorthand cleanup, undo behavior, and popup placement.
+- Specifically confirm that undoing a typed final `l` in `fill` or an autocomplete from `f` to `fill` restores the parent shorthand color and reverts the child command change as a single editor action.
 - If any interaction still feels off after that pass, continue T-053 before adding new editor features.
 
 ## Risks / Blockers
