@@ -432,3 +432,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The product spec has a canonical vocabulary now; T-074 will fold it into web reference docs and editor help, and T-075 will add focused compiler diagnostics for child-phase ordering.
 - Related tasks: T-074, T-075, T-060, T-067, T-069
 - Supersedes: N/A
+
+---
+
+### DEC-038: Apply Group Passes To A Composited Layer
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: Future group-level `fill`, `stroke`, `shadow`, glow, opacity, and blend behavior needs semantics that match the user's Photoshop-folder mental model instead of implying inherited child defaults.
+- Decision: Treat future group appearance/effect passes as post-raster layer operations: render all group children into an offscreen layer in source order, use the combined alpha/pixels as the group drawable, apply group-level passes to that composited result, then composite the final group layer back into the parent. Authors should use nested groups for staged effects.
+- Consequences: Group strokes and shadows can follow the combined outside contour rather than each child shape individually; ordering diagnostics must ensure group content comes before group-level passes; renderer work will need an offscreen layer/alpha model.
+- Related tasks: T-076, T-075, T-067, T-069
+- Supersedes: N/A

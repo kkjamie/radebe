@@ -343,6 +343,8 @@ rect-inset $pad $panel-fill
 - Groups accept root-style draw commands and nested groups.
 - Group child commands compile into the normal flat render command stream at their source position.
 - Group-level alpha, blend modes, masks, filters, offscreen surfaces, and transforms are intentionally deferred.
+- Future composited groups should behave like Photoshop folders: render child drawables into an offscreen layer in source order, treat the combined alpha/pixels as the group drawable, apply group-level appearance and effect passes to that result, then composite the final group layer back into the parent.
+- Group-level appearance and effect passes should not act as inherited defaults for children. If authors need staged effects, they should use nested groups.
 
 Example:
 
@@ -357,6 +359,17 @@ group frame
 
 group highlights
   line 16 14 112 14 white
+```
+
+Future composited group example:
+
+```text
+group badge
+  rect 8 8 80 32 #101820
+  circle 24 24 10 #18242c
+  polygon 70 12 88 24 70 36 #18242c
+  stroke 2 #70c8e8
+  shadow 2 2 black
 ```
 
 ## Geometry Model
