@@ -1,14 +1,13 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-05-20`
+Last updated: `2026-05-21`
 
 Use this as the single source of truth for active execution state. Keep `Active` limited to live execution items; closed work belongs in `Completed`.
 
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-043 | Add Unity importer options for sprite settings and slicing metadata | M2 | Gate C | P1 | In Progress | `codex-main` | Needs in-editor Unity confirmation that the new importer inspector preview and settings behave correctly for 9-slice, pivot, and filtering in Eddie | Open a deployed `.rdb` asset in Eddie, confirm the live preview shows border guides and pivot updates immediately, and verify reimport behavior for border/9-slice, pivot, PPU, and point vs bilinear filtering |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
@@ -17,9 +16,8 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-054 | Phase 5: Package the editor as a reusable consumer surface | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred until the product surface settles after the web editor spike | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
-| T-055 | Phase 6: Build Unity editor live-authoring parity | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred; current Unity priority remains importer validation/options rather than an in-Unity IDE surface | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
-| T-059 | Add `group` as a structural command for shared transforms and appearance scope | M2 | Deferred | P1 | Backlog | Unassigned | Needs shape/effect scope design so grouping does not imply unplanned compositing semantics | Define whether `group` first owns ordering and shared properties only, or also creates an offscreen compositing surface for alpha, blend, masks, and filters |
+| T-054 | Phase 5: Package the editor as a reusable consumer surface | M2 | Deferred | P2 | Backlog | Unassigned | Postponed by user on 2026-05-21 until the product/editor surface is deliberately resumed | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
+| T-055 | Phase 6: Build Unity editor live-authoring parity | M2 | Deferred | P2 | Backlog | Unassigned | Postponed by user on 2026-05-21; current work is language/effects rather than an in-Unity IDE surface | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
 | T-060 | Add explicit `mask` support with add, intersect, subtract, and replace modes | M2 | Deferred | P1 | Backlog | Unassigned | Needs render-region model design for clipping arbitrary child drawing | Implement the smallest mask slice that can clip child draw commands through shape coverage while preserving deterministic pixel output |
 | T-061 | Add soft shadow blur support to the existing `shadow` appearance command | M2 | Deferred | P1 | Backlog | Unassigned | Needs a deterministic blur kernel and performance budget for CLI, web, and Unity artifact parity | Extend `shadow` with `blur` while keeping the current hard-edged shadow behavior as the zero-blur default |
 | T-062 | Add glow appearance support, starting with inner glow and outer-glow semantics | M2 | Deferred | P2 | Backlog | Unassigned | Needs decision on whether outer glow is syntax sugar over colored soft shadows or a distinct appearance command | Prototype `glow` against shape contours, with inner glow clipped inside the source region and outer glow mapped to the soft-shadow pipeline if equivalent |
@@ -75,6 +73,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-040 | Add file-scoped variables with root declarations and optional grouping | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C, or if language work continues first, build expression support such as symbolic bounds and embedded variable arithmetic on top of whole-token variable references |
 | T-041 | Add optional real output antialiasing with sprite defaults and geometry overrides | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C with the richer renderer contract now preserving pixel-perfect defaults while allowing `sprite antialias` and per-geometry overrides for smoother contours |
 | T-042 | Remove standalone `align` and `style` pages from the web docs nav | M2 | Gate B | P2 | Done | `codex-main` | None | Keep `align` and `style` documented only where they apply, currently inside the `stroke` examples and notes |
+| T-043 | Add Unity importer options for sprite settings and slicing metadata | M2 | Gate C | P1 | Done | `codex-main` | None | Closed by user on 2026-05-21; reopen only if additional Eddie importer validation is explicitly requested |
 | T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Done | `codex-main` | None | Hand off to the next thread to choose the next Unity slice now that local deploy plus manual Unity verification confirmed the `.rdb` importer produces a generated Sprite in Eddie |
 | T-044 | Add editor-oriented schema metadata for language assistance | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-045 to build a headless language-service slice for completions, argument help, indentation, and future smart edits using the shared schema metadata |
 | T-045 | Build the first headless language service for editor completions and indentation | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-046 to wire the headless language-service results into the web editor without changing parser/compiler behavior |
@@ -89,6 +88,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-056 | Add VS Code language support for `.rdb` files | M2 | Deferred | P1 | Done | `codex-main` | None | Extension Development Host launch was validated by the user; T-057 followed up on the first named-color editor affordance gap |
 | T-057 | Add shared editor color token swatches and picker support | M2 | Gate B | P1 | Done | `codex-main` | None | VS Code color picker behavior was confirmed by the user; web swatches now use a button-launched native color input outside the editable surface, and the editor wrapper no longer uses label semantics that forwarded normal editor clicks to the swatch |
 | T-058 | Add local VS Code extension install automation | M2 | Deferred | P1 | Done | `codex-main` | None | `npm run install:vscode` now builds, stages a clean VSIX with bundled `@radebe/core`, packages it through `vsce`, and installs it into the normal VS Code profile |
+| T-059 | Add `group` as a structural command for shared transforms and appearance scope | M2 | Gate B | P1 | Done | `codex-main` | None | Transparent structural `group` support is complete for core, web examples, schema-driven editor assistance, and renderer ordering; transforms and group compositing remain deferred |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

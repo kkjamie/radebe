@@ -1,7 +1,7 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-20`
+Last updated: `2026-05-21`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
@@ -20,6 +20,7 @@ Last updated: `2026-05-20`
 - `polygon` is now available as a shared-shape geometry primitive using either flat whitespace-separated `x y` point pairs or canonical child `point` commands, plus color shorthand or explicit `fill`, and it now also participates in the shared `stroke` model while still keeping polygon syntax on the existing whitespace token model.
 - `path` is now available as a stroke-first open polyline primitive using canonical child `point` commands and required `stroke`; the first slice intentionally limits path to `stroke` align `center` and does not yet treat paths as fillable or closable regions.
 - File-scoped variables are now available through root `var name value` declarations plus optional `vars` grouping blocks. References resolve top-to-bottom as whole value tokens such as `$accent`, including named argument values like `color=$accent`; embedded expression forms such as `left+$pad` remain deferred.
+- Transparent structural `group` containers are now available for organizing draw commands. Groups may be named and nested, and their children compile into the normal flat render stream in source order; group-level alpha, blend, masks, filters, offscreen compositing, and transforms remain deferred.
 - Optional real output antialiasing is now available through a sprite-level `antialias` default plus per-geometry overrides on line, rectangle, circle, polygon, and path commands. The omitted default remains `false`, so existing pixel-perfect output remains unchanged unless authors opt in.
 - Source comments now use hash-prefixed lines only. The parser ignores lines whose trimmed text starts with `#`; `//` is no longer a comment marker and will be parsed as ordinary source.
 - The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, the SEA smoke path still exercises the same spec-aligned sample contract, and the web shell has grown into a left-nav docs/playground surface with an experimental page plus per-feature example pages that now support multiple editable live scenarios on a single page.
@@ -47,26 +48,27 @@ Last updated: `2026-05-20`
 - A separate Eddie batchmode package-resolution issue around `com.unity.test-framework` still exists, but it no longer blocks Gate C closure because the Unity integration objective for this task was verified manually in-editor.
 
 ## Open Decisions / Blockers
-- The task board has been cleaned up so `Active` contains only live work. Completed rows now live under `Completed`, with T-043 remaining the sole active item and T-054/T-055/T-099 still in backlog.
-- Feature backlog has been expanded with T-059 through T-073 for structural groups, masks, soft shadows, glow, procedural fills, patterns, blend modes, expressions, transforms, reusable symbols, richer paths, source-authored metadata, and boolean region operations.
+- The task board has been cleaned up so `Active` contains only live work. Completed rows now live under `Completed`; T-043 was closed by user request, T-054 and T-055 are explicitly postponed, and T-059 is complete.
+- Feature backlog has been expanded with T-060 through T-073 for masks, soft shadows, glow, procedural fills, patterns, blend modes, expressions, transforms, reusable symbols, richer paths, source-authored metadata, and boolean region operations. T-059 structural groups have landed as the transparent first slice.
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
 - DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
 - T-053 is done after user validation plus the final diagnostic-squiggle polish. Build, tests, and the running dev-server HTTP check pass.
-- DEC-032 records that Phase 5 reusable editor packaging and Phase 6 Unity live-authoring parity are intentionally deferred into backlog tasks T-054 and T-055 instead of being the immediate next work. The separate VS Code track it introduced has now completed its first slice as T-056.
+- DEC-032 records that Phase 5 reusable editor packaging and Phase 6 Unity live-authoring parity are intentionally deferred into backlog tasks T-054 and T-055 instead of being the immediate next work; the user explicitly postponed both again on 2026-05-21. The separate VS Code track it introduced has now completed its first slice as T-056.
 - DEC-033 records that VS Code language support starts as a direct `@radebe/core`-backed extension package, with LSP deferred until another editor host needs a protocol boundary.
 - T-056 is done after adding the first VS Code extension package, workspace wiring, adapter tests, and docs. The user confirmed the Extension Development Host launch worked, then identified the named-color picker gap addressed by T-057.
 - T-057 is done after the user confirmed the Extension Development Host worked, identified the named-color picker gap, and validated VS Code color picker behavior; the follow-up web picker now uses a button swatch that launches a temporary native color input outside CodeMirror, commits edits only when the browser picker reports `change`, and avoids wrapping the editor in a label.
 - DEC-035 records the local VS Code packaging choice: stage a VSIX locally with copied core runtime files rather than publishing to Marketplace or relying on workspace symlinks.
 - T-058 is done after adding and validating local VSIX packaging/install automation; `npm run install:vscode` successfully installed `radebe-language-support-0.1.0.vsix`.
 - No active blocker remains on T-011. The remaining Unity follow-on work is product choice, not integration failure.
-- The current leading Unity follow-on is importer options for sprite authoring ergonomics: border/9-slice metadata, pivot, pixels per unit, and filter mode surfaced through the existing ScriptedImporter settings.
-- T-043 is now in progress. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector now also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. The updated plugin has been redeployed to Eddie through `npm run deploy:unity`, but the settings still need a hands-on Unity editor check.
+- Unity importer-options work is closed by user request. No Unity follow-on is active; choose the next Unity slice only if Unity work is explicitly resumed.
+- T-043 is closed by user request. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. Reopen only if additional Eddie importer validation is explicitly requested.
+- T-059 is complete. `group` is a shared-core structural command accepted at the file root and inside groups; it allows draw commands and nested groups, supports optional names for authoring clarity, drives schema completions/indentation, and has live web examples. DEC-036 records the transparent no-compositing semantics.
 
 ## Best Next Tasks
-1. Return to T-043 when ready to close the active Unity importer-options task with hands-on Eddie validation.
-2. If language/effects work resumes after T-043, consider T-059 `group`, T-060 `mask`, T-061 soft shadows, or T-068 symbolic expressions as the highest-leverage next backlog candidates.
-3. Keep T-054 and T-055 deferred until reusable editor packaging or Unity live-authoring parity is explicitly resumed.
+1. Consider T-060 `mask`, T-061 soft shadows, or T-068 symbolic expressions as the highest-leverage next language/effects candidates.
+2. Reopen T-043 only if hands-on Eddie importer validation is explicitly requested.
+3. Keep T-054 and T-055 postponed until reusable editor packaging or Unity live-authoring parity is explicitly resumed.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

@@ -87,6 +87,7 @@ export const FILE_DEFINITION: CommandDefinition = {
     "circle",
     "polygon",
     "path",
+    "group",
     "var",
     "vars"
   ],
@@ -321,6 +322,27 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       arg("antialias", "boolean", { enumValues: booleanValues })
     ],
     allowedChildCommands: ["point", "stroke"],
+    editorHints: {
+      indentBehavior: "child"
+    }
+  },
+  {
+    name: "group",
+    kind: "structural",
+    propertyArgs: ["name"],
+    shorthandSchema: ["name"],
+    arguments: [arg("name", "identifier")],
+    allowedChildCommands: [
+      "plot",
+      "line",
+      "rect",
+      "rect-absolute",
+      "rect-inset",
+      "circle",
+      "polygon",
+      "path",
+      "group"
+    ],
     editorHints: {
       indentBehavior: "child"
     }

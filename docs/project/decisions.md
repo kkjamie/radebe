@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-20`
+Last updated: `2026-05-21`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -409,4 +409,15 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Add a local install script that stages a clean VSIX directory, copies the extension build plus `@radebe/core` runtime files into that stage, packages it with repo-local `@vscode/vsce`, and installs it with the VS Code CLI. Keep Marketplace publishing out of scope for now.
 - Consequences: `npm run install:vscode` gives a repeatable local deployment path without relying on Extension Development Host, global `vsce`, or workspace symlinks inside the VSIX. Marketplace publishing can still be added later with a separate release workflow.
 - Related tasks: T-058
+- Supersedes: N/A
+
+---
+
+### DEC-036: Keep The First `group` Slice Transparent
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: T-059 needed structural grouping without accidentally committing to offscreen compositing semantics for alpha, blend modes, masks, filters, or future transforms.
+- Decision: Implement `group` as a transparent structural container whose child draw commands flatten into the normal render command stream in source order. Allow optional group names and nested groups, but do not allow direct appearance children or group-level render effects in this slice.
+- Consequences: Authors can organize related geometry immediately, editor tooling can complete and indent groups from shared schema metadata, and future compositing or transform work can attach to a clear structural boundary without changing current pixel output semantics.
+- Related tasks: T-059, T-060, T-067, T-069
 - Supersedes: N/A

@@ -2261,48 +2261,11 @@ function compileShadow(
   };
 }
 
-function compileRootCommand(
+function compileDrawCommand(
   node: ParsedCommandNode,
-  sprite: SpriteHeader | null,
+  sprite: SpriteHeader,
   diagnostics: RadebeDiagnostic[]
 ): CompiledDrawCommand | null {
-  const definition = getCommandDefinition(node.name);
-
-  if (!definition) {
-    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
-    return null;
-  }
-
-  if (!allowsChild(FILE_DEFINITION, definition)) {
-    diagnostics.push(
-      createCompilerDiagnostic(
-        `The file root does not allow command "${node.name}".`,
-        node
-      )
-    );
-    return null;
-  }
-
-  if (node.name === "sprite") {
-    diagnostics.push(
-      createCompilerDiagnostic(
-        "The sprite header may only appear once at the top of the file.",
-        node
-      )
-    );
-    return null;
-  }
-
-  if (sprite === null) {
-    diagnostics.push(
-      createCompilerDiagnostic(
-        "Root draw commands require a sprite header before drawing commands.",
-        node
-      )
-    );
-    return null;
-  }
-
   if (node.name === "plot") {
     return compilePlotCommand(node, diagnostics);
   }
@@ -2333,6 +2296,123 @@ function compileRootCommand(
 
   diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
   return null;
+}
+
+function compileGroupCommand(
+  node: ParsedCommandNode,
+  sprite: SpriteHeader,
+  diagnostics: RadebeDiagnostic[]
+): CompiledDrawCommand[] {
+  const definition = getCommandDefinition(node.name);
+  const commands: CompiledDrawCommand[] = [];
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return commands;
+  }
+
+  const parsedArguments = parseArguments(node, definition);
+  const propertyValues = new Map(parsedArguments.values);
+  diagnostics.push(...parsedArguments.diagnostics);
+
+  node.children.forEach((child) => {
+    const childDefinition = getCommandDefinition(child.name);
+
+    if (!childDefinition) {
+      diagnostics.push(createCompilerDiagnostic(`Unknown command "${child.name}".`, child));
+      return;
+    }
+
+    if (!allowsChild(definition, childDefinition)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The group command does not allow child command "${child.name}".`,
+          child
+        )
+      );
+      return;
+    }
+
+    if (getAllowedPropertyCommands(definition).includes(child.name)) {
+      const childArguments = parseArguments(child, childDefinition);
+      diagnostics.push(...childArguments.diagnostics);
+      const value = childArguments.values.get("value");
+
+      if (!value) {
+        diagnostics.push(
+          createCompilerDiagnostic(`The ${child.name} command requires "value".`, child)
+        );
+        return;
+      }
+
+      setResolvedValue(propertyValues, child.name, value, node, diagnostics);
+      return;
+    }
+
+    if (child.name === "group") {
+      commands.push(...compileGroupCommand(child, sprite, diagnostics));
+      return;
+    }
+
+    const compiledCommand = compileDrawCommand(child, sprite, diagnostics);
+
+    if (compiledCommand) {
+      commands.push(compiledCommand);
+    }
+  });
+
+  return commands;
+}
+
+function compileRootCommand(
+  node: ParsedCommandNode,
+  sprite: SpriteHeader | null,
+  diagnostics: RadebeDiagnostic[]
+): CompiledDrawCommand[] {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return [];
+  }
+
+  if (!allowsChild(FILE_DEFINITION, definition)) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The file root does not allow command "${node.name}".`,
+        node
+      )
+    );
+    return [];
+  }
+
+  if (node.name === "sprite") {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The sprite header may only appear once at the top of the file.",
+        node
+      )
+    );
+    return [];
+  }
+
+  if (sprite === null) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "Root draw commands require a sprite header before drawing commands.",
+        node
+      )
+    );
+    return [];
+  }
+
+  if (node.name === "group") {
+    return compileGroupCommand(node, sprite, diagnostics);
+  }
+
+  const compiledCommand = compileDrawCommand(node, sprite, diagnostics);
+
+  return compiledCommand === null ? [] : [compiledCommand];
 }
 
 export function compileDocument(document: ParsedDocument): CompileResult {
@@ -2403,11 +2483,9 @@ export function compileDocument(document: ParsedDocument): CompileResult {
       return;
     }
 
-    const compiledCommand = compileRootCommand(resolvedNode, sprite, diagnostics);
+    const compiledCommands = compileRootCommand(resolvedNode, sprite, diagnostics);
 
-    if (compiledCommand) {
-      commands.push(compiledCommand);
-    }
+    commands.push(...compiledCommands);
   });
 
   if (sprite === null) {

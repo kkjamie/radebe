@@ -64,6 +64,7 @@ test("schema exposes context-aware child command metadata", () => {
     "circle",
     "polygon",
     "path",
+    "group",
     "var",
     "vars"
   ]);
@@ -100,6 +101,21 @@ test("schema exposes context-aware child command metadata", () => {
       .map((child) => child.definition.name),
     ["fill", "shadow", "stroke"]
   );
+
+  const group = getCommandDefinition("group");
+  assert.ok(group);
+  assert.deepEqual(getAllowedChildCommandNames(group), [
+    "plot",
+    "line",
+    "rect",
+    "rect-absolute",
+    "rect-inset",
+    "circle",
+    "polygon",
+    "path",
+    "group",
+    "name"
+  ]);
 });
 
 test("schema records editor hints for inline child commands and smart expansions", () => {
@@ -602,6 +618,57 @@ test("compileDocument allows vars to be defined between draw commands", () => {
     ["#ffffff", null, "#70c8e8"]
   ]);
   assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument flattens transparent group children in source order", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 6 4\n  background transparent\n\nvar accent #70c8e8\n\ngroup frame\n  rect 0 0 3 2 $accent\n  group lights\n    plot 2 0 white\nline 0 3 5 3 white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 8,
+      x: 0,
+      y: 0,
+      width: 3,
+      height: 2,
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: [],
+      sourceCommandName: "rect"
+    },
+    { kind: "plot", lineNumber: 10, x: 2, y: 0, color: "white" },
+    {
+      kind: "line",
+      lineNumber: 11,
+      x1: 0,
+      y1: 3,
+      x2: 5,
+      y2: 3,
+      color: "white"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument keeps group as a structural container without appearance children", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 4\n  background transparent\n\ngroup frame\n  fill solid white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, []);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message: 'The group command does not allow child command "fill".',
+      line: 6,
+      column: 3
+    }
+  ]);
 });
 
 test("compileDocument reports variable definition and usage diagnostics", () => {
@@ -1810,6 +1877,25 @@ test("renderSource runs the parser, compiler, and renderer pipeline", () => {
   assert.deepEqual(result.artifact.rows, [":::#", ":##:", ":#::", "#:::"]);
   assert.equal(result.parsed.commands.length, 3);
   assert.equal(result.compiled.commands.length, 2);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource renders grouped commands with normal ordering semantics", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped\n  size 4 2\n  background transparent\n\nplot 1 0 red\ngroup overlay\n  rect 0 0 2 2 #70c8e8\n  plot 1 0 white\nplot 3 1 red"
+  });
+
+  assert.deepEqual(result.compiled.commands.map((command) => command.kind), [
+    "plot",
+    "rect",
+    "plot",
+    "plot"
+  ]);
+  assert.deepEqual(result.artifact.pixels, [
+    ["#70c8e8", "#ffffff", null, null],
+    ["#70c8e8", "#70c8e8", null, "#ff0000"]
+  ]);
   assert.deepEqual(result.diagnostics, []);
 });
 

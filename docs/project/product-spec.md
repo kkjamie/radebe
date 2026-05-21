@@ -1,7 +1,7 @@
 # Product Spec
 
 Owner: `Main Thread`
-Last updated: `2026-05-19`
+Last updated: `2026-05-21`
 
 ## Product Summary
 - Radebe is a language and toolchain for authoring procedural UI sprites as text-first source files that compile into raster outputs and optional metadata.
@@ -328,6 +328,29 @@ rect-inset $pad $panel-fill
   stroke 2 $accent
 ```
 
+## Groups
+- `group` is a structural command for collecting related draw commands.
+- The current implementation treats groups as transparent ordering containers.
+- A group may have an optional name for authoring clarity and future tooling.
+- Groups accept root-style draw commands and nested groups.
+- Group child commands compile into the normal flat render command stream at their source position.
+- Group-level alpha, blend modes, masks, filters, offscreen surfaces, and transforms are intentionally deferred.
+
+Example:
+
+```text
+sprite panel
+  size 128 48
+  background transparent
+
+group frame
+  rect-inset 6 #101820
+    stroke 2 #70c8e8
+
+group highlights
+  line 16 14 112 14 white
+```
+
 ## Geometry Model
 Geometry defines coverage or edges.
 
@@ -510,7 +533,7 @@ line 16 24 220 24 #70c8e8
 - The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, `circle`, `polygon`, and stroke-first `path` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
 - The current implemented appearance slice also includes hard-edged `shadow` on rectangle-backed shapes, circles, and polygons with `x`, `y`, `spread`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur` remains deferred.
-- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse.
+- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse, plus transparent `group` containers for ordering and organizing nested draw commands.
 - The current stroke renderer supports rectangle-backed, circle-backed, polygon-backed, and open path shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 - The current renderer supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` when omitted.
 

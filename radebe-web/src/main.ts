@@ -1827,14 +1827,78 @@ const exampleDocs: ExampleDoc[] = [
       }
     ]
   },
-  createComingSoonDoc({
+  {
     id: "group",
     title: "Group",
     navGroup: "Structure",
-    summary: "Collects child commands into a structural group for future composition and transforms.",
+    summary:
+      "Collects drawing commands into a transparent ordered structure without changing how pixels composite.",
     args: ["optional name"],
-    childCommands: ["geometry", "appearance", "mask", "draw"]
-  }),
+    childCommands: [
+      "plot",
+      "line",
+      "rect",
+      "rect-absolute",
+      "rect-inset",
+      "circle",
+      "polygon",
+      "path",
+      "group"
+    ],
+    notes: [
+      "`group` is transparent in this first slice: child draw commands are compiled in source order.",
+      "An optional group name is accepted for authoring clarity and future tooling.",
+      "Group-level alpha, blend, masks, filters, and transforms are intentionally deferred so grouping does not imply offscreen compositing yet."
+    ],
+    examples: [
+      {
+        id: "group-panel-parts",
+        title: "Panel Parts",
+        summary:
+          "A named group keeps related panel geometry together while the renderer still draws each child normally.",
+        source: [
+          "sprite group-panel-demo",
+          "  size 128 56",
+          "  background transparent",
+          "",
+          "var face #101820",
+          "var edge #70c8e8",
+          "var glint #d8f8ff",
+          "",
+          "group frame",
+          "  rect-inset 6 $face",
+          "    cut 8",
+          "    stroke 2 $edge",
+          "",
+          "group highlights",
+          "  line 20 14 108 14 $glint",
+          "  line 26 42 102 42 $edge",
+          "  circle 64 28 4 $glint"
+        ].join("\n")
+      },
+      {
+        id: "group-nested-order",
+        title: "Nested Order",
+        summary:
+          "Nested groups flatten into the command stream at their source position, so later children can draw over earlier ones.",
+        source: [
+          "sprite group-order-demo",
+          "  size 96 48",
+          "  background #0f1318",
+          "",
+          "group base",
+          "  rect 12 10 72 28 #18242c",
+          "    radius 6",
+          "    stroke 2 #70c8e8",
+          "  group lights",
+          "    plot 24 20 white",
+          "    plot 72 20 white",
+          "",
+          "line 18 34 78 34 #ffcc88"
+        ].join("\n")
+      }
+    ]
+  },
   createComingSoonDoc({
     id: "mask",
     title: "Mask",

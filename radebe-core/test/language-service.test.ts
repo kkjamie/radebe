@@ -76,6 +76,19 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
       "stroke"
     ]
   );
+
+  assert.deepEqual(labels("sprite panel\n  size 24 24\n\ngroup frame\n  |"), [
+    "plot",
+    "line",
+    "rect",
+    "rect-absolute",
+    "rect-inset",
+    "circle",
+    "polygon",
+    "path",
+    "group",
+    "name"
+  ]);
 });
 
 test("getArgumentHelp reports the active positional argument", () => {
@@ -217,6 +230,7 @@ test("getEnterIndentation follows schema editor hints", () => {
   assert.equal(getEnterIndentation(atCursor("sprite panel|")), "  ");
   assert.equal(getEnterIndentation(atCursor("sprite panel\n  size 16 16|")), "  ");
   assert.equal(getEnterIndentation(atCursor("rect 0 0 10 10|")), "  ");
+  assert.equal(getEnterIndentation(atCursor("group frame|")), "  ");
   assert.equal(getEnterIndentation(atCursor("  fill|")), "    ");
   assert.equal(getEnterIndentation(atCursor("  fill solid red|")), "  ");
   assert.equal(getEnterIndentation(atCursor("plot 0 0 white|")), "");
