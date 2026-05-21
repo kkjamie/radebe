@@ -73,6 +73,7 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
       "antialias",
       "fill",
       "shadow",
+      "glow",
       "stroke"
     ]
   );
@@ -90,6 +91,7 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
     "name",
     "fill",
     "shadow",
+    "glow",
     "stroke"
   ]);
 });

@@ -132,7 +132,7 @@ The implementation schema still uses broad command kinds such as `header`, `prop
 - Geometry modifiers: change a shape drawable's coverage before it is painted. Current examples: `cut`, `radius`.
 - Property commands: expanded child forms for command configuration or arguments. Examples: `x`, `y`, `width`, `height`, `align`, `alpha`, `antialias`.
 - Appearance passes: paint a drawable region. Current examples: `fill`, `stroke`.
-- Effect passes: derive pixels from a drawable region or composited layer. Current example: `shadow` with optional blur; future examples include `glow` and standalone blur-like effects. The current schema may still classify effects under the broad `appearance` command kind until a separate internal kind is useful.
+- Effect passes: derive pixels from a drawable region or composited layer. Current examples: `shadow` with optional blur and `glow` with inner or outer mode; future examples include standalone blur-like effects. The current schema may still classify effects under the broad `appearance` command kind until a separate internal kind is useful.
 - Structural containers: create hierarchy, ownership, or scope. Current examples: `group`, `vars`; planned examples include mask containers.
 - Mask shape: the child container under a future `mask` command that defines clipping coverage.
 - Masked content: the child container under a future `mask` command that contains the drawables clipped by the mask.
@@ -339,9 +339,9 @@ rect-inset $pad $panel-fill
 ## Groups
 - `group` is a structural command for collecting related draw commands.
 - Groups without group-level passes are transparent ordering containers.
-- Groups with group-level `fill`, `stroke`, or `shadow` render child drawables into an offscreen layer, use the combined alpha/pixels as the group drawable, apply those passes, then composite the result back into the parent.
+- Groups with group-level `fill`, `stroke`, `shadow`, or `glow` render child drawables into an offscreen layer, use the combined alpha/pixels as the group drawable, apply those passes, then composite the result back into the parent.
 - A group may have an optional name for authoring clarity and future tooling.
-- Groups accept root-style draw commands, nested groups, and group-level `fill`, `shadow`, and `stroke` passes.
+- Groups accept root-style draw commands, nested groups, and group-level `fill`, `shadow`, `glow`, and `stroke` passes.
 - Group child drawables and nested groups must come before group-level appearance or effect passes; use nested groups for staged behavior.
 - Group-level alpha, blend modes, masks, standalone filters, and transforms are intentionally deferred.
 - Group-level appearance and effect passes should not act as inherited defaults for children. If authors need staged effects, they should use nested groups.
@@ -370,6 +370,7 @@ group badge
   polygon 70 12 88 24 70 36 #18242c
   stroke 2 #70c8e8
   shadow 2 2 black
+  glow #70c8e8 blur=4
 ```
 
 ## Geometry Model
@@ -408,6 +409,10 @@ Initial appearance commands:
 - `fill`
 - `stroke`
 
+Current effect commands:
+- `shadow`
+- `glow`
+
 Example fill:
 
 ```text
@@ -431,6 +436,13 @@ Stroke alignment values:
 - `outside`
 
 Longer term, strokes should behave like generated shapes that can themselves carry fill and nested stroke passes.
+
+Glow semantics:
+- `glow` supports `mode` values `outer` and `inner`; omitted mode defaults to `outer`.
+- `glow #70c8e8` uses color shorthand and defaults `blur` to `1`.
+- Outer glow uses the deterministic soft-shadow alpha sampler with zero offset, but clips the source interior out of the glow coverage so it behaves as an outside contour effect instead of a pure `shadow 0 0` alias.
+- Inner glow is clipped inside the source region and derives coverage from the difference between the source alpha and a blurred, optionally shrunken core alpha.
+- `spread` is non-negative for glow: it expands outer glow coverage or pushes inner glow farther inward before blur.
 
 ## Mask Model
 - Every shape has implicit coverage for its own fill.
@@ -562,7 +574,8 @@ line 16 24 220 24 #70c8e8
 - The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, `circle`, `polygon`, and stroke-first `path` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
 - The current implemented appearance slice also includes `shadow` on rectangle-backed shapes, circles, polygons, and composited groups with `x`, `y`, `spread`, `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur 0` preserves the original hard-edged behavior.
-- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse, plus `group` containers for ordering nested draw commands; groups stay transparent without group-level passes and become composited layer drawables when they include group-level `fill`, `stroke`, or `shadow`.
+- The current implemented effect slice includes `glow` on rectangle-backed shapes, circles, polygons, and composited groups with `mode`, non-negative `spread`, non-negative `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; outer glow draws outside the source contour and inner glow clips inside it.
+- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse, plus `group` containers for ordering nested draw commands; groups stay transparent without group-level passes and become composited layer drawables when they include group-level `fill`, `stroke`, `shadow`, or `glow`.
 - The current stroke renderer supports rectangle-backed, circle-backed, polygon-backed, and open path shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 - The current renderer supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` when omitted.
 

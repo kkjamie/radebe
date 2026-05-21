@@ -98,6 +98,7 @@ export const FILE_DEFINITION: CommandDefinition = {
 
 const booleanValues = ["true", "false"];
 const directionValues = ["horizontal", "vertical"];
+const glowModeValues = ["inner", "outer"];
 const strokeAlignValues = ["inside", "center", "outside"];
 const strokeStyleValues = ["solid", "dashed", "dotted"];
 
@@ -435,6 +436,25 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
     }
   },
   {
+    name: "glow",
+    kind: "appearance",
+    capabilities: ["shape-appearance"],
+    propertyArgs: ["color", "mode", "alpha", "spread", "blur"],
+    shorthandSchema: ["color"],
+    arguments: [
+      arg("color", "color"),
+      arg("mode", "enum", { enumValues: glowModeValues }),
+      arg("alpha", "number", { min: 0, max: 1 }),
+      arg("spread", "integer", { min: 0 }),
+      arg("blur", "integer", { min: 0 })
+    ],
+    allowedChildCommands: ["mode", "spread", "blur", "fill"],
+    shorthandExpansions: [colorFillExpansion()],
+    editorHints: {
+      indentBehavior: "child-when-no-args"
+    }
+  },
+  {
     name: "stroke",
     kind: "appearance",
     capabilities: ["shape-appearance"],
@@ -563,6 +583,9 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   createSingleValuePropertyDefinition("inset", "integer", { min: 0 }),
   createSingleValuePropertyDefinition("direction", "enum", {
     enumValues: directionValues
+  }),
+  createSingleValuePropertyDefinition("mode", "enum", {
+    enumValues: glowModeValues
   }),
   createSingleValuePropertyDefinition("angle", "number"),
   createSingleValuePropertyDefinition("center-x", "number", { min: 0, max: 1 }),

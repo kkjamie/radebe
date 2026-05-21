@@ -99,7 +99,7 @@ test("schema exposes context-aware child command metadata", () => {
     circleChildren
       .filter((child) => child.source === "capability")
       .map((child) => child.definition.name),
-    ["fill", "shadow", "stroke"]
+    ["fill", "shadow", "glow", "stroke"]
   );
 
   const group = getCommandDefinition("group");
@@ -117,6 +117,7 @@ test("schema exposes context-aware child command metadata", () => {
     "name",
     "fill",
     "shadow",
+    "glow",
     "stroke"
   ]);
 });
@@ -986,6 +987,39 @@ test("compileDocument supports shape shadows through the shared appearance model
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports shape glows through the shared appearance model", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\nrect 1 1 4 3\n  glow #70c8e8 mode=inner spread=1 blur=2 alpha=0.5"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 5,
+      x: 1,
+      y: 1,
+      width: 4,
+      height: 3,
+      fills: [],
+      glows: [
+        {
+          kind: "glow",
+          mode: "inner",
+          spread: 1,
+          blur: 2,
+          alpha: 0.5,
+          fill: { kind: "solid", color: "#70c8e8", alpha: 1 }
+        }
+      ],
+      strokes: [],
+      sourceCommandName: "rect"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
 test("compileDocument supports radial gradient properties and stop children", () => {
   const parsed = parseSource({
     source:
@@ -1357,7 +1391,7 @@ test("compileDocument requires circle fill coverage", () => {
     {
       stage: "compiler",
       message:
-        "The circle command requires a color shorthand, a fill child, a shadow child, or a stroke child.",
+        "The circle command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.",
       line: 5,
       column: 1
     }
@@ -1949,6 +1983,40 @@ test("renderDocument applies negative spread to polygon shadows", () => {
   ]);
 });
 
+test("renderDocument applies outer glow outside the source contour", () => {
+  const parsed = parseSource({
+    source:
+      "sprite glow\n  size 5 5\n  background transparent\n\nrect 2 2 1 1 white\n  glow #00ffff blur=1"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null],
+    [null, "#00ffff1c", "#00ffff1c", "#00ffff1c", null],
+    [null, "#00ffff1c", "#ffffff", "#00ffff1c", null],
+    [null, "#00ffff1c", "#00ffff1c", "#00ffff1c", null],
+    [null, null, null, null, null]
+  ]);
+});
+
+test("renderDocument clips inner glow inside the source contour", () => {
+  const parsed = parseSource({
+    source:
+      "sprite inner-glow\n  size 5 5\n  background transparent\n\nrect 1 1 3 3 black\n  glow #00ffff mode=inner blur=1"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null],
+    [null, "#008e8e", "#005555", "#008e8e", null],
+    [null, "#005555", "#000000", "#005555", null],
+    [null, "#008e8e", "#005555", "#008e8e", null],
+    [null, null, null, null, null]
+  ]);
+});
+
 test("renderDocument rasterizes nested rectangle strokes", () => {
   const parsed = parseSource({
     source:
@@ -2053,6 +2121,22 @@ test("renderSource applies blur to group shadow alpha", () => {
     [null, "#0000001c", "#0000001c", "#0000001c", null],
     [null, "#0000001c", "#ffffff", "#0000001c", null],
     [null, "#0000001c", "#0000001c", "#0000001c", null],
+    [null, null, null, null, null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource applies outer glow to composited group alpha", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped-glow\n  size 5 5\n  background transparent\n\ngroup badge\n  plot 2 2 white\n  glow #00ffff blur=1"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null],
+    [null, "#00ffff1c", "#00ffff1c", "#00ffff1c", null],
+    [null, "#00ffff1c", "#ffffff", "#00ffff1c", null],
+    [null, "#00ffff1c", "#00ffff1c", "#00ffff1c", null],
     [null, null, null, null, null]
   ]);
   assert.deepEqual(result.diagnostics, []);

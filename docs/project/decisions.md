@@ -476,3 +476,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Soft shadows use the same command surface as hard shadows and work for shape and composited-group shadows; large blur radii increase render cost in proportion to the blurred area and kernel size.
 - Related tasks: T-061, T-039, T-076, T-062
 - Supersedes: N/A
+
+---
+
+### DEC-042: Model Glow As A Distinct Inner/Outer Effect Pass
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: T-062 needed to decide whether outer glow should be syntax sugar over colored soft shadows or a separate appearance/effect command, while inner glow requires clipped-inside contour semantics.
+- Decision: Add `glow` as a distinct shape/group effect pass with `mode` values `outer` and `inner`. Outer glow reuses the deterministic soft-shadow alpha blur sampler with zero offset but clips out the source interior; inner glow clips inside the source region and derives its coverage from a blurred, optionally shrunken core alpha.
+- Consequences: Authors get one command for glow semantics instead of overloading `shadow`; renderer code can share blur sampling without making outer glow a pure `shadow 0 0` alias; glow currently supports rectangle-backed shapes, circles, polygons, and composited groups, while paths remain stroke-only.
+- Related tasks: T-062, T-061, T-076
+- Supersedes: N/A

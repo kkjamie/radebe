@@ -9,6 +9,7 @@ import { parseSource } from "./parser.js";
 import type {
   CompiledDocument,
   CompiledDrawCommand,
+  GlowAppearance,
   LinearGradientFill,
   PolygonPoint,
   RadialGradientFill,
@@ -258,6 +259,10 @@ function getShadowBlurRadius(shadow: ShadowAppearance): number {
   return Math.max(Math.round(shadow.blur ?? 0), 0);
 }
 
+function getGlowBlurRadius(glow: GlowAppearance): number {
+  return Math.max(Math.round(glow.blur ?? 0), 0);
+}
+
 function sampleBoxBlurredAlpha(
   x: number,
   y: number,
@@ -279,6 +284,55 @@ function sampleBoxBlurredAlpha(
   }
 
   return sampleCount === 0 ? 0 : alpha / sampleCount;
+}
+
+function drawGlowFromAlpha(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  glow: GlowAppearance,
+  drawBounds: RectBounds,
+  fillBounds: RectBounds,
+  sampleSourceAlpha: (sampleX: number, sampleY: number) => number,
+  sampleGlowBaseAlpha: (sampleX: number, sampleY: number) => number
+): void {
+  if (glow.fill === null) {
+    return;
+  }
+
+  const blurRadius = getGlowBlurRadius(glow);
+
+  for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
+    for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
+      const sourceAlpha = sampleSourceAlpha(x, y);
+      const softenedAlpha = sampleBoxBlurredAlpha(
+        x,
+        y,
+        blurRadius,
+        sampleGlowBaseAlpha
+      );
+      const coverage =
+        glow.mode === "outer"
+          ? Math.max(softenedAlpha - sourceAlpha, 0)
+          : Math.max(sourceAlpha - softenedAlpha, 0);
+
+      if (coverage <= 0) {
+        continue;
+      }
+
+      const color = sampleFillColor(glow.fill, fillBounds, x, y);
+
+      if (color !== null) {
+        setPixel(
+          pixels,
+          drawnPixels,
+          x,
+          y,
+          color,
+          glow.alpha * glow.fill.alpha * coverage
+        );
+      }
+    }
+  }
 }
 
 function sampleMaskAlpha(mask: AlphaMask, x: number, y: number, spread: number): number {
@@ -1035,6 +1089,56 @@ function drawPolygonShadow(
   }
 }
 
+function drawPolygonGlow(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
+  glow: GlowAppearance,
+  antialias: boolean
+): void {
+  if (glow.fill === null) {
+    return;
+  }
+
+  const sourceBounds = getPolygonBounds(command.points);
+  const spread = Math.max(glow.spread, 0);
+  const blurRadius = getGlowBlurRadius(glow);
+  const glowBounds =
+    glow.mode === "outer" ? expandBounds(sourceBounds, spread) : sourceBounds;
+  const drawBounds =
+    glow.mode === "outer" ? expandBounds(glowBounds, blurRadius) : sourceBounds;
+
+  const sampleSourceAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      isPointInsidePolygon(pointX, pointY, command.points)
+    );
+  const sampleGlowBaseAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) => {
+      const inside = isPointInsidePolygon(pointX, pointY, command.points);
+      const closestEdge = getClosestPolygonEdgeSample(
+        pointX,
+        pointY,
+        command.points
+      );
+
+      if (glow.mode === "outer") {
+        return inside || closestEdge.distance <= spread;
+      }
+
+      return inside && closestEdge.distance > spread;
+    });
+
+  drawGlowFromAlpha(
+    pixels,
+    drawnPixels,
+    glow,
+    drawBounds,
+    glowBounds,
+    sampleSourceAlpha,
+    sampleGlowBaseAlpha
+  );
+}
+
 function drawPolygonStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
@@ -1227,6 +1331,67 @@ function drawCircleShadow(
       }
     }
   }
+}
+
+function drawCircleGlow(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  command: Pick<Extract<CompiledDrawCommand, { kind: "circle" }>, "x" | "y" | "radius">,
+  glow: GlowAppearance,
+  antialias: boolean
+): void {
+  if (glow.fill === null) {
+    return;
+  }
+
+  const spread = Math.max(glow.spread, 0);
+  const blurRadius = getGlowBlurRadius(glow);
+  const sourceRadius = command.radius;
+  const glowRadius =
+    glow.mode === "outer" ? sourceRadius + spread : sourceRadius - spread;
+  const sourceBounds = {
+    x: command.x - sourceRadius,
+    y: command.y - sourceRadius,
+    width: sourceRadius * 2 + 1,
+    height: sourceRadius * 2 + 1
+  };
+  const glowBounds =
+    glowRadius >= 0
+      ? {
+          x: command.x - glowRadius,
+          y: command.y - glowRadius,
+          width: glowRadius * 2 + 1,
+          height: glowRadius * 2 + 1
+        }
+      : sourceBounds;
+  const drawBounds =
+    glow.mode === "outer" ? expandBounds(glowBounds, blurRadius) : sourceBounds;
+  const sourceCenterX = command.x + 0.5;
+  const sourceCenterY = command.y + 0.5;
+
+  const sampleSourceAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      Math.hypot(pointX - sourceCenterX, pointY - sourceCenterY) <= sourceRadius
+    );
+  const sampleGlowBaseAlpha = (sampleX: number, sampleY: number) => {
+    if (glowRadius < 0) {
+      return 0;
+    }
+
+    return getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      Math.hypot(pointX - sourceCenterX, pointY - sourceCenterY) <= glowRadius
+    );
+  };
+
+  drawGlowFromAlpha(
+    pixels,
+    drawnPixels,
+    glow,
+    drawBounds,
+    glowBounds,
+    sampleSourceAlpha,
+    sampleGlowBaseAlpha
+  );
 }
 
 function drawCircleStroke(
@@ -1494,6 +1659,62 @@ function drawRectShadow(
   }
 }
 
+function drawRectGlow(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  command: RectContour,
+  glow: GlowAppearance,
+  antialias: boolean
+): void {
+  if (glow.fill === null) {
+    return;
+  }
+
+  const spread = Math.max(glow.spread, 0);
+  const blurRadius = getGlowBlurRadius(glow);
+  const glowContour = buildAdjustedRectContour(
+    command,
+    glow.mode === "outer" ? spread : -spread
+  );
+
+  if (glow.mode === "outer" && glowContour === null) {
+    return;
+  }
+
+  const sourceBounds = {
+    x: command.x,
+    y: command.y,
+    width: command.width,
+    height: command.height
+  };
+  const glowBounds = glowContour ?? sourceBounds;
+  const drawBounds =
+    glow.mode === "outer" ? expandBounds(glowBounds, blurRadius) : sourceBounds;
+  const sampleSourceAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      isPointInsideRectContour(pointX, pointY, command)
+    );
+  const sampleGlowBaseAlpha = (sampleX: number, sampleY: number) => {
+    if (glowContour === null) {
+      return 0;
+    }
+
+    return getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      isPointInsideRectContour(pointX, pointY, glowContour)
+    );
+  };
+
+  drawGlowFromAlpha(
+    pixels,
+    drawnPixels,
+    glow,
+    drawBounds,
+    glowBounds,
+    sampleSourceAlpha,
+    sampleGlowBaseAlpha
+  );
+}
+
 function drawPlainRectStroke(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
@@ -1756,6 +1977,43 @@ function drawMaskShadow(
   }
 }
 
+function drawMaskGlow(
+  layer: Layer,
+  mask: AlphaMask,
+  bounds: RectBounds,
+  glow: GlowAppearance
+): void {
+  if (glow.fill === null) {
+    return;
+  }
+
+  const spread = Math.max(glow.spread, 0);
+  const blurRadius = getGlowBlurRadius(glow);
+  const glowBounds =
+    glow.mode === "outer" ? expandBounds(bounds, spread) : bounds;
+  const drawBounds =
+    glow.mode === "outer" ? expandBounds(glowBounds, blurRadius) : bounds;
+  const sampleSourceAlpha = (sampleX: number, sampleY: number) =>
+    getMaskAlpha(mask, Math.round(sampleX), Math.round(sampleY));
+  const sampleGlowBaseAlpha = (sampleX: number, sampleY: number) =>
+    sampleMaskAlpha(
+      mask,
+      Math.round(sampleX),
+      Math.round(sampleY),
+      glow.mode === "outer" ? spread : -spread
+    );
+
+  drawGlowFromAlpha(
+    layer.pixels,
+    layer.drawnPixels,
+    glow,
+    drawBounds,
+    glowBounds,
+    sampleSourceAlpha,
+    sampleGlowBaseAlpha
+  );
+}
+
 function drawMaskStroke(
   layer: Layer,
   mask: AlphaMask,
@@ -1820,6 +2078,7 @@ function drawMaskStroke(
 function groupHasPasses(command: Extract<CompiledDrawCommand, { kind: "group" }>): boolean {
   return (
     command.fills.length > 0 ||
+    (command.glows?.length ?? 0) > 0 ||
     (command.shadows?.length ?? 0) > 0 ||
     command.strokes.length > 0
   );
@@ -1863,10 +2122,20 @@ function drawGroup(
   (command.shadows ?? []).forEach((shadow) => {
     drawMaskShadow(finalLayer, mask, bounds, shadow);
   });
+  (command.glows ?? [])
+    .filter((glow) => glow.mode === "outer")
+    .forEach((glow) => {
+      drawMaskGlow(finalLayer, mask, bounds, glow);
+    });
   compositeLayer(finalLayer.pixels, finalLayer.drawnPixels, childLayer);
   command.fills.forEach((fill) => {
     drawMaskFill(finalLayer, mask, bounds, fill);
   });
+  (command.glows ?? [])
+    .filter((glow) => glow.mode === "inner")
+    .forEach((glow) => {
+      drawMaskGlow(finalLayer, mask, bounds, glow);
+    });
   command.strokes.forEach((stroke) => {
     drawMaskStroke(finalLayer, mask, bounds, stroke);
   });
@@ -1959,9 +2228,19 @@ function drawCommand(
     (command.shadows ?? []).forEach((shadow) => {
       drawRectShadow(pixels, drawnPixels, command, shadow, antialias);
     });
+    (command.glows ?? [])
+      .filter((glow) => glow.mode === "outer")
+      .forEach((glow) => {
+        drawRectGlow(pixels, drawnPixels, command, glow, antialias);
+      });
     command.fills.forEach((fill) => {
       drawRectFill(pixels, drawnPixels, command, fill, antialias);
     });
+    (command.glows ?? [])
+      .filter((glow) => glow.mode === "inner")
+      .forEach((glow) => {
+        drawRectGlow(pixels, drawnPixels, command, glow, antialias);
+      });
     command.strokes.forEach((stroke) => {
       drawRectStroke(pixels, drawnPixels, command, stroke, antialias);
     });
@@ -1973,9 +2252,19 @@ function drawCommand(
     (command.shadows ?? []).forEach((shadow) => {
       drawCircleShadow(pixels, drawnPixels, command, shadow, antialias);
     });
+    (command.glows ?? [])
+      .filter((glow) => glow.mode === "outer")
+      .forEach((glow) => {
+        drawCircleGlow(pixels, drawnPixels, command, glow, antialias);
+      });
     command.fills.forEach((fill) => {
       drawCircleFill(pixels, drawnPixels, command, fill, antialias);
     });
+    (command.glows ?? [])
+      .filter((glow) => glow.mode === "inner")
+      .forEach((glow) => {
+        drawCircleGlow(pixels, drawnPixels, command, glow, antialias);
+      });
     command.strokes.forEach((stroke) => {
       drawCircleStroke(pixels, drawnPixels, command, stroke, antialias);
     });
@@ -1987,9 +2276,19 @@ function drawCommand(
     (command.shadows ?? []).forEach((shadow) => {
       drawPolygonShadow(pixels, drawnPixels, command, shadow, antialias);
     });
+    (command.glows ?? [])
+      .filter((glow) => glow.mode === "outer")
+      .forEach((glow) => {
+        drawPolygonGlow(pixels, drawnPixels, command, glow, antialias);
+      });
     command.fills.forEach((fill) => {
       drawPolygonFill(pixels, drawnPixels, command, fill, antialias);
     });
+    (command.glows ?? [])
+      .filter((glow) => glow.mode === "inner")
+      .forEach((glow) => {
+        drawPolygonGlow(pixels, drawnPixels, command, glow, antialias);
+      });
     command.strokes.forEach((stroke) => {
       drawPolygonStroke(pixels, drawnPixels, command, stroke, antialias);
     });

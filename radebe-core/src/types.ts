@@ -134,6 +134,17 @@ export interface ShadowAppearance {
   fill: RectFill | null;
 }
 
+export type GlowMode = "inner" | "outer";
+
+export interface GlowAppearance {
+  kind: "glow";
+  mode: GlowMode;
+  spread: number;
+  blur: number;
+  alpha: number;
+  fill: RectFill | null;
+}
+
 export interface RectCommand {
   kind: "rect";
   lineNumber: number;
@@ -146,6 +157,7 @@ export interface RectCommand {
   radius?: RectRadius | null;
   fills: RectFill[];
   shadows?: ShadowAppearance[];
+  glows?: GlowAppearance[];
   strokes: StrokeAppearance[];
   sourceCommandName: "rect" | "rect-absolute" | "rect-inset";
 }
@@ -159,6 +171,7 @@ export interface CircleCommand {
   antialias?: boolean;
   fills: RectFill[];
   shadows?: ShadowAppearance[];
+  glows?: GlowAppearance[];
   strokes: StrokeAppearance[];
 }
 
@@ -174,6 +187,7 @@ export interface PolygonCommand {
   points: PolygonPoint[];
   fills: RectFill[];
   shadows?: ShadowAppearance[];
+  glows?: GlowAppearance[];
   strokes: StrokeAppearance[];
 }
 
@@ -193,6 +207,7 @@ export interface GroupCommand {
   commands: CompiledDrawCommand[];
   fills: RectFill[];
   shadows?: ShadowAppearance[];
+  glows?: GlowAppearance[];
   strokes: StrokeAppearance[];
 }
 

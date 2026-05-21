@@ -10,6 +10,8 @@ import type {
   CircleCommand,
   CompileResult,
   CompiledDrawCommand,
+  GlowAppearance,
+  GlowMode,
   GradientStop,
   GroupCommand,
   LinearGradientFill,
@@ -755,10 +757,12 @@ function compileShapeAppearances(
   diagnostics: RadebeDiagnostic[]
 ): {
   fills: RectFill[];
+  glows: GlowAppearance[];
   shadows: ShadowAppearance[];
   strokes: StrokeAppearance[];
 } {
   const fills: RectFill[] = [];
+  const glows: GlowAppearance[] = [];
   const shadows: ShadowAppearance[] = [];
   const strokes: StrokeAppearance[] = [];
 
@@ -768,6 +772,16 @@ function compileShapeAppearances(
 
       if (fill) {
         fills.push(fill);
+      }
+
+      return;
+    }
+
+    if (child.name === "glow") {
+      const glow = compileGlow(child, diagnostics);
+
+      if (glow) {
+        glows.push(glow);
       }
 
       return;
@@ -792,7 +806,7 @@ function compileShapeAppearances(
     }
   });
 
-  return { fills, shadows, strokes };
+  return { fills, glows, shadows, strokes };
 }
 
 function compileRectCommand(
@@ -914,6 +928,7 @@ function compileRectCommand(
   );
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
+  const glows: GlowAppearance[] = appearances.glows;
   const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
   let cut: RectCut | null = null;
@@ -940,6 +955,7 @@ function compileRectCommand(
 
     if (
       child.name === "fill" ||
+      child.name === "glow" ||
       child.name === "shadow" ||
       child.name === "stroke"
     ) {
@@ -956,10 +972,15 @@ function compileRectCommand(
     return null;
   }
 
-  if (fills.length === 0 && shadows.length === 0 && strokes.length === 0) {
+  if (
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
     diagnostics.push(
       createCompilerDiagnostic(
-        `The ${node.name} command requires a color shorthand, a fill child, a shadow child, or a stroke child.`,
+        `The ${node.name} command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.`,
         node
       )
     );
@@ -1047,6 +1068,7 @@ function compileRectCommand(
     ...(rectRadius === null ? {} : { radius: rectRadius }),
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
+    ...(glows.length === 0 ? {} : { glows }),
     strokes,
     sourceCommandName:
       node.name === "rect"
@@ -1089,6 +1111,7 @@ function compileCircleCommand(
   );
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
+  const glows: GlowAppearance[] = appearances.glows;
   const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
 
@@ -1104,10 +1127,15 @@ function compileCircleCommand(
     return null;
   }
 
-  if (fills.length === 0 && shadows.length === 0 && strokes.length === 0) {
+  if (
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
     diagnostics.push(
       createCompilerDiagnostic(
-        "The circle command requires a color shorthand, a fill child, a shadow child, or a stroke child.",
+        "The circle command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.",
         node
       )
     );
@@ -1123,6 +1151,7 @@ function compileCircleCommand(
     ...(antialias === null ? {} : { antialias }),
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
+    ...(glows.length === 0 ? {} : { glows }),
     strokes
   };
 }
@@ -1283,6 +1312,7 @@ function compilePolygonCommand(
 
   const appearances = compileShapeAppearances(node, diagnostics);
   const fills: RectFill[] = appearances.fills;
+  const glows: GlowAppearance[] = appearances.glows;
   const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
 
@@ -1390,10 +1420,15 @@ function compilePolygonCommand(
     return null;
   }
 
-  if (fills.length === 0 && shadows.length === 0 && strokes.length === 0) {
+  if (
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
     diagnostics.push(
       createCompilerDiagnostic(
-        "The polygon command requires a color shorthand, a fill child, a shadow child, or a stroke child.",
+        "The polygon command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.",
         node
       )
     );
@@ -1414,6 +1449,7 @@ function compilePolygonCommand(
     points,
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
+    ...(glows.length === 0 ? {} : { glows }),
     strokes
   };
 }
@@ -2184,6 +2220,104 @@ function compileStroke(
   };
 }
 
+function compileGlow(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): GlowAppearance | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const modeToken = readOptionalString(resolvedProperties.values, "mode") ?? "outer";
+  let mode: GlowMode | null = null;
+
+  if (modeToken === "inner" || modeToken === "outer") {
+    mode = modeToken;
+  } else {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The glow command expects "mode" to be either "inner" or "outer".',
+        node
+      )
+    );
+  }
+
+  const color = readOptionalString(resolvedProperties.values, "color");
+  const spread =
+    readOptionalInteger(node, resolvedProperties.values, "spread", diagnostics, {
+      min: 0
+    }) ?? 0;
+  const blur =
+    readOptionalInteger(node, resolvedProperties.values, "blur", diagnostics, {
+      min: 0
+    }) ?? 1;
+  const alpha =
+    readOptionalNumber(node, resolvedProperties.values, "alpha", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 1;
+  const fills: RectFill[] = [];
+
+  if (color !== null) {
+    fills.push({
+      kind: "solid",
+      color,
+      alpha: 1
+    });
+  }
+
+  node.children.forEach((child) => {
+    if (child.name !== "fill") {
+      return;
+    }
+
+    const fill = compileFill(child, diagnostics);
+
+    if (fill) {
+      fills.push(fill);
+    }
+  });
+
+  if (mode === null) {
+    return null;
+  }
+
+  if (fills.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The glow command requires a color shorthand or a fill child.",
+        node
+      )
+    );
+    return null;
+  }
+
+  if (fills.length > 1) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The first glow slice supports only one fill per glow node.",
+        node
+      )
+    );
+    return null;
+  }
+
+  return {
+    kind: "glow",
+    mode,
+    spread,
+    blur,
+    alpha,
+    fill: fills[0] ?? null
+  };
+}
+
 function compileShadow(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[]
@@ -2316,6 +2450,7 @@ function compileGroupCommand(
   const definition = getCommandDefinition(node.name);
   const commands: CompiledDrawCommand[] = [];
   const fills: RectFill[] = [];
+  const glows: GlowAppearance[] = [];
   const shadows: ShadowAppearance[] = [];
   const strokes: StrokeAppearance[] = [];
   let sawDrawable = false;
@@ -2375,7 +2510,12 @@ function compileGroupCommand(
       return;
     }
 
-    if (child.name === "fill" || child.name === "shadow" || child.name === "stroke") {
+    if (
+      child.name === "fill" ||
+      child.name === "glow" ||
+      child.name === "shadow" ||
+      child.name === "stroke"
+    ) {
       if (!sawDrawable) {
         invalidPassBeforeDrawable = true;
         sawPass = true;
@@ -2395,6 +2535,15 @@ function compileGroupCommand(
 
         if (fill) {
           fills.push(fill);
+        }
+        return;
+      }
+
+      if (child.name === "glow") {
+        const glow = compileGlow(child, diagnostics);
+
+        if (glow) {
+          glows.push(glow);
         }
         return;
       }
@@ -2445,6 +2594,7 @@ function compileGroupCommand(
     commands,
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
+    ...(glows.length === 0 ? {} : { glows }),
     strokes
   };
 }
