@@ -30,6 +30,18 @@ type RectBounds = {
   height: number;
 };
 
+type PixelGrid = (RgbaColor | null)[][];
+type DrawnGrid = boolean[][];
+
+type Layer = {
+  pixels: PixelGrid;
+  drawnPixels: DrawnGrid;
+  width: number;
+  height: number;
+};
+
+type AlphaMask = number[][];
+
 type CoveragePredicate = (pointX: number, pointY: number) => boolean;
 
 const ANTIALIAS_SAMPLE_GRID_SIZE = 4;
@@ -101,9 +113,28 @@ function withOpacity(color: RgbaColor, opacity: number): RgbaColor {
   };
 }
 
+function createLayer(
+  width: number,
+  height: number,
+  backgroundColor: RgbaColor | null = null
+): Layer {
+  return {
+    width,
+    height,
+    pixels: Array.from({ length: height }, () =>
+      Array.from({ length: width }, () =>
+        backgroundColor === null ? null : { ...backgroundColor }
+      )
+    ),
+    drawnPixels: Array.from({ length: height }, () =>
+      Array.from({ length: width }, () => false)
+    )
+  };
+}
+
 function setPixel(
-  pixels: (RgbaColor | null)[][],
-  drawnPixels: boolean[][],
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
   x: number,
   y: number,
   color: string,
@@ -125,6 +156,146 @@ function setPixel(
 
   pixels[y]![x] = blendColors(pixels[y]![x] ?? null, withOpacity(parsed, opacity));
   drawnPixels[y]![x] = true;
+}
+
+function compositeLayer(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  sourceLayer: Layer
+): void {
+  for (let y = 0; y < sourceLayer.height; y += 1) {
+    for (let x = 0; x < sourceLayer.width; x += 1) {
+      const color = sourceLayer.pixels[y]![x];
+
+      if (color === null || color.a <= 0) {
+        continue;
+      }
+
+      pixels[y]![x] = blendColors(pixels[y]![x] ?? null, color);
+      drawnPixels[y]![x] = true;
+    }
+  }
+}
+
+function buildAlphaMask(pixels: PixelGrid): AlphaMask {
+  return pixels.map((row) => row.map((pixel) => pixel?.a ?? 0));
+}
+
+function getMaskAlpha(mask: AlphaMask, x: number, y: number): number {
+  if (y < 0 || y >= mask.length) {
+    return 0;
+  }
+
+  const row = mask[y];
+
+  if (!row || x < 0 || x >= row.length) {
+    return 0;
+  }
+
+  return row[x] ?? 0;
+}
+
+function getAlphaMaskBounds(mask: AlphaMask): RectBounds | null {
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+
+  mask.forEach((row, y) => {
+    row.forEach((alpha, x) => {
+      if (alpha <= 0) {
+        return;
+      }
+
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    });
+  });
+
+  if (!Number.isFinite(minX)) {
+    return null;
+  }
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1
+  };
+}
+
+function expandBounds(bounds: RectBounds, amount: number): RectBounds {
+  return {
+    x: bounds.x - amount,
+    y: bounds.y - amount,
+    width: bounds.width + amount * 2,
+    height: bounds.height + amount * 2
+  };
+}
+
+function offsetAndExpandBounds(
+  bounds: RectBounds,
+  offsetX: number,
+  offsetY: number,
+  expansion: number
+): RectBounds {
+  const minX = Math.floor(bounds.x + offsetX - expansion);
+  const minY = Math.floor(bounds.y + offsetY - expansion);
+  const maxX = Math.ceil(bounds.x + bounds.width - 1 + offsetX + expansion);
+  const maxY = Math.ceil(bounds.y + bounds.height - 1 + offsetY + expansion);
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1
+  };
+}
+
+function sampleMaskAlpha(mask: AlphaMask, x: number, y: number, spread: number): number {
+  if (spread === 0) {
+    return getMaskAlpha(mask, x, y);
+  }
+
+  const radius = Math.ceil(Math.abs(spread));
+
+  if (spread > 0) {
+    let alpha = 0;
+
+    for (let sampleY = y - radius; sampleY <= y + radius; sampleY += 1) {
+      for (let sampleX = x - radius; sampleX <= x + radius; sampleX += 1) {
+        alpha = Math.max(alpha, getMaskAlpha(mask, sampleX, sampleY));
+      }
+    }
+
+    return alpha;
+  }
+
+  let alpha = 1;
+
+  for (let sampleY = y - radius; sampleY <= y + radius; sampleY += 1) {
+    for (let sampleX = x - radius; sampleX <= x + radius; sampleX += 1) {
+      alpha = Math.min(alpha, getMaskAlpha(mask, sampleX, sampleY));
+
+      if (alpha <= 0) {
+        return 0;
+      }
+    }
+  }
+
+  return alpha;
+}
+
+function buildSpreadMask(mask: AlphaMask, spread: number): AlphaMask {
+  if (spread <= 0) {
+    return mask;
+  }
+
+  return mask.map((row, y) =>
+    row.map((_, x) => sampleMaskAlpha(mask, x, y, spread))
+  );
 }
 
 function getPixelCoverage(
@@ -1466,6 +1637,191 @@ function drawRectStroke(
   drawContourAwareRectStroke(pixels, drawnPixels, command, stroke, antialias);
 }
 
+function drawMaskFill(
+  layer: Layer,
+  mask: AlphaMask,
+  bounds: RectBounds,
+  fill: RectFill
+): void {
+  for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+    for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+      const coverage = getMaskAlpha(mask, x, y);
+
+      if (coverage <= 0) {
+        continue;
+      }
+
+      const color = sampleFillColor(fill, bounds, x, y);
+
+      if (color !== null) {
+        setPixel(layer.pixels, layer.drawnPixels, x, y, color, fill.alpha * coverage);
+      }
+    }
+  }
+}
+
+function drawMaskShadow(
+  layer: Layer,
+  mask: AlphaMask,
+  bounds: RectBounds,
+  shadow: ShadowAppearance
+): void {
+  if (shadow.fill === null) {
+    return;
+  }
+
+  const expansion = Math.max(Math.ceil(Math.abs(shadow.spread)), 0);
+  const shadowBounds = offsetAndExpandBounds(
+    bounds,
+    shadow.offsetX,
+    shadow.offsetY,
+    expansion
+  );
+
+  for (let y = shadowBounds.y; y < shadowBounds.y + shadowBounds.height; y += 1) {
+    for (let x = shadowBounds.x; x < shadowBounds.x + shadowBounds.width; x += 1) {
+      const sourceX = Math.round(x - shadow.offsetX);
+      const sourceY = Math.round(y - shadow.offsetY);
+      const coverage = sampleMaskAlpha(mask, sourceX, sourceY, shadow.spread);
+
+      if (coverage <= 0) {
+        continue;
+      }
+
+      const color = sampleFillColor(shadow.fill, shadowBounds, x, y);
+
+      if (color !== null) {
+        setPixel(
+          layer.pixels,
+          layer.drawnPixels,
+          x,
+          y,
+          color,
+          shadow.alpha * shadow.fill.alpha * coverage
+        );
+      }
+    }
+  }
+}
+
+function drawMaskStroke(
+  layer: Layer,
+  mask: AlphaMask,
+  bounds: RectBounds,
+  stroke: StrokeAppearance
+): void {
+  const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
+  const strokeBounds = expandBounds(bounds, outer);
+
+  if (stroke.fill !== null) {
+    for (let y = strokeBounds.y; y < strokeBounds.y + strokeBounds.height; y += 1) {
+      for (let x = strokeBounds.x; x < strokeBounds.x + strokeBounds.width; x += 1) {
+        const patternPosition = x - strokeBounds.x + (y - strokeBounds.y);
+
+        if (
+          !getStrokePatternState(
+            stroke.style,
+            patternPosition,
+            stroke.width,
+            stroke.dashLength,
+            stroke.gapLength,
+            stroke.dotSpacing
+          )
+        ) {
+          continue;
+        }
+
+        const outerAlpha =
+          outer > 0 ? sampleMaskAlpha(mask, x, y, outer) : getMaskAlpha(mask, x, y);
+        const innerAlpha =
+          inner > 0 ? sampleMaskAlpha(mask, x, y, -inner) : getMaskAlpha(mask, x, y);
+        const coverage = Math.max(outerAlpha - innerAlpha, 0);
+
+        if (coverage <= 0) {
+          continue;
+        }
+
+        const color = sampleFillColor(stroke.fill, strokeBounds, x, y);
+
+        if (color !== null) {
+          setPixel(
+            layer.pixels,
+            layer.drawnPixels,
+            x,
+            y,
+            color,
+            stroke.alpha * stroke.fill.alpha * coverage
+          );
+        }
+      }
+    }
+  }
+
+  const nestedMask = buildSpreadMask(mask, outer);
+  const nestedBounds = outer > 0 ? strokeBounds : bounds;
+
+  stroke.strokes.forEach((nestedStroke) => {
+    drawMaskStroke(layer, nestedMask, nestedBounds, nestedStroke);
+  });
+}
+
+function groupHasPasses(command: Extract<CompiledDrawCommand, { kind: "group" }>): boolean {
+  return (
+    command.fills.length > 0 ||
+    (command.shadows?.length ?? 0) > 0 ||
+    command.strokes.length > 0
+  );
+}
+
+function drawGroup(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  command: Extract<CompiledDrawCommand, { kind: "group" }>,
+  defaultAntialias: boolean
+): void {
+  if (!groupHasPasses(command)) {
+    command.commands.forEach((childCommand) => {
+      drawCommand(pixels, drawnPixels, childCommand, defaultAntialias);
+    });
+    return;
+  }
+
+  const height = pixels.length;
+  const width = pixels[0]?.length ?? 0;
+  const childLayer = createLayer(width, height);
+
+  command.commands.forEach((childCommand) => {
+    drawCommand(
+      childLayer.pixels,
+      childLayer.drawnPixels,
+      childCommand,
+      defaultAntialias
+    );
+  });
+
+  const mask = buildAlphaMask(childLayer.pixels);
+  const bounds = getAlphaMaskBounds(mask);
+
+  if (bounds === null) {
+    return;
+  }
+
+  const finalLayer = createLayer(width, height);
+
+  (command.shadows ?? []).forEach((shadow) => {
+    drawMaskShadow(finalLayer, mask, bounds, shadow);
+  });
+  compositeLayer(finalLayer.pixels, finalLayer.drawnPixels, childLayer);
+  command.fills.forEach((fill) => {
+    drawMaskFill(finalLayer, mask, bounds, fill);
+  });
+  command.strokes.forEach((stroke) => {
+    drawMaskStroke(finalLayer, mask, bounds, stroke);
+  });
+
+  compositeLayer(pixels, drawnPixels, finalLayer);
+}
+
 function drawPixelLine(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
@@ -1536,8 +1892,8 @@ function drawAntialiasedLine(
 }
 
 function drawCommand(
-  pixels: (RgbaColor | null)[][],
-  drawnPixels: boolean[][],
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
   command: CompiledDrawCommand,
   defaultAntialias: boolean
 ): void {
@@ -1596,6 +1952,11 @@ function drawCommand(
     return;
   }
 
+  if (command.kind === "group") {
+    drawGroup(pixels, drawnPixels, command, defaultAntialias);
+    return;
+  }
+
   if (command.antialias ?? defaultAntialias) {
     drawAntialiasedLine(pixels, drawnPixels, command);
     return;
@@ -1609,22 +1970,24 @@ function buildSpriteGridArtifact(document: CompiledDocument): RenderArtifact {
   const height = document.sprite?.height ?? 0;
   const background = document.sprite?.background ?? "transparent";
   const backgroundColor = background === "transparent" ? null : parseColor(background);
-  const pixels = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () => backgroundColor)
-  );
-  const drawnPixels = Array.from({ length: height }, () =>
-    Array.from({ length: width }, () => false)
-  );
+  const layer = createLayer(width, height, backgroundColor);
 
   document.commands.forEach((command) => {
-    drawCommand(pixels, drawnPixels, command, document.sprite?.antialias ?? false);
+    drawCommand(
+      layer.pixels,
+      layer.drawnPixels,
+      command,
+      document.sprite?.antialias ?? false
+    );
   });
 
-  const formattedPixels = pixels.map((row) => row.map((pixel) => formatColor(pixel)));
+  const formattedPixels = layer.pixels.map((row) =>
+    row.map((pixel) => formatColor(pixel))
+  );
   const rows = formattedPixels.map((row, y) =>
     row
       .map((pixel, x) => {
-        if (drawnPixels[y]![x]) {
+        if (layer.drawnPixels[y]![x]) {
           return "#";
         }
 

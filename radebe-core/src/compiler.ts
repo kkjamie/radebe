@@ -11,6 +11,7 @@ import type {
   CompileResult,
   CompiledDrawCommand,
   GradientStop,
+  GroupCommand,
   LinearGradientFill,
   PathCommand,
   ParsedCommandNode,
@@ -2266,6 +2267,10 @@ function compileDrawCommand(
   sprite: SpriteHeader,
   diagnostics: RadebeDiagnostic[]
 ): CompiledDrawCommand | null {
+  if (node.name === "group") {
+    return compileGroupCommand(node, sprite, diagnostics);
+  }
+
   if (node.name === "plot") {
     return compilePlotCommand(node, diagnostics);
   }
@@ -2302,13 +2307,19 @@ function compileGroupCommand(
   node: ParsedCommandNode,
   sprite: SpriteHeader,
   diagnostics: RadebeDiagnostic[]
-): CompiledDrawCommand[] {
+): GroupCommand | null {
   const definition = getCommandDefinition(node.name);
   const commands: CompiledDrawCommand[] = [];
+  const fills: RectFill[] = [];
+  const shadows: ShadowAppearance[] = [];
+  const strokes: StrokeAppearance[] = [];
+  let sawDrawable = false;
+  let sawPass = false;
+  let invalidPassBeforeDrawable = false;
 
   if (!definition) {
     diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
-    return commands;
+    return null;
   }
 
   const parsedArguments = parseArguments(node, definition);
@@ -2334,6 +2345,16 @@ function compileGroupCommand(
     }
 
     if (getAllowedPropertyCommands(definition).includes(child.name)) {
+      if (sawDrawable || sawPass) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The group command expects property commands before child draw commands and group-level passes.",
+            child
+          )
+        );
+        return;
+      }
+
       const childArguments = parseArguments(child, childDefinition);
       diagnostics.push(...childArguments.diagnostics);
       const value = childArguments.values.get("value");
@@ -2349,8 +2370,54 @@ function compileGroupCommand(
       return;
     }
 
-    if (child.name === "group") {
-      commands.push(...compileGroupCommand(child, sprite, diagnostics));
+    if (child.name === "fill" || child.name === "shadow" || child.name === "stroke") {
+      if (!sawDrawable) {
+        invalidPassBeforeDrawable = true;
+        sawPass = true;
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The group command expects at least one child draw command before group-level appearance or effect passes.",
+            child
+          )
+        );
+        return;
+      }
+
+      sawPass = true;
+
+      if (child.name === "fill") {
+        const fill = compileFill(child, diagnostics);
+
+        if (fill) {
+          fills.push(fill);
+        }
+        return;
+      }
+
+      if (child.name === "shadow") {
+        const shadow = compileShadow(child, diagnostics);
+
+        if (shadow) {
+          shadows.push(shadow);
+        }
+        return;
+      }
+
+      const stroke = compileStroke(child, diagnostics);
+
+      if (stroke) {
+        strokes.push(stroke);
+      }
+      return;
+    }
+
+    if (sawPass) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          "The group command expects all child draw commands before group-level appearance or effect passes.",
+          child
+        )
+      );
       return;
     }
 
@@ -2358,10 +2425,23 @@ function compileGroupCommand(
 
     if (compiledCommand) {
       commands.push(compiledCommand);
+      sawDrawable = true;
     }
   });
 
-  return commands;
+  if (invalidPassBeforeDrawable && commands.length === 0) {
+    return null;
+  }
+
+  return {
+    kind: "group",
+    lineNumber: node.lineNumber,
+    name: readOptionalString(propertyValues, "name"),
+    commands,
+    fills,
+    ...(shadows.length === 0 ? {} : { shadows }),
+    strokes
+  };
 }
 
 function compileRootCommand(
@@ -2407,7 +2487,9 @@ function compileRootCommand(
   }
 
   if (node.name === "group") {
-    return compileGroupCommand(node, sprite, diagnostics);
+    const compiledGroup = compileGroupCommand(node, sprite, diagnostics);
+
+    return compiledGroup === null ? [] : [compiledGroup];
   }
 
   const compiledCommand = compileDrawCommand(node, sprite, diagnostics);

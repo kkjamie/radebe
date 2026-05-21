@@ -443,3 +443,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Group strokes and shadows can follow the combined outside contour rather than each child shape individually; ordering diagnostics must ensure group content comes before group-level passes; renderer work will need an offscreen layer/alpha model.
 - Related tasks: T-076, T-075, T-067, T-069
 - Supersedes: N/A
+
+---
+
+### DEC-039: Preserve Compiled Groups And Composite Only When Needed
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: T-076 needed group-level passes without breaking the transparent source-order behavior introduced in T-059.
+- Decision: Compile `group` into a retained draw-command node with nested child commands. Render groups directly into the parent when they have no group-level passes, and switch to an offscreen child layer only when `fill`, `stroke`, or `shadow` appears under the group.
+- Consequences: Transparent groups preserve their existing pixel behavior while still giving the renderer a real boundary for group passes, future masks, transforms, and compositing controls. Compiler diagnostics can now enforce group content before group-level passes without silently flattening or reordering children.
+- Related tasks: T-076, T-075, T-060, T-069
+- Supersedes: N/A

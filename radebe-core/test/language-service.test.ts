@@ -87,7 +87,10 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
     "polygon",
     "path",
     "group",
-    "name"
+    "name",
+    "fill",
+    "shadow",
+    "stroke"
   ]);
 });
 

@@ -114,7 +114,10 @@ test("schema exposes context-aware child command metadata", () => {
     "polygon",
     "path",
     "group",
-    "name"
+    "name",
+    "fill",
+    "shadow",
+    "stroke"
   ]);
 });
 
@@ -620,7 +623,7 @@ test("compileDocument allows vars to be defined between draw commands", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
-test("compileDocument flattens transparent group children in source order", () => {
+test("compileDocument preserves transparent group containers in source order", () => {
   const parsed = parseSource({
     source:
       "sprite panel\n  size 6 4\n  background transparent\n\nvar accent #70c8e8\n\ngroup frame\n  rect 0 0 3 2 $accent\n  group lights\n    plot 2 0 white\nline 0 3 5 3 white"
@@ -629,17 +632,33 @@ test("compileDocument flattens transparent group children in source order", () =
 
   assert.deepEqual(result.document.commands, [
     {
-      kind: "rect",
-      lineNumber: 8,
-      x: 0,
-      y: 0,
-      width: 3,
-      height: 2,
-      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      kind: "group",
+      lineNumber: 7,
+      name: "frame",
+      commands: [
+        {
+          kind: "rect",
+          lineNumber: 8,
+          x: 0,
+          y: 0,
+          width: 3,
+          height: 2,
+          fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+          strokes: [],
+          sourceCommandName: "rect"
+        },
+        {
+          kind: "group",
+          lineNumber: 9,
+          name: "lights",
+          commands: [{ kind: "plot", lineNumber: 10, x: 2, y: 0, color: "white" }],
+          fills: [],
+          strokes: []
+        }
+      ],
+      fills: [],
       strokes: [],
-      sourceCommandName: "rect"
     },
-    { kind: "plot", lineNumber: 10, x: 2, y: 0, color: "white" },
     {
       kind: "line",
       lineNumber: 11,
@@ -653,7 +672,47 @@ test("compileDocument flattens transparent group children in source order", () =
   assert.deepEqual(result.diagnostics, []);
 });
 
-test("compileDocument keeps group as a structural container without appearance children", () => {
+test("compileDocument compiles group-level appearance passes after content", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 4\n  background transparent\n\ngroup frame\n  rect 1 1 2 2 white\n  fill solid #70c8e8\n  shadow 1 1 black\n  stroke 1 white"
+  });
+  const result = compileDocument(parsed.document);
+  const group = result.document.commands[0];
+
+  assert.equal(group?.kind, "group");
+  assert.deepEqual(group.commands.map((command) => command.kind), ["rect"]);
+  assert.deepEqual(group.fills, [
+    { kind: "solid", color: "#70c8e8", alpha: 1 }
+  ]);
+  assert.deepEqual(group.shadows, [
+    {
+      kind: "shadow",
+      offsetX: 1,
+      offsetY: 1,
+      spread: 0,
+      alpha: 1,
+      fill: { kind: "solid", color: "black", alpha: 1 }
+    }
+  ]);
+  assert.deepEqual(group.strokes, [
+    {
+      kind: "stroke",
+      width: 1,
+      align: "center",
+      style: "solid",
+      alpha: 1,
+      dashLength: null,
+      gapLength: null,
+      dotSpacing: null,
+      fill: { kind: "solid", color: "white", alpha: 1 },
+      strokes: []
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument rejects group passes before group content", () => {
   const parsed = parseSource({
     source:
       "sprite panel\n  size 4 4\n  background transparent\n\ngroup frame\n  fill solid white"
@@ -664,8 +723,30 @@ test("compileDocument keeps group as a structural container without appearance c
   assert.deepEqual(result.diagnostics, [
     {
       stage: "compiler",
-      message: 'The group command does not allow child command "fill".',
+      message:
+        "The group command expects at least one child draw command before group-level appearance or effect passes.",
       line: 6,
+      column: 3
+    }
+  ]);
+});
+
+test("compileDocument rejects group content after group passes", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 4\n  background transparent\n\ngroup frame\n  rect 0 0 2 2 white\n  stroke 1 black\n  plot 3 3 white"
+  });
+  const result = compileDocument(parsed.document);
+  const group = result.document.commands[0];
+
+  assert.equal(group?.kind, "group");
+  assert.deepEqual(group.commands.map((command) => command.kind), ["rect"]);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message:
+        "The group command expects all child draw commands before group-level appearance or effect passes.",
+      line: 8,
       column: 3
     }
   ]);
@@ -1888,13 +1969,56 @@ test("renderSource renders grouped commands with normal ordering semantics", () 
 
   assert.deepEqual(result.compiled.commands.map((command) => command.kind), [
     "plot",
-    "rect",
-    "plot",
+    "group",
     "plot"
   ]);
   assert.deepEqual(result.artifact.pixels, [
     ["#70c8e8", "#ffffff", null, null],
     ["#70c8e8", "#70c8e8", null, "#ff0000"]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource applies group fill to the composited child alpha", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped-fill\n  size 4 2\n  background transparent\n\ngroup badge\n  rect 0 0 2 2 white\n  plot 2 0 white\n  fill solid #70c8e8"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    ["#70c8e8", "#70c8e8", "#70c8e8", null],
+    ["#70c8e8", "#70c8e8", null, null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource applies group stroke to the combined child contour", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped-stroke\n  size 5 5\n  background transparent\n\ngroup badge\n  rect 1 1 3 3 #101010\n  stroke 1 white"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null],
+    [null, "#ffffff", "#ffffff", "#ffffff", null],
+    [null, "#ffffff", "#101010", "#ffffff", null],
+    [null, "#ffffff", "#ffffff", "#ffffff", null],
+    [null, null, null, null, null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource applies group shadow behind composited children", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped-shadow\n  size 4 4\n  background transparent\n\ngroup badge\n  rect 0 0 2 2 white\n  shadow 1 1 black"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    ["#ffffff", "#ffffff", null, null],
+    ["#ffffff", "#ffffff", "#000000", null],
+    [null, "#000000", "#000000", null],
+    [null, null, null, null]
   ]);
   assert.deepEqual(result.diagnostics, []);
 });

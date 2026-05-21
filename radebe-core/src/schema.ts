@@ -332,6 +332,7 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
     propertyArgs: ["name"],
     shorthandSchema: ["name"],
     arguments: [arg("name", "identifier")],
+    allowedChildCapabilities: ["shape-appearance"],
     allowedChildCommands: [
       "plot",
       "line",

@@ -185,13 +185,24 @@ export interface PathCommand {
   strokes: StrokeAppearance[];
 }
 
+export interface GroupCommand {
+  kind: "group";
+  lineNumber: number;
+  name: string | null;
+  commands: CompiledDrawCommand[];
+  fills: RectFill[];
+  shadows?: ShadowAppearance[];
+  strokes: StrokeAppearance[];
+}
+
 export type CompiledDrawCommand =
   | PlotCommand
   | LineCommand
   | RectCommand
   | CircleCommand
   | PolygonCommand
-  | PathCommand;
+  | PathCommand
+  | GroupCommand;
 
 export interface CompiledDocument {
   kind: "compiled-document";
