@@ -200,6 +200,11 @@ test("getLanguageSmartEdits removes shorthand color when fill command is complet
     applySmartEdits("polygon 0 0 8 0 8 8 black\n  fill|"),
     "polygon 0 0 8 0 8 8\n  fill"
   );
+
+  assert.equal(
+    applySmartEdits("rect-inset 1 2 3 4 black\n  fill|"),
+    "rect-inset 1 2 3 4\n  fill"
+  );
 });
 
 test("getLanguageSmartEdits keeps shorthand when no matching child is started", () => {

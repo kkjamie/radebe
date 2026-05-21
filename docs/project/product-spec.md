@@ -57,7 +57,7 @@ line 8 8 240 8 #70c8e8
 
 ## Syntax Rules
 - Canonical command form is `command-name arg1 arg2 arg3`.
-- Prefer explicit normalized commands such as `rect-inset 6`, `rect-absolute 0 0 128 64`, and `line-to 20 30`.
+- Prefer explicit normalized commands such as `rect-inset 6`, `rect-inset 4 4 8 8`, `rect-absolute 0 0 128 64`, and `line-to 20 30`.
 - Avoid overloaded function-style syntax such as `rect(inset: 6)` or `lineTo(20, 30)`.
 - A command may terminate on the same line or own an indented child block.
 
@@ -381,6 +381,7 @@ Initial geometry types discussed in the recovered spec and current direction:
 - `line <x1> <y1> <x2> <y2> <color>`
 - `rect <x> <y> <w> <h>`
 - `rect-inset <amount>`
+- `rect-inset <top> <right> <bottom> <left>`
 - `rect-absolute <x> <y> <w> <h>`
 - `circle <x> <y> <radius>`
 - `polygon <x1> <y1> <x2> <y2> <x3> <y3> ...`

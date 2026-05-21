@@ -393,6 +393,48 @@ test("compileDocument supports side-specific rect-inset overrides", () => {
   assert.deepEqual(result.diagnostics, []);
 });
 
+test("compileDocument supports four-side rect-inset shorthand", () => {
+  const parsed = parseSource({
+    source: [
+      "sprite panel",
+      "  size 16 12",
+      "  background transparent",
+      "",
+      "rect-inset 1 2 3 4 #70c8e8",
+      "rect-inset",
+      "  inset 2 1 4 3",
+      "  fill solid #ffffff"
+    ].join("\n")
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "rect",
+      lineNumber: 5,
+      x: 4,
+      y: 1,
+      width: 10,
+      height: 8,
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: [],
+      sourceCommandName: "rect-inset"
+    },
+    {
+      kind: "rect",
+      lineNumber: 6,
+      x: 3,
+      y: 2,
+      width: 12,
+      height: 6,
+      fills: [{ kind: "solid", color: "#ffffff", alpha: 1 }],
+      strokes: [],
+      sourceCommandName: "rect-inset"
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
 test("compileDocument supports circle shorthand and explicit fills", () => {
   const parsed = parseSource({
     source:
@@ -1476,6 +1518,24 @@ test("renderDocument rasterizes side-specific rect-inset values", () => {
   const parsed = parseSource({
     source:
       "sprite panel\n  size 8 6\n  background transparent\n\nrect-inset\n  top 1\n  right 2\n  bottom 3\n  left 1\n  color #ffffff"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.rows, [
+    "........",
+    ".#####..",
+    ".#####..",
+    "........",
+    "........",
+    "........"
+  ]);
+});
+
+test("renderDocument rasterizes four-side rect-inset shorthand", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 8 6\n  background transparent\n\nrect-inset 1 2 3 1 #ffffff"
   });
   const compiled = compileDocument(parsed.document);
   const result = renderDocument(compiled.document);

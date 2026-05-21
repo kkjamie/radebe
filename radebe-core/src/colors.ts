@@ -120,6 +120,23 @@ function getPositionalArgumentDefinition(
   positionalIndex: number,
   positionalTokens: SourceTokenSpan[]
 ): CommandArgumentDefinition | null {
+  if (definition.name === "rect-inset") {
+    if (
+      (positionalTokens.length === 2 && positionalIndex === 1) ||
+      (positionalTokens.length === 5 && positionalIndex === 4)
+    ) {
+      return getCommandArgumentDefinition(definition, "color") ?? null;
+    }
+
+    if (positionalTokens.length === 4 || positionalTokens.length === 5) {
+      const sideName = ["top", "right", "bottom", "left"][positionalIndex];
+
+      return sideName
+        ? getCommandArgumentDefinition(definition, sideName) ?? null
+        : null;
+    }
+  }
+
   const shorthandArgument =
     getShorthandArgumentDefinitions(definition)[positionalIndex] ?? null;
 

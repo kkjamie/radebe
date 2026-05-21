@@ -977,11 +977,12 @@ const exampleDocs: ExampleDoc[] = [
     title: "Rect Inset",
     navGroup: "Geometry",
     summary:
-      "Defines a rectangle from the current sprite bounds using a uniform inset amount or side-specific top/right/bottom/left insets, which makes it a convenient panel and frame primitive.",
-    args: ["inset", "top", "right", "bottom", "left", "color shorthand", "fill", "antialias"],
+      "Defines a rectangle from the current sprite bounds using a uniform inset amount, four-side top/right/bottom/left shorthand, or expanded side-specific insets.",
+    args: ["inset", "top right bottom left", "color shorthand", "fill", "antialias"],
     childCommands: ["fill", "stroke", "cut", "radius", "antialias"],
     notes: [
       "The uniform `inset` value applies to every side by default.",
+      "`rect-inset 4 4 8 8` and child `inset 4 4 8 8` use top, right, bottom, left order.",
       "Any of `top`, `right`, `bottom`, or `left` can override the uniform inset per side.",
       "Like `rect`, direct color shorthand lowers into an implicit solid fill.",
       "The computed rectangle must still fit inside the sprite bounds."
@@ -1009,11 +1010,8 @@ const exampleDocs: ExampleDoc[] = [
           "  size 160 72",
           "  background #0f1318",
           "",
-          "# Uniform inset with a tighter top and wider right edge",
-          "rect-inset",
-          "  inset 10",
-          "  top 6",
-          "  right 18",
+          "# Four-side shorthand: top right bottom left",
+          "rect-inset 6 18 10 10",
           "  fill solid #18242c"
         ].join("\n")
       }

@@ -93,6 +93,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-076 | Apply appearance and effect passes to composited groups | M2 | Gate B | P1 | Done | `codex-main` | None | Group-level `fill`, `stroke`, and `shadow` now apply to an offscreen composited child layer; broader ordering restrictions, blend modes, masks, filters, and transforms remain separate backlog work |
 | T-061 | Add soft shadow blur support to the existing `shadow` appearance command | M2 | Gate B | P1 | Done | `codex-main` | None | `shadow` now accepts non-negative integer `blur` on shape and composited-group shadows, with `blur 0` preserving hard-edged output |
 | T-062 | Add glow appearance support, starting with inner glow and outer-glow semantics | M2 | Gate B | P2 | Done | `t-062-glow` | None | `glow` now supports outer and inner modes on rectangle-backed shapes, circles, polygons, and composited groups, with non-negative `spread`, non-negative `blur`, explicit `alpha`, and color shorthand or nested `fill` |
+| T-078 | Add four-side shorthand for `rect-inset` | M2 | Gate B | P1 | Done | `codex-main` | None | `rect-inset` now accepts `top right bottom left` shorthand on the command itself and on child `inset`, while keeping existing uniform inset and expanded side-property forms |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

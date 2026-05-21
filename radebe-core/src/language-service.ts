@@ -560,6 +560,54 @@ function getInlineChildArgumentHelp(
   };
 }
 
+function getRectInsetActiveArgument(
+  commandDefinition: CommandDefinition,
+  argumentState: ArgumentTokenState
+): CommandArgumentDefinition | null {
+  const currentToken = argumentState.currentToken;
+
+  if (currentToken?.text.includes("=")) {
+    return null;
+  }
+
+  const activeTokenIndex = currentToken
+    ? argumentState.argumentTokens.indexOf(currentToken)
+    : argumentState.activeArgumentIndex;
+  const tokensBeforeActive = argumentState.argumentTokens.slice(0, activeTokenIndex);
+  const positionalIndex = tokensBeforeActive.filter(
+    (token) => !token.text.includes("=")
+  ).length;
+  const positionalCount = currentToken
+    ? argumentState.argumentTokens.filter((token) => !token.text.includes("="))
+        .length
+    : positionalIndex + 1;
+
+  if (
+    (positionalCount === 2 && positionalIndex === 1) ||
+    (positionalCount === 5 && positionalIndex === 4)
+  ) {
+    return getCommandArgumentDefinition(commandDefinition, "color") ?? null;
+  }
+
+  if (positionalCount === 4 || positionalCount === 5) {
+    const sideName = ["top", "right", "bottom", "left"][positionalIndex];
+
+    return sideName
+      ? getCommandArgumentDefinition(commandDefinition, sideName) ?? null
+      : null;
+  }
+
+  if (positionalIndex === 0) {
+    return getCommandArgumentDefinition(commandDefinition, "inset") ?? null;
+  }
+
+  if (positionalIndex === 1) {
+    return getCommandArgumentDefinition(commandDefinition, "color") ?? null;
+  }
+
+  return null;
+}
+
 function getPositionalArgumentHelp(
   context: InternalContext,
   argumentState: ArgumentTokenState
@@ -578,7 +626,12 @@ function getPositionalArgumentHelp(
     commandDefinition,
     context.parentDefinition
   );
+  const customRectInsetArgument =
+    commandDefinition.name === "rect-inset"
+      ? getRectInsetActiveArgument(commandDefinition, argumentState)
+      : null;
   const activeArgument =
+    customRectInsetArgument ??
     shorthandArguments[argumentState.activeArgumentIndex] ??
     argumentsForCommand[argumentState.activeArgumentIndex] ??
     null;
@@ -710,6 +763,81 @@ function createValueCompletions(
     }));
 }
 
+function setArgumentTokenAssignment(
+  assignments: Map<string, ArgumentTokenAssignment>,
+  definition: CommandDefinition,
+  argumentName: string,
+  token: TokenSpan,
+  tokenIndex: number
+): void {
+  const argument = getCommandArgumentDefinition(definition, argumentName);
+
+  if (argument && !assignments.has(argumentName)) {
+    assignments.set(argumentName, {
+      argument,
+      token,
+      tokenIndex
+    });
+  }
+}
+
+function assignRectInsetPositionalTokens(
+  assignments: Map<string, ArgumentTokenAssignment>,
+  definition: CommandDefinition,
+  positionalTokens: Array<{ token: TokenSpan; tokenIndex: number }>
+): void {
+  if (positionalTokens.length === 1 || positionalTokens.length === 2) {
+    const insetToken = positionalTokens[0]!;
+    setArgumentTokenAssignment(
+      assignments,
+      definition,
+      "inset",
+      insetToken.token,
+      insetToken.tokenIndex
+    );
+
+    if (positionalTokens.length === 2) {
+      const colorToken = positionalTokens[1]!;
+      setArgumentTokenAssignment(
+        assignments,
+        definition,
+        "color",
+        colorToken.token,
+        colorToken.tokenIndex
+      );
+    }
+
+    return;
+  }
+
+  if (positionalTokens.length === 4 || positionalTokens.length === 5) {
+    ["top", "right", "bottom", "left"].forEach((argumentName, index) => {
+      const sideToken = positionalTokens[index];
+
+      if (sideToken) {
+        setArgumentTokenAssignment(
+          assignments,
+          definition,
+          argumentName,
+          sideToken.token,
+          sideToken.tokenIndex
+        );
+      }
+    });
+
+    if (positionalTokens.length === 5) {
+      const colorToken = positionalTokens[4]!;
+      setArgumentTokenAssignment(
+        assignments,
+        definition,
+        "color",
+        colorToken.token,
+        colorToken.tokenIndex
+      );
+    }
+  }
+}
+
 function getArgumentTokenAssignments(
   definition: CommandDefinition,
   tokens: TokenSpan[]
@@ -718,6 +846,7 @@ function getArgumentTokenAssignments(
   const shorthandArguments = getShorthandArgumentDefinitions(definition);
   const positionalTokens: Array<{ token: TokenSpan; tokenIndex: number }> = [];
   let positionalIndex = 0;
+  const usesCustomRectInsetPositionals = definition.name === "rect-inset";
 
   tokens.slice(1).forEach((token, argumentTokenIndex) => {
     const tokenIndex = argumentTokenIndex + 1;
@@ -740,6 +869,10 @@ function getArgumentTokenAssignments(
 
     positionalTokens.push({ token, tokenIndex });
 
+    if (usesCustomRectInsetPositionals) {
+      return;
+    }
+
     const argument = shorthandArguments[positionalIndex] ?? null;
     positionalIndex += 1;
 
@@ -751,6 +884,11 @@ function getArgumentTokenAssignments(
       });
     }
   });
+
+  if (usesCustomRectInsetPositionals) {
+    assignRectInsetPositionalTokens(assignments, definition, positionalTokens);
+    return assignments;
+  }
 
   const variadic = definition.variadicArguments;
   const trailingArgument = variadic?.trailingArgument;
