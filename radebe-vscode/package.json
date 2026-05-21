@@ -1,5 +1,5 @@
 {
-  "name": "@radebe/vscode",
+  "name": "radebe-language-support",
   "displayName": "Radebe Language Support",
   "description": "VS Code language support for Radebe .rdb sprite source files.",
   "version": "0.1.0",

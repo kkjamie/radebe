@@ -4,6 +4,7 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 artifacts/
+Temp/
 .env
 .env.local
 .env.*.local

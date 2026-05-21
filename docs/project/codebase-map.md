@@ -44,6 +44,7 @@ Last updated: `2026-05-20`
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.
 - `scripts/src/sea.ts`: release-time bundling and Node SEA packaging automation for `radebe-cli`.
 - `scripts/src/unity-deploy.ts`: local Unity plugin deployment helper that reads `.env` / `RADEBE_UNITY_PROJECT_PATH`, copies `radebe-unity/Assets` into a configured Unity project, and installs the current platform packaged CLI payload.
+- `scripts/install-vscode-extension.mjs`: local VS Code deployment helper that stages the extension plus copied `@radebe/core` runtime files, packages a VSIX through `@vscode/vsce`, and optionally installs it with the VS Code CLI.
 - root workspace config files: npm workspaces, TypeScript project references, and shared build settings.
 - CLI packaging pipeline: bundle `radebe-cli` plus `@radebe/core` into a single release entry script, then build per-platform Node SEA executables from a pinned Node LTS binary.
 - SEA artifact root: `artifacts/radebe-cli/sea/<platform>-<arch>/` containing `artifact-manifest.json`, the bundled entry, SEA blob, config, and generated executable.

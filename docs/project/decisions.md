@@ -399,3 +399,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Editor color affordances stay aligned with renderer-supported colors, named colors and hex colors behave consistently across VS Code and web, and future color vocabulary changes can be made once in core.
 - Related tasks: T-057
 - Supersedes: N/A
+
+---
+
+### DEC-035: Package VS Code Locally With A Staged VSIX
+- Date: `2026-05-20`
+- Status: Accepted
+- Context: The user wanted a normal installed VS Code extension without publishing to Marketplace yet, and the extension imports the private workspace package `@radebe/core`.
+- Decision: Add a local install script that stages a clean VSIX directory, copies the extension build plus `@radebe/core` runtime files into that stage, packages it with repo-local `@vscode/vsce`, and installs it with the VS Code CLI. Keep Marketplace publishing out of scope for now.
+- Consequences: `npm run install:vscode` gives a repeatable local deployment path without relying on Extension Development Host, global `vsce`, or workspace symlinks inside the VSIX. Marketplace publishing can still be added later with a separate release workflow.
+- Related tasks: T-058
+- Supersedes: N/A

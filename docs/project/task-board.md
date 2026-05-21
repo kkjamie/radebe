@@ -3,9 +3,40 @@
 Owner: `Main Thread`
 Last updated: `2026-05-20`
 
-Use this as the single source of truth for active execution state.
+Use this as the single source of truth for active execution state. Keep `Active` limited to live execution items; closed work belongs in `Completed`.
 
 ## Active
+| ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-043 | Add Unity importer options for sprite settings and slicing metadata | M2 | Gate C | P1 | In Progress | `codex-main` | Needs in-editor Unity confirmation that the new importer inspector preview and settings behave correctly for 9-slice, pivot, and filtering in Eddie | Open a deployed `.rdb` asset in Eddie, confirm the live preview shows border guides and pivot updates immediately, and verify reimport behavior for border/9-slice, pivot, PPU, and point vs bilinear filtering |
+
+## Next Up
+| ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+## Backlog
+| ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-054 | Phase 5: Package the editor as a reusable consumer surface | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred until the product surface settles after the web editor spike | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
+| T-055 | Phase 6: Build Unity editor live-authoring parity | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred; current Unity priority remains importer validation/options rather than an in-Unity IDE surface | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
+| T-059 | Add `group` as a structural command for shared transforms and appearance scope | M2 | Deferred | P1 | Backlog | Unassigned | Needs shape/effect scope design so grouping does not imply unplanned compositing semantics | Define whether `group` first owns ordering and shared properties only, or also creates an offscreen compositing surface for alpha, blend, masks, and filters |
+| T-060 | Add explicit `mask` support with add, intersect, subtract, and replace modes | M2 | Deferred | P1 | Backlog | Unassigned | Needs render-region model design for clipping arbitrary child drawing | Implement the smallest mask slice that can clip child draw commands through shape coverage while preserving deterministic pixel output |
+| T-061 | Add soft shadow blur support to the existing `shadow` appearance command | M2 | Deferred | P1 | Backlog | Unassigned | Needs a deterministic blur kernel and performance budget for CLI, web, and Unity artifact parity | Extend `shadow` with `blur` while keeping the current hard-edged shadow behavior as the zero-blur default |
+| T-062 | Add glow appearance support, starting with inner glow and outer-glow semantics | M2 | Deferred | P2 | Backlog | Unassigned | Needs decision on whether outer glow is syntax sugar over colored soft shadows or a distinct appearance command | Prototype `glow` against shape contours, with inner glow clipped inside the source region and outer glow mapped to the soft-shadow pipeline if equivalent |
+| T-063 | Add procedural noise fills | M2 | Deferred | P2 | Backlog | Unassigned | Needs seeded deterministic generator design and color-ramp syntax | Add a `fill noise` variant with stable seeds, scale controls, optional alpha, and web examples for sci-fi surface texture |
+| T-064 | Add cloud or fractal fill generators | M2 | Deferred | P2 | Backlog | Unassigned | Depends on the broader procedural fill generator contract from T-063 | Add a smooth procedural fill family for cloudy, plasma, or layered fractal looks with deterministic seeds and palette stops |
+| T-065 | Add Voronoi or cell-pattern fill generators | M2 | Deferred | P2 | Backlog | Unassigned | Depends on the broader procedural fill generator contract from T-063 | Add a cell-based generator useful for cracked panels, alien tech surfaces, shields, and map-like UI backgrounds |
+| T-066 | Add tileable pattern fills and scanline/hatch presets | M2 | Deferred | P2 | Backlog | Unassigned | Needs syntax for repeated pattern coordinate space and shape-local anchoring | Add deterministic pattern fills such as stripes, diagonal hatches, dots, grids, scanlines, and circuit-like repeats |
+| T-067 | Add blend modes and compositing controls for appearance passes | M2 | Deferred | P2 | Backlog | Unassigned | Needs alpha/compositing model design and compatibility checks across renderer targets | Define and implement a small initial blend set such as normal, add, multiply, screen, and overlay for ordered appearance passes |
+| T-068 | Add symbolic bounds and expression values | M2 | Deferred | P1 | Backlog | Unassigned | Needs expression parsing and evaluation that stays simple, deterministic, and schema-aware | Support values such as `left+8`, `right-8`, `center-x`, `bottom-12`, and variable arithmetic in geometry and appearance arguments |
+| T-069 | Add transform support for shapes and groups | M2 | Deferred | P2 | Backlog | Unassigned | Needs choices around pixel snapping, antialiasing, rotated bounds, and whether transforms require groups | Scope translate, rotate, scale, and mirror operations for shapes or `group` blocks without breaking pixel-perfect defaults |
+| T-070 | Add reusable symbols or component definitions | M2 | Deferred | P2 | Backlog | Unassigned | Needs naming, parameter, and instancing model design | Explore `symbol` / `use` style reuse for repeated UI pieces such as corner bolts, tabs, dividers, and button motifs |
+| T-071 | Add richer path semantics with caps, joins, curves, and closed paths | M2 | Deferred | P2 | Backlog | Unassigned | Builds on the current stroke-first open `path` slice | Extend `path` beyond point-polylines with cap and join controls, optional close/fill behavior, and later curve commands if still aligned with the language style |
+| T-072 | Add source-authored sprite metadata for import hints and slicing | M2 | Deferred | P1 | Backlog | Unassigned | Should follow T-043 validation so Unity-only importer options are understood first | Decide which Unity-facing settings, such as pivot, PPU, border, slicing labels, and filter hints, should be expressible in `.rdb` source metadata |
+| T-073 | Add boolean region operations for shape composition | M2 | Deferred | P2 | Backlog | Unassigned | Overlaps with mask modes and should wait until explicit masks clarify the render-region model | Explore union, subtract, intersect, and difference operations for composing reusable shape regions before fill or stroke passes |
+| T-099 | Track future language and tooling ideas after the first vertical slice | M2 | Gate B | P2 | Backlog | Unassigned | None | Revisit once the core loop is running |
+
+## Completed
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-001 | Select workspace tooling and scaffold the TypeScript monorepo | M1 | Gate A | P0 | Done | `t-001-workspace-scaffold` | None | Hand off to T-002 with the scaffolded package boundaries and shared TypeScript config |
@@ -45,7 +76,6 @@ Use this as the single source of truth for active execution state.
 | T-041 | Add optional real output antialiasing with sprite defaults and geometry overrides | M2 | Gate B | P1 | Done | `codex-main` | None | Return to Unity Gate C with the richer renderer contract now preserving pixel-perfect defaults while allowing `sprite antialias` and per-geometry overrides for smoother contours |
 | T-042 | Remove standalone `align` and `style` pages from the web docs nav | M2 | Gate B | P2 | Done | `codex-main` | None | Keep `align` and `style` documented only where they apply, currently inside the `stroke` examples and notes |
 | T-011 | Re-exercise the packaged CLI bridge from Unity after the first language commands | M2 | Gate C | P1 | Done | `codex-main` | None | Hand off to the next thread to choose the next Unity slice now that local deploy plus manual Unity verification confirmed the `.rdb` importer produces a generated Sprite in Eddie |
-| T-043 | Add Unity importer options for sprite settings and slicing metadata | M2 | Gate C | P1 | In Progress | `codex-main` | Needs in-editor Unity confirmation that the new importer inspector preview and settings behave correctly for 9-slice, pivot, and filtering in Eddie | Open a deployed `.rdb` asset in Eddie, confirm the live preview shows border guides and pivot updates immediately, and verify reimport behavior for border/9-slice, pivot, PPU, and point vs bilinear filtering |
 | T-044 | Add editor-oriented schema metadata for language assistance | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-045 to build a headless language-service slice for completions, argument help, indentation, and future smart edits using the shared schema metadata |
 | T-045 | Build the first headless language service for editor completions and indentation | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-046 to wire the headless language-service results into the web editor without changing parser/compiler behavior |
 | T-046 | Wire the headless language service into the web editor | M2 | Gate B | P1 | Done | `codex-main` | None | Hand off to T-047 for schema-driven smart edits such as removing inline color shorthand when explicit `fill` authoring begins |
@@ -58,17 +88,7 @@ Use this as the single source of truth for active execution state.
 | T-053 | Validate and polish the CodeMirror editor migration | M2 | Gate B | P1 | Done | `codex-main` | None | Phase 4 editor migration polish is complete: CodeMirror interactions, assist timing, smart edits, undo grouping, caret/gutter styling, and compiler-backed diagnostic squiggles are in place |
 | T-056 | Add VS Code language support for `.rdb` files | M2 | Deferred | P1 | Done | `codex-main` | None | Extension Development Host launch was validated by the user; T-057 followed up on the first named-color editor affordance gap |
 | T-057 | Add shared editor color token swatches and picker support | M2 | Gate B | P1 | Done | `codex-main` | None | VS Code color picker behavior was confirmed by the user; web swatches now use a button-launched native color input outside the editable surface, and the editor wrapper no longer uses label semantics that forwarded normal editor clicks to the swatch |
-
-## Next Up
-| ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-## Backlog
-| ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-054 | Phase 5: Package the editor as a reusable consumer surface | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred until the product surface settles after the web editor spike | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
-| T-055 | Phase 6: Build Unity editor live-authoring parity | M2 | Deferred | P2 | Backlog | Unassigned | Explicitly deferred; current Unity priority remains importer validation/options rather than an in-Unity IDE surface | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
-| T-099 | Track future language and tooling ideas after the first vertical slice | M2 | Gate B | P2 | Backlog | Unassigned | None | Revisit once the core loop is running |
+| T-058 | Add local VS Code extension install automation | M2 | Deferred | P1 | Done | `codex-main` | None | `npm run install:vscode` now builds, stages a clean VSIX with bundled `@radebe/core`, packages it through `vsce`, and installs it into the normal VS Code profile |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

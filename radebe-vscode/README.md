@@ -11,8 +11,17 @@ VS Code language support for `.rdb` sprite source files.
 
 ## Development
 ```sh
-npm run build -w @radebe/vscode
-npm run test -w @radebe/vscode
+npm run build -w radebe-language-support
+npm run test -w radebe-language-support
 ```
+
+## Local Install
+From the repository root:
+
+```sh
+npm run install:vscode
+```
+
+This builds the workspace, packages an installable VSIX into `Temp/`, and installs it into the normal VS Code profile with `code --install-extension`.
 
 The extension consumes `@radebe/core` directly for this first slice. A shared LSP adapter can be introduced later if multiple editor hosts need a protocol boundary.

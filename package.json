@@ -16,12 +16,15 @@
     "dev:web": "npm run dev -w @radebe/web",
     "deploy:unity": "npm run package:cli:sea && npm run unity:deploy -w @radebe/scripts",
     "package:cli:sea": "npm run build -w @radebe/scripts && npm run sea:build -w @radebe/scripts",
+    "package:vscode": "npm run build && node scripts/install-vscode-extension.mjs",
+    "install:vscode": "npm run build && node scripts/install-vscode-extension.mjs --install",
     "smoke:cli:sea": "npm run build -w @radebe/scripts && npm run sea:smoke -w @radebe/scripts",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "tsc -b"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
+    "@vscode/vsce": "^3.9.1",
     "typescript": "^5.8.3"
   }
 }
