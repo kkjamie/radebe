@@ -498,3 +498,25 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Authors can clip arbitrary draw commands immediately with deterministic pixel output, a clear inverted-mask option, and a way to inspect either side of the mask while tuning source. Full mask composition modes are split to T-079 so they can be designed against a real mask-stack or boolean-region model.
 - Related tasks: T-060, T-079
 - Supersedes: N/A
+
+---
+
+### DEC-044: Make `radebe-web` The Public Homepage And Reference Surface
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: The web package had grown from a quick examples workbench into the most useful user-facing surface for learning and trying the language.
+- Decision: Treat `radebe-web` as the main public site. The default route introduces Radebe, `Try it` owns the full editor/preview workspace, command reference navigation uses the author-facing vocabulary, and release notes, public roadmap, VS Code extension, and Unity plugin pages live alongside the command docs.
+- Consequences: Future web additions should decide whether they belong in the public roadmap, command reference, syntax guide, or integration pages instead of adding another examples-only page by default.
+- Related tasks: T-081, T-074, T-054, T-055, T-058
+- Supersedes: N/A
+
+---
+
+### DEC-045: Keep The Web Site On Modular Vanilla TypeScript
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: After `radebe-web` became the public site, `main.ts` had grown into a multi-thousand-line mix of static content, page rendering, editor internals, styling, and router wiring. The site needs reusable panels and easier editing, but it remains mostly static and does not yet need framework-level state management.
+- Decision: Keep `radebe-web` on Vite, TypeScript, CodeMirror 6, and direct DOM construction for now, but split the app into modules for data, page renderers, playground/editor internals, shared UI helpers, styles, shared types, and shell/router wiring. Do not introduce React or another frontend framework solely for this stage.
+- Consequences: Page and docs edits become easier without framework churn. A future React/Preact/Svelte decision remains open if the web app gains richer persistent state, reusable interactive panels, or hostable editor-package needs that justify a component framework.
+- Related tasks: T-082, T-081, T-054
+- Supersedes: N/A

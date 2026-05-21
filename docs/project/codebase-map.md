@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-05-20`
+Last updated: `2026-05-21`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -28,7 +28,21 @@ Last updated: `2026-05-20`
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.
-- `radebe-web/src/`: CodeMirror-backed browser authoring shell that imports `radebe-core`, provides schema-driven editor assists, renders the shared preview artifact, and shows shared-core color swatches with picker-backed replacement.
+- `radebe-web/src/main.ts`: browser site shell, top bar/sidebar wiring, hash routing, active navigation, and shared source-state ownership.
+- `radebe-web/src/data.ts`: lightweight page registry that aggregates the page-owned web content modules.
+- `radebe-web/src/content/home.ts`: homepage page definition and highlighted mini-preview source.
+- `radebe-web/src/content/try-it.ts`: default full-page Try it editor example data.
+- `radebe-web/src/content/syntax.ts`: syntax guide feature cards, notes, and example snippets.
+- `radebe-web/src/content/releases.ts`: release-note history data.
+- `radebe-web/src/content/roadmap.ts`: public roadmap feature cards and planned syntax examples.
+- `radebe-web/src/content/integrations.ts`: VS Code extension and Unity plugin page data plus local download links.
+- `radebe-web/src/content/commands/*.ts`: one command reference doc module per sidebar command page, with `content/commands/index.ts` preserving navigation order.
+- `radebe-web/src/pages.ts`: page renderer functions for Home, Try it, Syntax, Release Notes, Roadmap, integration pages, and command reference pages.
+- `radebe-web/src/playground.ts`: CodeMirror-backed Radebe editor/preview surface, schema-driven assists, diagnostics, color swatches, and preview rendering.
+- `radebe-web/src/syntax-highlight.ts`: shared static source highlighter used outside CodeMirror surfaces.
+- `radebe-web/src/ui.ts`: reusable DOM helper panels and small UI primitives used by page renderers.
+- `radebe-web/src/styles.ts`: style injection for the current web shell, editor, sidebar, and shared components.
+- `radebe-web/src/types.ts`: web-only page/content types shared across the web modules.
 - `radebe-vscode/src/extension.ts`: VS Code extension activation for `.rdb` completions, signature help, diagnostics, color decorations/picker presentations, smart newline indentation, smart edits, and text render preview.
 - `radebe-vscode/src/language-adapter.ts`: pure adapter layer that converts VS Code-style offsets into shared `@radebe/core` language-service, color-token, and diagnostic-range calls.
 - `radebe-vscode/syntaxes/radebe.tmLanguage.json`: TextMate grammar for `.rdb` syntax highlighting.
