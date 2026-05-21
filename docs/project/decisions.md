@@ -454,3 +454,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Transparent groups preserve their existing pixel behavior while still giving the renderer a real boundary for group passes, future masks, transforms, and compositing controls. Compiler diagnostics can now enforce group content before group-level passes without silently flattening or reordering children.
 - Related tasks: T-076, T-075, T-060, T-069
 - Supersedes: N/A
+
+---
+
+### DEC-040: Distinguish Omitted Corner Treatments From Zero Values
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: Existing rectangle corner modifiers support uniform and four-corner `cut` or `radius` values, but authors also need to mix cut and rounded corners on the same rectangle.
+- Decision: Future mixed-corner rectangle work should support targeted single-corner commands such as `cut top-left 8` and `radius top-right 12`. A corner with no targeted treatment is semantically different from a corner with an explicit zero-valued cut or radius.
+- Consequences: T-077 must use a corner-treatment model that can represent absence, cut, and radius independently per corner rather than lowering targeted syntax into four numeric values where `0` means "not modified."
+- Related tasks: T-077, T-030, T-033
+- Supersedes: N/A

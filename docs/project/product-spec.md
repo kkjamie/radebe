@@ -504,6 +504,16 @@ plot 5 4 #ffffff
 line 8 8 120 8 #70c8e8
 ```
 
+Rectangle corner treatments currently support uniform and four-corner `cut` or `radius` forms, but a single rectangle cannot yet mix cut and rounded corners. Future work should support targeted corner treatments such as:
+
+```text
+rect 0 0 96 40 #101820
+  cut top-left 8
+  radius top-right 12
+```
+
+In that future model, an omitted corner treatment must remain distinct from an explicit zero-valued treatment. For example, `cut top-left 8` should not be treated as equivalent to `cut 8 0 0 0`.
+
 Recovered MVP command set:
 - `sprite`
 - `size`

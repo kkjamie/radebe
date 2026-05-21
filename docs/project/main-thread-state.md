@@ -13,7 +13,7 @@ Last updated: `2026-05-21`
 - `overlay` has been intentionally removed from the near-term language surface and web docs for now; ordered multi-`fill` passes are the current supported layering model until a future compositing need justifies a distinct overlay command again.
 - `shadow` is now a real shape appearance pass on `rect`, `circle`, `polygon`, and composited groups, with `x`, `y`, `spread`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; it renders as a crisp contour-derived shadow behind the source shape or group layer, and `blur` remains intentionally deferred to a later extension on the same command.
 - `fill` and `stroke` now also support explicit `alpha` properties as per-pass opacity multipliers; they default to `1`, multiply with any alpha already present in solid colors or gradient stop colors, and do not implicitly flow into nested child strokes.
-- Rectangle geometry now also supports `cut` and `radius` as child geometry modifiers on rectangle-backed shapes, with `cut` covering chamfered corners, `radius` covering rounded corners, and the current compiler intentionally rejecting both on the same rectangle until a richer mixed-corner model exists.
+- Rectangle geometry now also supports `cut` and `radius` as child geometry modifiers on rectangle-backed shapes, with `cut` covering chamfered corners, `radius` covering rounded corners, and the current compiler intentionally rejecting both on the same rectangle until a richer mixed-corner model exists. T-077 now tracks that future model, including targeted single-corner forms where an omitted corner treatment is distinct from an explicit zero-valued treatment.
 - Geometry commands can now opt into shared shape appearance children through a `shape-appearance` capability path in the schema, and the compiler collects those `fill` / `stroke` children through a shared appearance pass instead of per-shape child wiring.
 - Rectangle-backed `stroke` is now available as the first generated-region appearance slice, including `stroke <width> <color>` shorthand, optional `align`, optional `style`, rectangle rendering for `solid`, `dashed`, and `dotted` styles, nested child `stroke` support on the generated stroke envelope, and modifier-aware contour following for `cut` and `radius`.
 - `circle` is now available as the first non-rectangular shape primitive using integer `x`, `y`, and `radius` geometry plus color shorthand or explicit `fill`, and it now also participates in the shared `stroke` model.
@@ -51,7 +51,7 @@ Last updated: `2026-05-21`
 
 ## Open Decisions / Blockers
 - The task board has been cleaned up so `Active` contains only live work. Completed rows now live under `Completed`; T-043 was closed by user request, T-054 and T-055 are explicitly postponed, and T-059 is complete.
-- Feature backlog has been expanded with T-060 through T-076 for masks, soft shadows, glow, procedural fills, patterns, blend modes, expressions, transforms, reusable symbols, richer paths, source-authored metadata, boolean region operations, vocabulary/reference-doc standardization, compiler ordering restrictions, and composited group appearance/effect passes. T-059 structural groups landed the transparent first slice, and T-076 has now landed group-level composited `fill`, `stroke`, and hard-edged `shadow`.
+- Feature backlog has been expanded with T-060 through T-077 for masks, soft shadows, glow, procedural fills, patterns, blend modes, expressions, transforms, reusable symbols, richer paths, source-authored metadata, boolean region operations, vocabulary/reference-doc standardization, compiler ordering restrictions, composited group appearance/effect passes, and mixed per-corner rectangle treatments. T-059 structural groups landed the transparent first slice, and T-076 has now landed group-level composited `fill`, `stroke`, and hard-edged `shadow`.
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
 - DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
@@ -69,10 +69,11 @@ Last updated: `2026-05-21`
 - T-076 is complete. Group-level `fill`, `stroke`, and hard-edged `shadow` now apply to a composited child layer using the Photoshop-folder semantics recorded in DEC-038; transparent groups still render children directly when no group passes are present.
 - T-074 is a backlog task to standardize the author-facing vocabulary across web reference docs, examples, autocomplete detail text, and VS Code/web editor help.
 - T-075 is a backlog task to add compiler ordering restrictions for command child phases, with tuning expected around property/argument forms, geometry modifiers, appearance passes, and effects. The group-specific content-before-passes rule landed with T-076.
+- T-077 is a backlog task to allow mixed per-corner rectangle treatments, such as `cut top-left 8` plus `radius top-right 12`, without treating omitted corners as explicit zero-valued cuts or radii.
 
 ## Best Next Tasks
 1. Consider T-074 vocabulary/reference-doc standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
-2. Consider T-060 `mask`, T-061 soft shadows, or T-068 symbolic expressions if the next goal is visible language/effects capability.
+2. Consider T-060 `mask`, T-061 soft shadows, T-068 symbolic expressions, or T-077 mixed rectangle corners if the next goal is visible language/effects capability.
 3. Keep T-054 and T-055 postponed; reopen T-043 only if hands-on Eddie importer validation is explicitly requested.
 
 ## Resume Checklist
