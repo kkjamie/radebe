@@ -67,6 +67,8 @@ export type {
   CompiledDocument,
   CompiledDrawCommand,
   LineCommand,
+  MaskCommand,
+  MaskShowMode,
   ParseResult,
   ParsedCommandNode,
   ParsedDocument,

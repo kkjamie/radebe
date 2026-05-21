@@ -211,6 +211,18 @@ export interface GroupCommand {
   strokes: StrokeAppearance[];
 }
 
+export type MaskShowMode = "masked-content" | "shape-only" | "content-only";
+
+export interface MaskCommand {
+  kind: "mask";
+  lineNumber: number;
+  name: string | null;
+  invert: boolean;
+  show: MaskShowMode;
+  shapeCommands: CompiledDrawCommand[];
+  contentCommands: CompiledDrawCommand[];
+}
+
 export type CompiledDrawCommand =
   | PlotCommand
   | LineCommand
@@ -218,7 +230,8 @@ export type CompiledDrawCommand =
   | CircleCommand
   | PolygonCommand
   | PathCommand
-  | GroupCommand;
+  | GroupCommand
+  | MaskCommand;
 
 export interface CompiledDocument {
   kind: "compiled-document";

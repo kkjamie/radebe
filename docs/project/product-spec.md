@@ -133,9 +133,9 @@ The implementation schema still uses broad command kinds such as `header`, `prop
 - Property commands: expanded child forms for command configuration or arguments. Examples: `x`, `y`, `width`, `height`, `align`, `alpha`, `antialias`.
 - Appearance passes: paint a drawable region. Current examples: `fill`, `stroke`.
 - Effect passes: derive pixels from a drawable region or composited layer. Current examples: `shadow` with optional blur and `glow` with inner or outer mode; future examples include standalone blur-like effects. The current schema may still classify effects under the broad `appearance` command kind until a separate internal kind is useful.
-- Structural containers: create hierarchy, ownership, or scope. Current examples: `group`, `vars`; planned examples include mask containers.
-- Mask shape: the child container under a future `mask` command that defines clipping coverage.
-- Masked content: the child container under a future `mask` command that contains the drawables clipped by the mask.
+- Structural containers: create hierarchy, ownership, or scope. Current examples: `group`, `vars`, `mask`, `shape`, and `contents`.
+- Mask shape: the `shape` child container under `mask` that defines clipping coverage.
+- Masked content: the `contents` child container under `mask` that contains the drawables clipped by the mask.
 
 Use these terms consistently in product docs, web reference docs, diagnostics, autocomplete details, and editor help.
 
@@ -149,7 +149,7 @@ Planned compiler restrictions:
 - Once a shape child block starts appearance or effect passes, later geometry modifiers or property commands should produce a focused diagnostic.
 - For composited groups, child drawables and nested groups should come before group-level appearance or effect passes.
 - Once a composited group starts group-level appearance or effect passes, later group content should produce a focused diagnostic; authors can use nested groups for staged behavior.
-- For future masks, `shape` should define the mask region and `content` should define the clipped drawables, with names and ordering documented in the web reference.
+- For masks, `shape` should define the mask region and `contents` should define the clipped drawables, with names and ordering documented in the web reference.
 
 Examples:
 
@@ -217,9 +217,8 @@ file:
       - sprite
       - plot
       - line
-      - rect-fill
-      - rect-outline
-      - shape
+      - rect
+      - group
       - mask
       - path
 
@@ -230,11 +229,27 @@ sprite:
       - size
       - background
 
+mask:
+  allows:
+    commands:
+      - shape
+      - contents
+
 shape:
   allows:
-    kinds:
-      - geometry
-      - appearance
+    commands:
+      - rect
+      - circle
+      - polygon
+
+contents:
+  allows:
+    commands:
+      - plot
+      - line
+      - rect
+      - group
+      - mask
 
 plot:
   kind: geometry
@@ -343,7 +358,7 @@ rect-inset $pad $panel-fill
 - A group may have an optional name for authoring clarity and future tooling.
 - Groups accept root-style draw commands, nested groups, and group-level `fill`, `shadow`, `glow`, and `stroke` passes.
 - Group child drawables and nested groups must come before group-level appearance or effect passes; use nested groups for staged behavior.
-- Group-level alpha, blend modes, masks, standalone filters, and transforms are intentionally deferred.
+- Group-level alpha, blend modes, standalone filters, and transforms are intentionally deferred.
 - Group-level appearance and effect passes should not act as inherited defaults for children. If authors need staged effects, they should use nested groups.
 
 Example:
@@ -448,8 +463,12 @@ Glow semantics:
 ## Mask Model
 - Every shape has implicit coverage for its own fill.
 - Explicit masks are for clipping arbitrary child drawing commands.
-- Planned mask modes include `intersect`, `subtract`, `replace`, and `add`.
-- Planned mask containers use `shape` for the clipping region and `content` for the clipped drawables.
+- `mask` uses a `shape` child container for the clipping region and a `contents` child container for the clipped drawables.
+- `shape` must come before `contents`.
+- Shape drawables inside `shape` can define coverage without a visible color or fill shorthand; the compiler gives otherwise-unpainted shape drawables implicit mask coverage.
+- `invert=true` keeps masked content outside the mask shape instead of inside it.
+- `show` controls mask debugging: omitted or `show=masked-content` renders normally, `show=shape-only` renders only the mask shape layer, and `show=content-only` renders the unmasked content layer.
+- Future mask composition modes may include `intersect`, `subtract`, `replace`, and `add`, but the current implemented slice is a single explicit clipping operation with optional inversion.
 
 Example:
 
@@ -458,12 +477,10 @@ mask body-mask
   shape
     rect-inset 6
       cut 12
-    circle 32 32 10
 
-  content
-    group hatch-lines
-      line -20 20 280 20 white
-      line -20 28 280 28 white
+  contents
+    rect-inset 0
+      fill gradient-linear #18242c #70c8e8
 ```
 
 ## Renderer Concepts
@@ -577,6 +594,7 @@ line 16 24 220 24 #70c8e8
 - The current implemented appearance slice also includes `shadow` on rectangle-backed shapes, circles, polygons, and composited groups with `x`, `y`, `spread`, `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur 0` preserves the original hard-edged behavior.
 - The current implemented effect slice includes `glow` on rectangle-backed shapes, circles, polygons, and composited groups with `mode`, non-negative `spread`, non-negative `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; outer glow draws outside the source contour and inner glow clips inside it.
 - The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse, plus `group` containers for ordering nested draw commands; groups stay transparent without group-level passes and become composited layer drawables when they include group-level `fill`, `stroke`, `shadow`, or `glow`.
+- The current implemented masking slice includes `mask` with `shape` and `contents` containers plus `invert=true` and `show` debug modes; mask shapes render into an alpha layer, contents render into an offscreen layer, and content alpha is clipped through the mask shape coverage or its inverse unless `show=shape-only` or `show=content-only` is used for debugging.
 - The current stroke renderer supports rectangle-backed, circle-backed, polygon-backed, and open path shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 - The current renderer supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` when omitted.
 

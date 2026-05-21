@@ -88,12 +88,36 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
     "polygon",
     "path",
     "group",
+    "mask",
     "name",
     "fill",
     "shadow",
     "glow",
     "stroke"
   ]);
+
+  assert.deepEqual(labels("sprite panel\n  size 24 24\n\nmask window\n  |"), [
+    "shape",
+    "contents",
+    "name",
+    "invert",
+    "show"
+  ]);
+
+  assert.deepEqual(
+    labels("sprite panel\n  size 24 24\n\nmask window\n  shape\n    |"),
+    [
+      "plot",
+      "line",
+      "rect",
+      "rect-absolute",
+      "rect-inset",
+      "circle",
+      "polygon",
+      "path",
+      "group"
+    ]
+  );
 });
 
 test("getArgumentHelp reports the active positional argument", () => {
@@ -162,6 +186,12 @@ test("getLanguageCompletions suggests enum values", () => {
   assert.deepEqual(labels("circle 12 12 8\n  antialias |"), [
     "true",
     "false"
+  ]);
+  assert.deepEqual(labels("mask window\n  invert |"), ["true", "false"]);
+  assert.deepEqual(labels("mask window\n  show |"), [
+    "masked-content",
+    "shape-only",
+    "content-only"
   ]);
 });
 
@@ -241,6 +271,8 @@ test("getEnterIndentation follows schema editor hints", () => {
   assert.equal(getEnterIndentation(atCursor("sprite panel\n  size 16 16|")), "  ");
   assert.equal(getEnterIndentation(atCursor("rect 0 0 10 10|")), "  ");
   assert.equal(getEnterIndentation(atCursor("group frame|")), "  ");
+  assert.equal(getEnterIndentation(atCursor("mask window|")), "  ");
+  assert.equal(getEnterIndentation(atCursor("  shape|")), "    ");
   assert.equal(getEnterIndentation(atCursor("  fill|")), "    ");
   assert.equal(getEnterIndentation(atCursor("  fill solid red|")), "  ");
   assert.equal(getEnterIndentation(atCursor("plot 0 0 white|")), "");

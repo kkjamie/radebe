@@ -65,6 +65,7 @@ test("schema exposes context-aware child command metadata", () => {
     "polygon",
     "path",
     "group",
+    "mask",
     "var",
     "vars"
   ]);
@@ -114,11 +115,22 @@ test("schema exposes context-aware child command metadata", () => {
     "polygon",
     "path",
     "group",
+    "mask",
     "name",
     "fill",
     "shadow",
     "glow",
     "stroke"
+  ]);
+
+  const mask = getCommandDefinition("mask");
+  assert.ok(mask);
+  assert.deepEqual(getAllowedChildCommandNames(mask), [
+    "shape",
+    "contents",
+    "name",
+    "invert",
+    "show"
   ]);
 });
 
@@ -792,6 +804,95 @@ test("compileDocument rejects group content after group passes", () => {
         "The group command expects all child draw commands before group-level appearance or effect passes.",
       line: 8,
       column: 3
+    }
+  ]);
+});
+
+test("compileDocument supports mask shape and contents containers", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 5 3\n  background transparent\n\nmask body invert=true show=shape-only\n  shape\n    rect 1 0 3 3\n  contents\n    rect 0 0 5 3 #70c8e8"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "mask",
+      lineNumber: 5,
+      name: "body",
+      invert: true,
+      show: "shape-only",
+      shapeCommands: [
+        {
+          kind: "rect",
+          lineNumber: 7,
+          x: 1,
+          y: 0,
+          width: 3,
+          height: 3,
+          fills: [{ kind: "solid", color: "white", alpha: 1 }],
+          strokes: [],
+          sourceCommandName: "rect"
+        }
+      ],
+      contentCommands: [
+        {
+          kind: "rect",
+          lineNumber: 9,
+          x: 0,
+          y: 0,
+          width: 5,
+          height: 3,
+          fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+          strokes: [],
+          sourceCommandName: "rect"
+        }
+      ]
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument rejects mask contents before shape", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 4\n  background transparent\n\nmask bad\n  contents\n    plot 0 0 white\n  shape\n    rect 0 0 2 2"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, []);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message:
+        "The mask command expects a shape container before its contents container.",
+      line: 6,
+      column: 3
+    },
+    {
+      stage: "compiler",
+      message: "The mask command requires a contents container.",
+      line: 5,
+      column: 1
+    }
+  ]);
+});
+
+test("compileDocument rejects invalid mask show values", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 4 4\n  background transparent\n\nmask debug show=wireframe\n  shape\n    rect 0 0 2 2\n  contents\n    plot 0 0 white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, []);
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      message:
+        'The mask command expects "show" to be "masked-content", "shape-only", or "content-only".',
+      line: 5,
+      column: 1
     }
   ]);
 });
@@ -2105,6 +2206,66 @@ test("renderSource runs the parser, compiler, and renderer pipeline", () => {
   assert.deepEqual(result.artifact.rows, [":::#", ":##:", ":#::", "#:::"]);
   assert.equal(result.parsed.commands.length, 3);
   assert.equal(result.compiled.commands.length, 2);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource clips mask contents to the mask shape coverage", () => {
+  const result = renderSource({
+    source:
+      "sprite masked\n  size 5 3\n  background transparent\n\nmask window\n  shape\n    rect 1 0 3 3\n  contents\n    rect 0 0 5 3 white"
+  });
+
+  assert.deepEqual(result.artifact.rows, [".###.", ".###.", ".###."]);
+  assert.deepEqual(result.artifact.pixels, [
+    [null, "#ffffff", "#ffffff", "#ffffff", null],
+    [null, "#ffffff", "#ffffff", "#ffffff", null],
+    [null, "#ffffff", "#ffffff", "#ffffff", null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource supports inverted masks that exclude the shape area", () => {
+  const result = renderSource({
+    source:
+      "sprite masked-invert\n  size 5 3\n  background transparent\n\nmask invert=true\n  shape\n    rect 1 0 3 3\n  contents\n    rect 0 0 5 3 white"
+  });
+
+  assert.deepEqual(result.artifact.rows, ["#...#", "#...#", "#...#"]);
+  assert.deepEqual(result.artifact.pixels, [
+    ["#ffffff", null, null, null, "#ffffff"],
+    ["#ffffff", null, null, null, "#ffffff"],
+    ["#ffffff", null, null, null, "#ffffff"]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource supports mask shape-only debug output", () => {
+  const result = renderSource({
+    source:
+      "sprite masked-shape\n  size 5 3\n  background transparent\n\nmask show=shape-only\n  shape\n    rect 1 0 3 3\n  contents\n    rect 0 0 5 3 #70c8e8"
+  });
+
+  assert.deepEqual(result.artifact.rows, [".###.", ".###.", ".###."]);
+  assert.deepEqual(result.artifact.pixels, [
+    [null, "#ffffff", "#ffffff", "#ffffff", null],
+    [null, "#ffffff", "#ffffff", "#ffffff", null],
+    [null, "#ffffff", "#ffffff", "#ffffff", null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource supports mask content-only debug output", () => {
+  const result = renderSource({
+    source:
+      "sprite masked-content\n  size 5 3\n  background transparent\n\nmask show=content-only\n  shape\n    rect 1 0 3 3\n  contents\n    rect 0 0 5 3 #70c8e8"
+  });
+
+  assert.deepEqual(result.artifact.rows, ["#####", "#####", "#####"]);
+  assert.deepEqual(result.artifact.pixels, [
+    ["#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8"],
+    ["#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8"],
+    ["#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8"]
+  ]);
   assert.deepEqual(result.diagnostics, []);
 });
 

@@ -487,3 +487,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Authors get one command for glow semantics instead of overloading `shadow`; renderer code can share blur sampling without making outer glow a pure `shadow 0 0` alias; glow currently supports rectangle-backed shapes, circles, polygons, and composited groups, while paths remain stroke-only.
 - Related tasks: T-062, T-061, T-076
 - Supersedes: N/A
+
+---
+
+### DEC-043: Use Shape And Contents Containers For First Mask Clipping
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: T-060 needed explicit masks for clipping arbitrary child drawing, and the latest authoring direction preferred `mask` with a `shape` container plus a plural `contents` container. The older backlog wording also mentioned composition modes, but add/replace/intersect/subtract need a real stacked-mask or region-composition model to avoid fake semantics.
+- Decision: Implement the first mask slice as `mask name? invert=true|false show=masked-content|shape-only|content-only` with exactly one `shape` container followed by exactly one `contents` container. Mask shape drawables render into an alpha layer, otherwise-unpainted shape drawables receive implicit mask coverage, and the content layer is clipped through the mask alpha or inverse alpha when `invert=true`. The `show` option defaults to `masked-content`; `shape-only` and `content-only` are debug views.
+- Consequences: Authors can clip arbitrary draw commands immediately with deterministic pixel output, a clear inverted-mask option, and a way to inspect either side of the mask while tuning source. Full mask composition modes are split to T-079 so they can be designed against a real mask-stack or boolean-region model.
+- Related tasks: T-060, T-079
+- Supersedes: N/A

@@ -88,6 +88,7 @@ export const FILE_DEFINITION: CommandDefinition = {
     "polygon",
     "path",
     "group",
+    "mask",
     "var",
     "vars"
   ],
@@ -99,6 +100,7 @@ export const FILE_DEFINITION: CommandDefinition = {
 const booleanValues = ["true", "false"];
 const directionValues = ["horizontal", "vertical"];
 const glowModeValues = ["inner", "outer"];
+const maskShowValues = ["masked-content", "shape-only", "content-only"];
 const strokeAlignValues = ["inside", "center", "outside"];
 const strokeStyleValues = ["solid", "dashed", "dotted"];
 
@@ -343,7 +345,60 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       "circle",
       "polygon",
       "path",
+      "group",
+      "mask"
+    ],
+    editorHints: {
+      indentBehavior: "child"
+    }
+  },
+  {
+    name: "mask",
+    kind: "structural",
+    propertyArgs: ["name", "invert", "show"],
+    shorthandSchema: ["name"],
+    arguments: [
+      arg("name", "identifier"),
+      arg("invert", "boolean", { enumValues: booleanValues }),
+      arg("show", "enum", { enumValues: maskShowValues })
+    ],
+    allowedChildCommands: ["shape", "contents"],
+    editorHints: {
+      indentBehavior: "child"
+    }
+  },
+  {
+    name: "shape",
+    kind: "structural",
+    allowedChildCommands: [
+      "plot",
+      "line",
+      "rect",
+      "rect-absolute",
+      "rect-inset",
+      "circle",
+      "polygon",
+      "path",
       "group"
+    ],
+    editorHints: {
+      indentBehavior: "child"
+    }
+  },
+  {
+    name: "contents",
+    kind: "structural",
+    allowedChildCommands: [
+      "plot",
+      "line",
+      "rect",
+      "rect-absolute",
+      "rect-inset",
+      "circle",
+      "polygon",
+      "path",
+      "group",
+      "mask"
     ],
     editorHints: {
       indentBehavior: "child"
@@ -574,6 +629,12 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   createSingleValuePropertyDefinition("height", "integer", { min: 1 }),
   createSingleValuePropertyDefinition("antialias", "boolean", {
     enumValues: booleanValues
+  }),
+  createSingleValuePropertyDefinition("invert", "boolean", {
+    enumValues: booleanValues
+  }),
+  createSingleValuePropertyDefinition("show", "enum", {
+    enumValues: maskShowValues
   }),
   createSingleValuePropertyDefinition("alpha", "number", { min: 0, max: 1 }),
   createSingleValuePropertyDefinition("color", "color"),

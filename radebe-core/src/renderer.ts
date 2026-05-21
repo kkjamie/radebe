@@ -2143,6 +2143,75 @@ function drawGroup(
   compositeLayer(pixels, drawnPixels, finalLayer);
 }
 
+function applyAlphaMaskToLayer(layer: Layer, mask: AlphaMask, invert: boolean): void {
+  for (let y = 0; y < layer.height; y += 1) {
+    for (let x = 0; x < layer.width; x += 1) {
+      const color = layer.pixels[y]![x];
+
+      if (color === null || color.a <= 0) {
+        layer.pixels[y]![x] = null;
+        layer.drawnPixels[y]![x] = false;
+        continue;
+      }
+
+      const maskAlpha = getMaskAlpha(mask, x, y);
+      const coverage = invert ? 1 - maskAlpha : maskAlpha;
+
+      if (coverage <= 0) {
+        layer.pixels[y]![x] = null;
+        layer.drawnPixels[y]![x] = false;
+        continue;
+      }
+
+      layer.pixels[y]![x] = withOpacity(color, coverage);
+      layer.drawnPixels[y]![x] = true;
+    }
+  }
+}
+
+function drawMask(
+  pixels: PixelGrid,
+  drawnPixels: DrawnGrid,
+  command: Extract<CompiledDrawCommand, { kind: "mask" }>,
+  defaultAntialias: boolean
+): void {
+  const height = pixels.length;
+  const width = pixels[0]?.length ?? 0;
+  const shapeLayer = createLayer(width, height);
+  const contentLayer = createLayer(width, height);
+
+  command.shapeCommands.forEach((shapeCommand) => {
+    drawCommand(
+      shapeLayer.pixels,
+      shapeLayer.drawnPixels,
+      shapeCommand,
+      defaultAntialias
+    );
+  });
+
+  command.contentCommands.forEach((contentCommand) => {
+    drawCommand(
+      contentLayer.pixels,
+      contentLayer.drawnPixels,
+      contentCommand,
+      defaultAntialias
+    );
+  });
+
+  if (command.show === "shape-only") {
+    compositeLayer(pixels, drawnPixels, shapeLayer);
+    return;
+  }
+
+  if (command.show === "content-only") {
+    compositeLayer(pixels, drawnPixels, contentLayer);
+    return;
+  }
+
+  applyAlphaMaskToLayer(contentLayer, buildAlphaMask(shapeLayer.pixels), command.invert);
+  compositeLayer(pixels, drawnPixels, contentLayer);
+}
+
 function drawPixelLine(
   pixels: (RgbaColor | null)[][],
   drawnPixels: boolean[][],
@@ -2305,6 +2374,11 @@ function drawCommand(
 
   if (command.kind === "group") {
     drawGroup(pixels, drawnPixels, command, defaultAntialias);
+    return;
+  }
+
+  if (command.kind === "mask") {
+    drawMask(pixels, drawnPixels, command, defaultAntialias);
     return;
   }
 

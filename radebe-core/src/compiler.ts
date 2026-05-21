@@ -15,6 +15,8 @@ import type {
   GradientStop,
   GroupCommand,
   LinearGradientFill,
+  MaskCommand,
+  MaskShowMode,
   PathCommand,
   ParsedCommandNode,
   ParsedDocument,
@@ -49,6 +51,18 @@ const VARIABLE_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 const VARIABLE_REFERENCE_PATTERN = /^\$([A-Za-z][A-Za-z0-9_-]*)$/;
 
 type VariableEnvironment = Map<string, string>;
+
+interface CompileDrawOptions {
+  maskShape?: boolean;
+}
+
+function createMaskShapeFill(): SolidFill {
+  return {
+    kind: "solid",
+    color: "white",
+    alpha: 1
+  };
+}
 
 function parseArguments(
   node: ParsedCommandNode,
@@ -1027,7 +1041,8 @@ function compileShapeAppearances(
 function compileRectCommand(
   node: ParsedCommandNode,
   sprite: SpriteHeader,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
 ): RectCommand | null {
   const definition = getCommandDefinition(node.name);
 
@@ -1158,6 +1173,16 @@ function compileRectCommand(
       color,
       alpha: 1
     });
+  }
+
+  if (
+    options.maskShape &&
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
+    fills.push(createMaskShapeFill());
   }
 
   for (const child of node.children) {
@@ -1299,7 +1324,8 @@ function compileRectCommand(
 
 function compileCircleCommand(
   node: ParsedCommandNode,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
 ): CircleCommand | null {
   const definition = getCommandDefinition(node.name);
 
@@ -1339,6 +1365,16 @@ function compileCircleCommand(
       color,
       alpha: 1
     });
+  }
+
+  if (
+    options.maskShape &&
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
+    fills.push(createMaskShapeFill());
   }
 
   if (x === null || y === null || radius === null) {
@@ -1400,7 +1436,8 @@ function compilePolygonPoint(
 
 function compilePolygonCommand(
   node: ParsedCommandNode,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
 ): PolygonCommand | null {
   const definition = getCommandDefinition(node.name);
 
@@ -1611,6 +1648,16 @@ function compilePolygonCommand(
       color,
       alpha: 1
     });
+  }
+
+  if (
+    options.maskShape &&
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
+    fills.push(createMaskShapeFill());
   }
 
   if (points.length < 3) {
@@ -2622,10 +2669,15 @@ function compileShadow(
 function compileDrawCommand(
   node: ParsedCommandNode,
   sprite: SpriteHeader,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
 ): CompiledDrawCommand | null {
   if (node.name === "group") {
-    return compileGroupCommand(node, sprite, diagnostics);
+    return compileGroupCommand(node, sprite, diagnostics, options);
+  }
+
+  if (node.name === "mask") {
+    return compileMaskCommand(node, sprite, diagnostics);
   }
 
   if (node.name === "plot") {
@@ -2637,11 +2689,11 @@ function compileDrawCommand(
   }
 
   if (node.name === "circle") {
-    return compileCircleCommand(node, diagnostics);
+    return compileCircleCommand(node, diagnostics, options);
   }
 
   if (node.name === "polygon") {
-    return compilePolygonCommand(node, diagnostics);
+    return compilePolygonCommand(node, diagnostics, options);
   }
 
   if (node.name === "path") {
@@ -2653,7 +2705,7 @@ function compileDrawCommand(
     node.name === "rect-absolute" ||
     node.name === "rect-inset"
   ) {
-    return compileRectCommand(node, sprite, diagnostics);
+    return compileRectCommand(node, sprite, diagnostics, options);
   }
 
   diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
@@ -2663,7 +2715,8 @@ function compileDrawCommand(
 function compileGroupCommand(
   node: ParsedCommandNode,
   sprite: SpriteHeader,
-  diagnostics: RadebeDiagnostic[]
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
 ): GroupCommand | null {
   const definition = getCommandDefinition(node.name);
   const commands: CompiledDrawCommand[] = [];
@@ -2793,7 +2846,7 @@ function compileGroupCommand(
       return;
     }
 
-    const compiledCommand = compileDrawCommand(child, sprite, diagnostics);
+    const compiledCommand = compileDrawCommand(child, sprite, diagnostics, options);
 
     if (compiledCommand) {
       commands.push(compiledCommand);
@@ -2814,6 +2867,263 @@ function compileGroupCommand(
     ...(shadows.length === 0 ? {} : { shadows }),
     ...(glows.length === 0 ? {} : { glows }),
     strokes
+  };
+}
+
+function compileMaskContainerCommands(
+  node: ParsedCommandNode,
+  sprite: SpriteHeader,
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions
+): CompiledDrawCommand[] {
+  const definition = getCommandDefinition(node.name);
+  const commands: CompiledDrawCommand[] = [];
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return commands;
+  }
+
+  if (node.args.length > 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} container does not accept arguments.`,
+        node
+      )
+    );
+  }
+
+  node.children.forEach((child) => {
+    const childDefinition = getCommandDefinition(child.name);
+
+    if (!childDefinition) {
+      diagnostics.push(createCompilerDiagnostic(`Unknown command "${child.name}".`, child));
+      return;
+    }
+
+    if (!allowsChild(definition, childDefinition)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The ${node.name} container does not allow child command "${child.name}".`,
+          child
+        )
+      );
+      return;
+    }
+
+    const compiledCommand = compileDrawCommand(child, sprite, diagnostics, options);
+
+    if (compiledCommand) {
+      commands.push(compiledCommand);
+    }
+  });
+
+  return commands;
+}
+
+function compileMaskCommand(
+  node: ParsedCommandNode,
+  sprite: SpriteHeader,
+  diagnostics: RadebeDiagnostic[]
+): MaskCommand | null {
+  const definition = getCommandDefinition(node.name);
+  const shapeCommands: CompiledDrawCommand[] = [];
+  const contentCommands: CompiledDrawCommand[] = [];
+  let sawShape = false;
+  let sawContents = false;
+  let validStructure = true;
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const parsedArguments = parseArguments(node, definition);
+  const propertyValues = new Map(parsedArguments.values);
+  diagnostics.push(...parsedArguments.diagnostics);
+
+  node.children.forEach((child) => {
+    const childDefinition = getCommandDefinition(child.name);
+
+    if (!childDefinition) {
+      diagnostics.push(createCompilerDiagnostic(`Unknown command "${child.name}".`, child));
+      validStructure = false;
+      return;
+    }
+
+    if (!allowsChild(definition, childDefinition)) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The mask command does not allow child command "${child.name}".`,
+          child
+        )
+      );
+      validStructure = false;
+      return;
+    }
+
+    if (getAllowedPropertyCommands(definition).includes(child.name)) {
+      if (sawShape || sawContents) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The mask command expects property commands before shape and contents containers.",
+            child
+          )
+        );
+        validStructure = false;
+        return;
+      }
+
+      const childArguments = parseArguments(child, childDefinition);
+      diagnostics.push(...childArguments.diagnostics);
+      const value = childArguments.values.get("value");
+
+      if (!value) {
+        diagnostics.push(
+          createCompilerDiagnostic(`The ${child.name} command requires "value".`, child)
+        );
+        validStructure = false;
+        return;
+      }
+
+      setResolvedValue(propertyValues, child.name, value, node, diagnostics);
+      return;
+    }
+
+    if (child.name === "shape") {
+      if (sawShape) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The mask command allows only one shape container.",
+            child
+          )
+        );
+        validStructure = false;
+        return;
+      }
+
+      if (sawContents) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The mask command expects its shape container before its contents container.",
+            child
+          )
+        );
+        validStructure = false;
+        return;
+      }
+
+      sawShape = true;
+      shapeCommands.push(
+        ...compileMaskContainerCommands(child, sprite, diagnostics, {
+          maskShape: true
+        })
+      );
+      return;
+    }
+
+    if (child.name === "contents") {
+      if (!sawShape) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The mask command expects a shape container before its contents container.",
+            child
+          )
+        );
+        validStructure = false;
+        return;
+      }
+
+      if (sawContents) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            "The mask command allows only one contents container.",
+            child
+          )
+        );
+        validStructure = false;
+        return;
+      }
+
+      sawContents = true;
+      contentCommands.push(
+        ...compileMaskContainerCommands(child, sprite, diagnostics, {})
+      );
+    }
+  });
+
+  if (!sawShape) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The mask command requires a shape container.",
+        node
+      )
+    );
+    validStructure = false;
+  }
+
+  if (!sawContents) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The mask command requires a contents container.",
+        node
+      )
+    );
+    validStructure = false;
+  }
+
+  if (sawShape && shapeCommands.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The mask shape container requires at least one draw command.",
+        node
+      )
+    );
+    validStructure = false;
+  }
+
+  if (sawContents && contentCommands.length === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        "The mask contents container requires at least one draw command.",
+        node
+      )
+    );
+    validStructure = false;
+  }
+
+  const invert =
+    readOptionalBoolean(node, propertyValues, "invert", diagnostics) ?? false;
+  const showToken = readOptionalString(propertyValues, "show") ?? "masked-content";
+  let show: MaskShowMode | null = null;
+
+  if (
+    showToken === "masked-content" ||
+    showToken === "shape-only" ||
+    showToken === "content-only"
+  ) {
+    show = showToken;
+  } else {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The mask command expects "show" to be "masked-content", "shape-only", or "content-only".',
+        node
+      )
+    );
+  }
+
+  if (!validStructure || show === null) {
+    return null;
+  }
+
+  return {
+    kind: "mask",
+    lineNumber: node.lineNumber,
+    name: readOptionalString(propertyValues, "name"),
+    invert,
+    show,
+    shapeCommands,
+    contentCommands
   };
 }
 
