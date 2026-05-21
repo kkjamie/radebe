@@ -95,6 +95,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-062 | Add glow appearance support, starting with inner glow and outer-glow semantics | M2 | Gate B | P2 | Done | `t-062-glow` | None | `glow` now supports outer and inner modes on rectangle-backed shapes, circles, polygons, and composited groups, with non-negative `spread`, non-negative `blur`, explicit `alpha`, and color shorthand or nested `fill` |
 | T-078 | Add four-side shorthand for `rect-inset` | M2 | Gate B | P1 | Done | `codex-main` | None | `rect-inset` now accepts `top right bottom left` shorthand on the command itself and on child `inset`, while keeping existing uniform inset and expanded side-property forms |
 | T-060 | Add explicit `mask` support with `shape`, `contents`, `invert`, and `show` | M2 | Deferred | P1 | Done | `codex-main` | None | `mask` now clips `contents` drawables through rendered `shape` coverage, supports implicit shape coverage without visible fills, works through core/web/editor schema, supports `invert=true`, and adds `show=shape-only|content-only` debug views |
+| T-080 | Normalize web example presentation | M2 | Gate B | P2 | Done | `codex-main` | None | Web examples now use transparent sprite backgrounds by default, avoid `var` usage outside the Vars page, keep non-plot examples at least 64x32, and show `line` with one three-line example including antialiasing |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

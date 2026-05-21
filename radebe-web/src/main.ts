@@ -810,17 +810,12 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "  size 256 80",
         "  background transparent",
         "",
-        "var pad 8",
-        "var panel-fill #101820",
-        "var accent #70c8e8",
-        "var glow #d8f8ff",
-        "",
         "# Base button shape",
-        "rect $pad $pad 240 64",
-        "  fill gradient-linear $panel-fill #365266",
+        "rect 8 8 240 64",
+        "  fill gradient-linear #101820 #365266",
         "",
         "# Radial glow from the left side",
-        "rect $pad $pad 240 64",
+        "rect 8 8 240 64",
         "  fill",
         "    gradient-radial",
         "      center-x 0.22",
@@ -830,8 +825,8 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "      stop #70c8e800 1",
         "",
         "# Outer frame stroke",
-        "rect-inset $pad",
-        "  stroke 1 $glow",
+        "rect-inset 8",
+        "  stroke 1 #d8f8ff",
         "",
         "# Circular indicator glow",
         "circle 220 28 10",
@@ -841,8 +836,8 @@ const experimentalPage: Extract<PageDefinition, { kind: "playground" }> = {
         "      stop #70c8e800 1",
         "",
         "# Accent and baseline",
-        "plot 28 24 $glow",
-        "line 40 54 216 54 $accent"
+        "plot 28 24 #d8f8ff",
+        "line 40 54 216 54 #70c8e8"
       ].join("\n")
     }
   ]
@@ -890,12 +885,12 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite",
           "  name command-header-demo",
-          "  size 24 12",
+          "  size 64 32",
           "  background #0f1318",
           "  antialias false",
           "",
           "# A simple panel to confirm the header values are active",
-          "rect 2 2 20 8 #1c2a33"
+          "rect 6 6 52 20 #1c2a33"
         ].join("\n")
       }
     ]
@@ -951,23 +946,26 @@ const exampleDocs: ExampleDoc[] = [
     examples: [
       {
         id: "line-basic",
-        title: "Horizontal And Diagonal",
-        summary: "A small example showing a simple top stroke and a diagonal accent.",
+        title: "Three Lines",
+        summary: "A compact example showing a top edge, a property-form diagonal, and an antialiased diagonal.",
         source: [
           "sprite line-demo",
-          "  size 32 16",
+          "  size 64 32",
           "  background transparent",
           "",
           "# Top edge",
-          "line 2 2 29 2 #d8f8ff",
+          "line 4 4 58 4 #d8f8ff",
           "",
           "# Diagonal cut",
           "line",
-          "  x1 4",
-          "  y1 13",
-          "  x2 26",
-          "  y2 5",
-          "  color #70c8e8"
+          "  x1 8",
+          "  y1 26",
+          "  x2 52",
+          "  y2 10",
+          "  color #70c8e8",
+          "",
+          "# Smoothed diagonal",
+          "line 6 30 58 16 #ffcc88 antialias=true"
         ].join("\n")
       }
     ]
@@ -995,7 +993,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite inset-panel-demo",
           "  size 96 48",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Simple inset panel using color shorthand",
           "rect-inset 8 #18242c"
@@ -1008,7 +1006,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite inset-sides-demo",
           "  size 160 72",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Four-side shorthand: top right bottom left",
           "rect-inset 6 18 10 10",
@@ -1040,7 +1038,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite circle-demo",
           "  size 384 192",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Shorthand solid circle",
           "circle 80 96 40 #d8f8ff",
@@ -1109,7 +1107,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite polygon-stroke-demo",
           "  size 120 72",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "polygon",
           "  point 16 14",
@@ -1145,7 +1143,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite path-demo",
           "  size 120 72",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "path rail",
           "  point 16 18",
@@ -1162,7 +1160,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite path-dashed-demo",
           "  size 144 80",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "path route",
           "  point 16 56",
@@ -1199,18 +1197,18 @@ const exampleDocs: ExampleDoc[] = [
         summary: "Shows `rect-absolute` shorthand next to an expanded `rect` with explicit fill.",
         source: [
           "sprite rect-demo",
-          "  size 40 18",
-          "  background #0f1318",
+          "  size 80 36",
+          "  background transparent",
           "",
           "# Direct color shorthand",
-          "rect-absolute 2 2 12 6 #18242c",
+          "rect-absolute 4 4 24 12 #18242c",
           "",
           "# Expanded property form with explicit fill",
           "rect",
-          "  x 20",
-          "  y 4",
-          "  width 14",
-          "  height 8",
+          "  x 40",
+          "  y 8",
+          "  width 28",
+          "  height 16",
           "  fill solid #70c8e8"
         ].join("\n")
       },
@@ -1221,7 +1219,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite rect-radius-demo",
           "  size 128 64",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Rounded plate using a radius modifier on rect",
           "rect 16 12 96 40 #18242c",
@@ -1235,7 +1233,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite cut-uniform-demo",
           "  size 128 64",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Uniform chamfered panel",
           "rect 16 12 96 40 #18242c",
@@ -1249,7 +1247,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite cut-four-demo",
           "  size 128 64",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Small top corners with larger lower corners",
           "rect 16 12 96 40 #18242c",
@@ -1263,7 +1261,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite cut-expanded-demo",
           "  size 128 64",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Named corner cuts for a more directional panel shape",
           "rect 16 12 96 40 #18242c",
@@ -1281,7 +1279,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite rect-stroke-contour-demo",
           "  size 128 72",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Rounded plate with a matching outline",
           "rect 14 14 44 44 #18242c",
@@ -1319,15 +1317,15 @@ const exampleDocs: ExampleDoc[] = [
         summary: "One rectangle uses shorthand, the other uses the expanded canonical form.",
         source: [
           "sprite solid-fill-demo",
-          "  size 64 24",
-          "  background #0f1318",
+          "  size 96 40",
+          "  background transparent",
           "",
           "# Shorthand solid fill",
-          "rect 4 5 20 12",
+          "rect 8 10 30 18",
           "  fill solid #18242c",
           "",
           "# Expanded canonical solid fill",
-          "rect 34 6 20 10",
+          "rect 58 11 30 16",
           "  fill",
           "    solid",
           "      color #70c8e8"
@@ -1357,7 +1355,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite linear-horizontal-demo",
           "  size 256 56",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Default horizontal gradient alias",
           "rect 8 8 240 40",
@@ -1371,7 +1369,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite linear-vertical-demo",
           "  size 256 80",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Vertical gradient with three stops",
           "rect 20 8 216 64",
@@ -1390,7 +1388,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite linear-angle-demo",
           "  size 256 96",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Diagonal sweep using an explicit angle",
           "rect 16 12 224 72",
@@ -1425,7 +1423,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite radial-centered-demo",
           "  size 192 112",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Default centered radial glow",
           "rect 16 16 160 80",
@@ -1443,7 +1441,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite radial-offset-demo",
           "  size 192 112",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Offset highlight near the upper-left",
           "rect 16 16 160 80",
@@ -1506,7 +1504,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite stroke-shape-showcase",
           "  size 568 264",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Plain rectangle",
           "rect 24 36 80 60 #18242c",
@@ -1538,7 +1536,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite stroke-solid-demo",
           "  size 96 48",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# A simple centered white frame",
           "rect-inset 10",
@@ -1552,7 +1550,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite stroke-align-demo",
           "  size 96 48",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Stroke stays entirely inside the generated rectangle",
           "rect-inset 8",
@@ -1569,7 +1567,7 @@ const exampleDocs: ExampleDoc[] = [
           source: [
             "sprite stroke-gradient-demo",
             "  size 160 72",
-            "  background #0f1318",
+            "  background transparent",
             "",
             "# Gradient-filled border around a darker inner plate",
             "rect-inset 12 #14191f",
@@ -1591,7 +1589,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite stroke-style-demo",
           "  size 160 72",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "# Dashed outer frame",
           "rect-inset 10",
@@ -1613,7 +1611,7 @@ const exampleDocs: ExampleDoc[] = [
           source: [
             "sprite stroke-outside-demo",
             "  size 128 64",
-            "  background #0f1318",
+            "  background transparent",
             "",
             "# Base plate stays compact while the frame expands outward",
             "rect-inset 18 #18242c",
@@ -1630,7 +1628,7 @@ const exampleDocs: ExampleDoc[] = [
           source: [
             "sprite stroke-nested-demo",
             "  size 128 64",
-            "  background #0f1318",
+            "  background transparent",
             "",
             "# Outer cyan frame with a nested white inner edge",
             "rect-inset 12",
@@ -1663,7 +1661,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite shadow-basic-demo",
           "  size 160 88",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "rect 20 16 104 48",
           "  shadow 8 6 #000000 alpha=0.4",
@@ -1678,7 +1676,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite shadow-spread-grow-demo",
           "  size 180 96",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "rect 28 20 112 44",
           "  radius 10",
@@ -1698,7 +1696,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite shadow-soft-blur-demo",
           "  size 180 96",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "rect 30 20 112 44",
           "  radius 8",
@@ -1714,7 +1712,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite shadow-spread-shrink-demo",
           "  size 208 112",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "circle 54 46 22",
           "  shadow",
@@ -1760,7 +1758,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite glow-panel-demo",
           "  size 180 96",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "rect 28 22 124 48",
           "  radius 10",
@@ -1797,7 +1795,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite glow-group-demo",
           "  size 136 80",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "group badge",
           "  rect 26 22 52 32 #101820",
@@ -1833,7 +1831,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite alpha-fill-demo",
           "  size 128 48",
-          "  background #101418",
+          "  background transparent",
           "",
           "rect 12 10 104 28 #ff0044",
           "  fill alpha=0.5",
@@ -1850,7 +1848,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite alpha-stroke-demo",
           "  size 128 64",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "rect-inset 18 #18242c",
           "  stroke 3 #d8f8ff alpha=0.4",
@@ -1882,7 +1880,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite antialias-default-demo",
           "  size 144 64",
-          "  background #0f1318",
+          "  background transparent",
           "  antialias true",
           "",
           "# Smooth circle from the sprite default",
@@ -1958,19 +1956,15 @@ const exampleDocs: ExampleDoc[] = [
           "  size 128 56",
           "  background transparent",
           "",
-          "var face #101820",
-          "var edge #70c8e8",
-          "var glint #d8f8ff",
-          "",
           "group frame",
-          "  rect-inset 6 $face",
+          "  rect-inset 6 #101820",
           "    cut 8",
-          "    stroke 2 $edge",
+          "    stroke 2 #70c8e8",
           "",
           "group highlights",
-          "  line 20 14 108 14 $glint",
-          "  line 26 42 102 42 $edge",
-          "  circle 64 28 4 $glint"
+          "  line 20 14 108 14 #d8f8ff",
+          "  line 26 42 102 42 #70c8e8",
+          "  circle 64 28 4 #d8f8ff"
         ].join("\n")
       },
       {
@@ -1981,7 +1975,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite group-order-demo",
           "  size 96 48",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "group base",
           "  rect 12 10 72 28 #18242c",
@@ -2138,7 +2132,7 @@ const exampleDocs: ExampleDoc[] = [
         source: [
           "sprite vars-group-demo",
           "  size 120 56",
-          "  background #0f1318",
+          "  background transparent",
           "",
           "vars",
           "  var inset 8",
