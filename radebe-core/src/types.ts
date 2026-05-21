@@ -129,6 +129,7 @@ export interface ShadowAppearance {
   offsetX: number;
   offsetY: number;
   spread: number;
+  blur: number;
   alpha: number;
   fill: RectFill | null;
 }

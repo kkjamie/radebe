@@ -418,16 +418,17 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
     name: "shadow",
     kind: "appearance",
     capabilities: ["shape-appearance"],
-    propertyArgs: ["x", "y", "color", "alpha", "spread"],
+    propertyArgs: ["x", "y", "color", "alpha", "spread", "blur"],
     shorthandSchema: ["x", "y", "color"],
     arguments: [
       arg("x", "number"),
       arg("y", "number"),
       arg("color", "color"),
       arg("alpha", "number", { min: 0, max: 1 }),
-      arg("spread", "integer")
+      arg("spread", "integer"),
+      arg("blur", "integer", { min: 0 })
     ],
-    allowedChildCommands: ["x", "y", "spread", "fill"],
+    allowedChildCommands: ["x", "y", "spread", "blur", "fill"],
     shorthandExpansions: [colorFillExpansion()],
     editorHints: {
       indentBehavior: "child-when-no-args"
@@ -567,6 +568,7 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   createSingleValuePropertyDefinition("center-x", "number", { min: 0, max: 1 }),
   createSingleValuePropertyDefinition("center-y", "number", { min: 0, max: 1 }),
   createSingleValuePropertyDefinition("spread", "integer"),
+  createSingleValuePropertyDefinition("blur", "integer", { min: 0 }),
   createSingleValuePropertyDefinition("radius", "number", { min: 0 }),
   createSingleValuePropertyDefinition("align", "enum", {
     enumValues: strokeAlignValues

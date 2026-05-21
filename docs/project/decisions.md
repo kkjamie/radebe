@@ -465,3 +465,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: T-077 must use a corner-treatment model that can represent absence, cut, and radius independently per corner rather than lowering targeted syntax into four numeric values where `0` means "not modified."
 - Related tasks: T-077, T-030, T-033
 - Supersedes: N/A
+
+---
+
+### DEC-041: Use A Deterministic Box Blur For Shadow Blur
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: T-061 needed soft shadow support on the existing `shadow` command while preserving deterministic pixel output across CLI, web, VS Code preview, and Unity artifact consumers.
+- Decision: Add `blur` as a non-negative integer pixel radius on `shadow`, keep `blur 0` as the hard-edged default, and render positive blur values with a normalized box blur over the shadow alpha mask.
+- Consequences: Soft shadows use the same command surface as hard shadows and work for shape and composited-group shadows; large blur radii increase render cost in proportion to the blurred area and kernel size.
+- Related tasks: T-061, T-039, T-076, T-062
+- Supersedes: N/A

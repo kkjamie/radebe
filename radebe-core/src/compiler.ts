@@ -2205,6 +2205,10 @@ function compileShadow(
   const color = readOptionalString(resolvedProperties.values, "color");
   const spread =
     readOptionalInteger(node, resolvedProperties.values, "spread", diagnostics) ?? 0;
+  const blur =
+    readOptionalInteger(node, resolvedProperties.values, "blur", diagnostics, {
+      min: 0
+    }) ?? 0;
   const alpha =
     readOptionalNumber(node, resolvedProperties.values, "alpha", diagnostics, {
       min: 0,
@@ -2257,6 +2261,7 @@ function compileShadow(
     offsetX,
     offsetY,
     spread,
+    blur,
     alpha,
     fill: fills[0] ?? null
   };

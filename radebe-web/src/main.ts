@@ -1647,15 +1647,15 @@ const exampleDocs: ExampleDoc[] = [
     title: "Shadow",
     navGroup: "Appearance",
     summary:
-      "Defines an offset silhouette pass behind supported filled shapes. The current slice supports hard-edged shadows with optional positive or negative spread.",
-    args: ["x", "y", "color", "spread", "alpha"],
-    childCommands: ["fill"],
+      "Defines an offset silhouette pass behind supported filled shapes and composited groups, with optional spread and soft blur.",
+    args: ["x", "y", "color", "spread", "blur", "alpha"],
+    childCommands: ["blur", "fill"],
     notes: [
       "`shadow 2 2 black` is shorthand for `x`, `y`, and an implicit solid fill color.",
-      "Current rendering support covers rectangle-backed shapes, circle geometry, and polygon geometry.",
+      "Current rendering support covers rectangle-backed shapes, circle geometry, polygon geometry, and composited groups.",
       "Positive `spread` grows the shadow silhouette outward; negative `spread` shrinks it inward.",
-      "Shadows render behind the source shape and preserve authoring order among multiple shadow nodes.",
-      "`blur` is intentionally deferred; the current shadow slice is crisp by design."
+      "`blur` applies a deterministic box blur to the shadow alpha; `blur 0` keeps the hard-edged behavior.",
+      "Shadows render behind the source shape or group and preserve authoring order among multiple shadow nodes."
     ],
     examples: [
       {
@@ -1694,9 +1694,25 @@ const exampleDocs: ExampleDoc[] = [
         ].join("\n")
       },
       {
+        id: "shadow-soft-blur",
+        title: "Soft Blur",
+        summary: "Blur softens the spread silhouette while preserving the same source shape and offset semantics.",
+        source: [
+          "sprite shadow-soft-blur-demo",
+          "  size 180 96",
+          "  background #0f1318",
+          "",
+          "rect 30 20 112 44",
+          "  radius 8",
+          "  shadow 8 8 #000000 alpha=0.45 spread=2 blur=4",
+          "  fill gradient-linear #203040 #2d4a5a",
+          "  stroke 1 #70c8e8"
+        ].join("\n")
+      },
+      {
         id: "shadow-spread-shrink",
         title: "Negative Spread",
-        summary: "Negative spread tightens the silhouette, which is useful for restrained inset-like drop shadows without adding blur.",
+        summary: "Negative spread tightens the silhouette, which is useful for restrained drop shadows with or without blur.",
         source: [
           "sprite shadow-spread-shrink-demo",
           "  size 208 112",

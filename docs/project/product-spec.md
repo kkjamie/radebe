@@ -132,7 +132,7 @@ The implementation schema still uses broad command kinds such as `header`, `prop
 - Geometry modifiers: change a shape drawable's coverage before it is painted. Current examples: `cut`, `radius`.
 - Property commands: expanded child forms for command configuration or arguments. Examples: `x`, `y`, `width`, `height`, `align`, `alpha`, `antialias`.
 - Appearance passes: paint a drawable region. Current examples: `fill`, `stroke`.
-- Effect passes: derive pixels from a drawable region or composited layer. Current example: `shadow`; future examples include `glow` and blur-like effects. The current schema may still classify effects under the broad `appearance` command kind until a separate internal kind is useful.
+- Effect passes: derive pixels from a drawable region or composited layer. Current example: `shadow` with optional blur; future examples include `glow` and standalone blur-like effects. The current schema may still classify effects under the broad `appearance` command kind until a separate internal kind is useful.
 - Structural containers: create hierarchy, ownership, or scope. Current examples: `group`, `vars`; planned examples include mask containers.
 - Mask shape: the child container under a future `mask` command that defines clipping coverage.
 - Masked content: the child container under a future `mask` command that contains the drawables clipped by the mask.
@@ -343,7 +343,7 @@ rect-inset $pad $panel-fill
 - A group may have an optional name for authoring clarity and future tooling.
 - Groups accept root-style draw commands, nested groups, and group-level `fill`, `shadow`, and `stroke` passes.
 - Group child drawables and nested groups must come before group-level appearance or effect passes; use nested groups for staged behavior.
-- Group-level alpha, blend modes, masks, filters, blur, and transforms are intentionally deferred.
+- Group-level alpha, blend modes, masks, standalone filters, and transforms are intentionally deferred.
 - Group-level appearance and effect passes should not act as inherited defaults for children. If authors need staged effects, they should use nested groups.
 
 Example:
@@ -561,8 +561,8 @@ line 16 24 220 24 #70c8e8
 - The current Unity import baseline treats `.rdb` files as source assets, invokes the packaged CLI with `compile <file> --format unity-json`, and imports the resulting `unity-sprite` artifact into generated Unity `Texture2D` and `Sprite` subassets.
 - The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, `circle`, `polygon`, and stroke-first `path` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
-- The current implemented appearance slice also includes hard-edged `shadow` on rectangle-backed shapes, circles, polygons, and composited groups with `x`, `y`, `spread`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur` remains deferred.
-- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse, plus `group` containers for ordering nested draw commands; groups stay transparent without group-level passes and become composited layer drawables when they include group-level `fill`, `stroke`, or hard-edged `shadow`.
+- The current implemented appearance slice also includes `shadow` on rectangle-backed shapes, circles, polygons, and composited groups with `x`, `y`, `spread`, `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur 0` preserves the original hard-edged behavior.
+- The current implemented structural slice includes file-scoped `var` declarations and optional `vars` grouping blocks for whole-token value reuse, plus `group` containers for ordering nested draw commands; groups stay transparent without group-level passes and become composited layer drawables when they include group-level `fill`, `stroke`, or `shadow`.
 - The current stroke renderer supports rectangle-backed, circle-backed, polygon-backed, and open path shapes, and rectangle-backed stroke now follows `cut` and `radius` contours instead of only the plain rectangle envelope.
 - The current renderer supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` when omitted.
 

@@ -254,6 +254,33 @@ function offsetAndExpandBounds(
   };
 }
 
+function getShadowBlurRadius(shadow: ShadowAppearance): number {
+  return Math.max(Math.round(shadow.blur ?? 0), 0);
+}
+
+function sampleBoxBlurredAlpha(
+  x: number,
+  y: number,
+  radius: number,
+  sampleAlpha: (sampleX: number, sampleY: number) => number
+): number {
+  if (radius <= 0) {
+    return sampleAlpha(x, y);
+  }
+
+  let alpha = 0;
+  let sampleCount = 0;
+
+  for (let sampleY = y - radius; sampleY <= y + radius; sampleY += 1) {
+    for (let sampleX = x - radius; sampleX <= x + radius; sampleX += 1) {
+      alpha += sampleAlpha(sampleX, sampleY);
+      sampleCount += 1;
+    }
+  }
+
+  return sampleCount === 0 ? 0 : alpha / sampleCount;
+}
+
 function sampleMaskAlpha(mask: AlphaMask, x: number, y: number, spread: number): number {
   if (spread === 0) {
     return getMaskAlpha(mask, x, y);
@@ -968,19 +995,25 @@ function drawPolygonShadow(
     width: baseBounds.width + expansion * 2,
     height: baseBounds.height + expansion * 2
   };
+  const blurRadius = getShadowBlurRadius(shadow);
+  const drawBounds =
+    blurRadius === 0 ? sampleBounds : expandBounds(sampleBounds, blurRadius);
 
-  for (let y = sampleBounds.y; y < sampleBounds.y + sampleBounds.height; y += 1) {
-    for (let x = sampleBounds.x; x < sampleBounds.x + sampleBounds.width; x += 1) {
-      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
-        const inside = isPointInsidePolygon(pointX, pointY, points);
-        const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, points);
+  const sampleShadowAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) => {
+      const inside = isPointInsidePolygon(pointX, pointY, points);
+      const closestEdge = getClosestPolygonEdgeSample(pointX, pointY, points);
 
-        if (shadow.spread >= 0) {
-          return inside || closestEdge.distance <= shadow.spread;
-        }
+      if (shadow.spread >= 0) {
+        return inside || closestEdge.distance <= shadow.spread;
+      }
 
-        return inside && closestEdge.distance > -shadow.spread;
-      });
+      return inside && closestEdge.distance > -shadow.spread;
+    });
+
+  for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
+    for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
+      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
 
       if (coverage <= 0) {
         continue;
@@ -1162,14 +1195,19 @@ function drawCircleShadow(
     width: radius * 2 + 1,
     height: radius * 2 + 1
   };
+  const blurRadius = getShadowBlurRadius(shadow);
+  const drawBounds =
+    blurRadius === 0 ? bounds : offsetAndExpandBounds(bounds, 0, 0, blurRadius);
+  const sampleCenterX = centerX + 0.5;
+  const sampleCenterY = centerY + 0.5;
+  const sampleShadowAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      Math.hypot(pointX - sampleCenterX, pointY - sampleCenterY) <= radius
+    );
 
-  for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
-    for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-      const sampleCenterX = centerX + 0.5;
-      const sampleCenterY = centerY + 0.5;
-      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) =>
-        Math.hypot(pointX - sampleCenterX, pointY - sampleCenterY) <= radius
-      );
+  for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
+    for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
+      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
 
       if (coverage <= 0) {
         continue;
@@ -1422,12 +1460,19 @@ function drawRectShadow(
     shadow.offsetX,
     shadow.offsetY
   );
+  const blurRadius = getShadowBlurRadius(shadow);
+  const drawBounds =
+    blurRadius === 0
+      ? shadowContour
+      : offsetAndExpandBounds(shadowContour, 0, 0, blurRadius);
+  const sampleShadowAlpha = (sampleX: number, sampleY: number) =>
+    getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
+      isPointInsideRectContour(pointX, pointY, shadowContour)
+    );
 
-  for (let y = shadowContour.y; y < shadowContour.y + shadowContour.height; y += 1) {
-    for (let x = shadowContour.x; x < shadowContour.x + shadowContour.width; x += 1) {
-      const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) =>
-        isPointInsideRectContour(pointX, pointY, shadowContour)
-      );
+  for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
+    for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
+      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
 
       if (coverage <= 0) {
         continue;
@@ -1670,6 +1715,7 @@ function drawMaskShadow(
     return;
   }
 
+  const blurRadius = getShadowBlurRadius(shadow);
   const expansion = Math.max(Math.ceil(Math.abs(shadow.spread)), 0);
   const shadowBounds = offsetAndExpandBounds(
     bounds,
@@ -1677,12 +1723,18 @@ function drawMaskShadow(
     shadow.offsetY,
     expansion
   );
+  const drawBounds =
+    blurRadius === 0 ? shadowBounds : expandBounds(shadowBounds, blurRadius);
+  const sampleShadowAlpha = (sampleX: number, sampleY: number) => {
+    const sourceX = Math.round(sampleX - shadow.offsetX);
+    const sourceY = Math.round(sampleY - shadow.offsetY);
 
-  for (let y = shadowBounds.y; y < shadowBounds.y + shadowBounds.height; y += 1) {
-    for (let x = shadowBounds.x; x < shadowBounds.x + shadowBounds.width; x += 1) {
-      const sourceX = Math.round(x - shadow.offsetX);
-      const sourceY = Math.round(y - shadow.offsetY);
-      const coverage = sampleMaskAlpha(mask, sourceX, sourceY, shadow.spread);
+    return sampleMaskAlpha(mask, sourceX, sourceY, shadow.spread);
+  };
+
+  for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
+    for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
+      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
 
       if (coverage <= 0) {
         continue;

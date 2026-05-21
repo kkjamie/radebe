@@ -691,6 +691,7 @@ test("compileDocument compiles group-level appearance passes after content", () 
       offsetX: 1,
       offsetY: 1,
       spread: 0,
+      blur: 0,
       alpha: 1,
       fill: { kind: "solid", color: "black", alpha: 1 }
     }
@@ -954,7 +955,7 @@ test("compileDocument supports linear gradient shorthand and explicit stops", ()
 test("compileDocument supports shape shadows through the shared appearance model", () => {
   const parsed = parseSource({
     source:
-      "sprite panel\n  size 8 8\n  background transparent\n\nrect 1 1 4 3\n  shadow x=1 y=2 spread=1 color=#000000 alpha=0.5"
+      "sprite panel\n  size 8 8\n  background transparent\n\nrect 1 1 4 3\n  shadow x=1 y=2 spread=1 blur=2 color=#000000 alpha=0.5"
   });
   const result = compileDocument(parsed.document);
 
@@ -973,6 +974,7 @@ test("compileDocument supports shape shadows through the shared appearance model
           offsetX: 1,
           offsetY: 2,
           spread: 1,
+          blur: 2,
           alpha: 0.5,
           fill: { kind: "solid", color: "#000000", alpha: 1 }
         }
@@ -1896,6 +1898,23 @@ test("renderDocument rasterizes rectangle shadows behind the base shape", () => 
   assert.equal(result.artifact.pixels[4]?.[4], "#000000");
 });
 
+test("renderDocument applies blur to rectangle shadow alpha", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 5 5\n  background transparent\n\nrect 2 2 1 1 white\n  shadow 0 0 black blur=1"
+  });
+  const compiled = compileDocument(parsed.document);
+  const result = renderDocument(compiled.document);
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null],
+    [null, "#0000001c", "#0000001c", "#0000001c", null],
+    [null, "#0000001c", "#ffffff", "#0000001c", null],
+    [null, "#0000001c", "#0000001c", "#0000001c", null],
+    [null, null, null, null, null]
+  ]);
+});
+
 test("renderDocument applies positive spread to circle shadows", () => {
   const parsed = parseSource({
     source:
@@ -2019,6 +2038,22 @@ test("renderSource applies group shadow behind composited children", () => {
     ["#ffffff", "#ffffff", "#000000", null],
     [null, "#000000", "#000000", null],
     [null, null, null, null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource applies blur to group shadow alpha", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped-shadow-blur\n  size 5 5\n  background transparent\n\ngroup badge\n  plot 2 2 white\n  shadow 0 0 black blur=1"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null],
+    [null, "#0000001c", "#0000001c", "#0000001c", null],
+    [null, "#0000001c", "#ffffff", "#0000001c", null],
+    [null, "#0000001c", "#0000001c", "#0000001c", null],
+    [null, null, null, null, null]
   ]);
   assert.deepEqual(result.diagnostics, []);
 });
