@@ -120,56 +120,64 @@ Equivalent to:
 line x1=8 y1=8 x2=120 y2=8 color=#70c8e8
 ```
 
-## Command Categories
-The language distinguishes between five semantic command categories:
+## Command Categories And Author Vocabulary
+The implementation schema still uses broad command kinds such as `header`, `property`, `geometry`, `appearance`, and `structural`, but author-facing docs should use more specific vocabulary:
 
-- Header commands: define overall file and sprite properties.
-- Property commands: configure the current node.
-- Geometry commands: define geometry generators.
-- Appearance commands: add renderable appearance passes.
-- Structural commands: create hierarchy, ownership, or layout scope.
+- Header commands: define file or sprite metadata. Examples: `sprite`, `size`, `background`.
+- Declarations: define reusable source-level values without drawing. Examples: `var`, `vars`.
+- Drawable commands: produce pixels directly or define a drawable region. Examples: `plot`, `line`, `rect`, `circle`, `polygon`, `path`, `group`.
+- Pixel primitives: simple drawable commands that do not expose a reusable filled region. Current examples: `plot`, `line`.
+- Shape drawables: drawable commands with a coverage region that can receive fills, strokes, and effects. Current examples: `rect`, `rect-inset`, `rect-absolute`, `circle`, `polygon`. Future composited groups can become shape drawables once they rasterize child alpha into a layer.
+- Path drawables: edge-oriented drawables that are currently visible through strokes rather than fills. Current example: `path`.
+- Geometry modifiers: change a shape drawable's coverage before it is painted. Current examples: `cut`, `radius`.
+- Property commands: expanded child forms for command configuration or arguments. Examples: `x`, `y`, `width`, `height`, `align`, `alpha`, `antialias`.
+- Appearance passes: paint a drawable region. Current examples: `fill`, `stroke`.
+- Effect passes: derive pixels from a drawable region or composited layer. Current example: `shadow`; future examples include `glow` and blur-like effects. The current schema may still classify effects under the broad `appearance` command kind until a separate internal kind is useful.
+- Structural containers: create hierarchy, ownership, or scope. Current examples: `group`, `vars`; planned examples include mask containers.
+- Mask shape: the child container under a future `mask` command that defines clipping coverage.
+- Masked content: the child container under a future `mask` command that contains the drawables clipped by the mask.
+
+Use these terms consistently in product docs, web reference docs, diagnostics, autocomplete details, and editor help.
+
+## Ordering Model
+The language should not silently reorder child commands whose source order appears meaningful.
+
+Arguments on the parent command line are command configuration and conceptually apply before child phases. Expanded child property commands are the child-block form of the same configuration.
+
+Planned compiler restrictions:
+- For shape drawables, property commands and geometry modifiers should come before appearance or effect passes.
+- Once a shape child block starts appearance or effect passes, later geometry modifiers or property commands should produce a focused diagnostic.
+- For future composited groups, child drawables and nested groups should come before group-level appearance or effect passes.
+- Once a composited group starts group-level appearance or effect passes, later group content should produce a focused diagnostic; authors can use nested groups for staged behavior.
+- For future masks, `shape` should define the mask region and `content` should define the clipped drawables, with names and ordering documented in the web reference.
 
 Examples:
 
 ```text
-Header Commands:
-  sprite
-  size
-  background
-
-Property Commands:
-  inset
-  width
-  height
-  align
-  cut
-  radius
-  alpha
-  blend
-
-Geometry Commands:
-  plot
-  line
-  rect
-  rect-inset
-  rect-absolute
-  circle
-  polygon
-
-Appearance Commands:
-  fill
-  stroke
-  shadow
-
-Structural Commands:
-  shape
-  group
-  mask
-  path
-  draw
-  var
-  vars
+rect 0 0 100 100
+  cut 10
+  fill solid black
 ```
+
+Preferred over:
+
+```text
+rect 0 0 100 100
+  fill solid black
+  cut 10
+```
+
+Future group-level effects should follow content:
+
+```text
+group badge
+  rect 8 8 80 32 #101820
+  circle 24 24 10 #18242c
+  stroke 2 #70c8e8
+  shadow 2 2 black
+```
+
+If staged effects are needed, use nested groups rather than relying on the compiler to apply an effect to "the group so far."
 
 ## Command Schema and Child Capability Model
 - The parser should remain generic and structurally simple.
@@ -415,6 +423,7 @@ Longer term, strokes should behave like generated shapes that can themselves car
 - Every shape has implicit coverage for its own fill.
 - Explicit masks are for clipping arbitrary child drawing commands.
 - Planned mask modes include `intersect`, `subtract`, `replace`, and `add`.
+- Planned mask containers use `shape` for the clipping region and `content` for the clipped drawables.
 
 Example:
 
@@ -422,16 +431,13 @@ Example:
 mask body-mask
   shape
     rect-inset 6
-    cut 12
+      cut 12
+    circle 32 32 10
 
-  draw
-    line
-      from -20 20
-      to 280 20
-      stroke
-        width 1
-        fill
-          solid white
+  content
+    group hatch-lines
+      line -20 20 280 20 white
+      line -20 28 280 28 white
 ```
 
 ## Renderer Concepts

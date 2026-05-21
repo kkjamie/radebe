@@ -421,3 +421,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Authors can organize related geometry immediately, editor tooling can complete and indent groups from shared schema metadata, and future compositing or transform work can attach to a clear structural boundary without changing current pixel output semantics.
 - Related tasks: T-059, T-060, T-067, T-069
 - Supersedes: N/A
+
+---
+
+### DEC-037: Use Author-Facing Vocabulary And Avoid Silent Child Reordering
+- Date: `2026-05-21`
+- Status: Accepted
+- Context: Group compositing, masks, and future compiler ordering rules need clearer language than broad schema kinds such as geometry, appearance, and structural.
+- Decision: Adopt author-facing terms such as drawable commands, pixel primitives, shape drawables, path drawables, geometry modifiers, property commands, appearance passes, effect passes, structural containers, mask shape, and masked content. Preserve source-order intuition by rejecting confusing child ordering rather than silently moving modifiers or group effects across drawables.
+- Consequences: The product spec has a canonical vocabulary now; T-074 will fold it into web reference docs and editor help, and T-075 will add focused compiler diagnostics for child-phase ordering.
+- Related tasks: T-074, T-075, T-060, T-067, T-069
+- Supersedes: N/A

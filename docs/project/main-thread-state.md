@@ -21,6 +21,8 @@ Last updated: `2026-05-21`
 - `path` is now available as a stroke-first open polyline primitive using canonical child `point` commands and required `stroke`; the first slice intentionally limits path to `stroke` align `center` and does not yet treat paths as fillable or closable regions.
 - File-scoped variables are now available through root `var name value` declarations plus optional `vars` grouping blocks. References resolve top-to-bottom as whole value tokens such as `$accent`, including named argument values like `color=$accent`; embedded expression forms such as `left+$pad` remain deferred.
 - Transparent structural `group` containers are now available for organizing draw commands. Groups may be named and nested, and their children compile into the normal flat render stream in source order; group-level alpha, blend, masks, filters, offscreen compositing, and transforms remain deferred.
+- The product spec now has canonical author-facing vocabulary: drawable commands, pixel primitives, shape drawables, path drawables, geometry modifiers, property commands, appearance passes, effect passes, structural containers, mask shape, and masked content. T-074 tracks folding this into the web reference docs and editor assistance.
+- The accepted ordering direction is to preserve source-order intuition by rejecting confusing child phases instead of silently reordering them. T-075 tracks compiler diagnostics for cases such as geometry modifiers after appearance passes or future group content after group-level effects.
 - Optional real output antialiasing is now available through a sprite-level `antialias` default plus per-geometry overrides on line, rectangle, circle, polygon, and path commands. The omitted default remains `false`, so existing pixel-perfect output remains unchanged unless authors opt in.
 - Source comments now use hash-prefixed lines only. The parser ignores lines whose trimmed text starts with `#`; `//` is no longer a comment marker and will be parsed as ordinary source.
 - The shared `radebe-core` / `radebe-cli` / `radebe-web` path remains intact, the SEA smoke path still exercises the same spec-aligned sample contract, and the web shell has grown into a left-nav docs/playground surface with an experimental page plus per-feature example pages that now support multiple editable live scenarios on a single page.
@@ -49,7 +51,7 @@ Last updated: `2026-05-21`
 
 ## Open Decisions / Blockers
 - The task board has been cleaned up so `Active` contains only live work. Completed rows now live under `Completed`; T-043 was closed by user request, T-054 and T-055 are explicitly postponed, and T-059 is complete.
-- Feature backlog has been expanded with T-060 through T-073 for masks, soft shadows, glow, procedural fills, patterns, blend modes, expressions, transforms, reusable symbols, richer paths, source-authored metadata, and boolean region operations. T-059 structural groups have landed as the transparent first slice.
+- Feature backlog has been expanded with T-060 through T-075 for masks, soft shadows, glow, procedural fills, patterns, blend modes, expressions, transforms, reusable symbols, richer paths, source-authored metadata, boolean region operations, vocabulary/reference-doc standardization, and compiler ordering restrictions. T-059 structural groups have landed as the transparent first slice.
 - No M1 blocker remains; the shared core/web render contract, workspace build, workspace tests, and CLI SEA smoke path all pass in the current environment.
 - No active blocker remains on the language or web-dev tooling side.
 - DEC-030 records that editor intelligence should be driven from shared core schema metadata rather than hard-coded web or Unity presentation logic.
@@ -64,11 +66,13 @@ Last updated: `2026-05-21`
 - Unity importer-options work is closed by user request. No Unity follow-on is active; choose the next Unity slice only if Unity work is explicitly resumed.
 - T-043 is closed by user request. Repo code adds a custom `RadebeSpriteImporter` inspector plus importer-side support for pivot presets, custom pivot fallback, clamped 9-slice border values, mesh type, extrude edges, filter mode, and wrap mode. The inspector also renders a live preview overlay of the imported sprite with border guides and pivot marker driven by the current inspector values before reimport. Reopen only if additional Eddie importer validation is explicitly requested.
 - T-059 is complete. `group` is a shared-core structural command accepted at the file root and inside groups; it allows draw commands and nested groups, supports optional names for authoring clarity, drives schema completions/indentation, and has live web examples. DEC-036 records the transparent no-compositing semantics.
+- T-074 is a backlog task to standardize the author-facing vocabulary across web reference docs, examples, autocomplete detail text, and VS Code/web editor help.
+- T-075 is a backlog task to add compiler ordering restrictions for command child phases, with tuning expected around property/argument forms, geometry modifiers, appearance passes, effects, and future composited group behavior.
 
 ## Best Next Tasks
-1. Consider T-060 `mask`, T-061 soft shadows, or T-068 symbolic expressions as the highest-leverage next language/effects candidates.
-2. Reopen T-043 only if hands-on Eddie importer validation is explicitly requested.
-3. Keep T-054 and T-055 postponed until reusable editor packaging or Unity live-authoring parity is explicitly resumed.
+1. Consider T-074 vocabulary/reference-doc standardization or T-075 compiler ordering restrictions if the next goal is language coherence.
+2. Consider T-060 `mask`, T-061 soft shadows, or T-068 symbolic expressions if the next goal is visible language/effects capability.
+3. Keep T-054 and T-055 postponed; reopen T-043 only if hands-on Eddie importer validation is explicitly requested.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.
