@@ -86,6 +86,8 @@ export const FILE_DEFINITION: CommandDefinition = {
     "rect-inset",
     "circle",
     "polygon",
+    "polygon-regular",
+    "polygon-star",
     "path",
     "group",
     "mask",
@@ -316,6 +318,41 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
     }
   },
   {
+    name: "polygon-regular",
+    kind: "geometry",
+    propertyArgs: ["sides", "radius", "color", "antialias"],
+    shorthandSchema: ["sides", "radius", "color"],
+    arguments: [
+      arg("sides", "integer", { required: true, min: 3 }),
+      arg("radius", "integer", { required: true, min: 1 }),
+      arg("color", "color"),
+      arg("antialias", "boolean", { enumValues: booleanValues })
+    ],
+    allowedChildCapabilities: ["shape-appearance"],
+    shorthandExpansions: [colorFillExpansion()],
+    editorHints: {
+      indentBehavior: "child"
+    }
+  },
+  {
+    name: "polygon-star",
+    kind: "geometry",
+    propertyArgs: ["points", "inner-radius", "outer-radius", "color", "antialias"],
+    shorthandSchema: ["points", "inner-radius", "outer-radius", "color"],
+    arguments: [
+      arg("points", "integer", { required: true, min: 3 }),
+      arg("inner-radius", "integer", { required: true, min: 1 }),
+      arg("outer-radius", "integer", { required: true, min: 1 }),
+      arg("color", "color"),
+      arg("antialias", "boolean", { enumValues: booleanValues })
+    ],
+    allowedChildCapabilities: ["shape-appearance"],
+    shorthandExpansions: [colorFillExpansion()],
+    editorHints: {
+      indentBehavior: "child"
+    }
+  },
+  {
     name: "path",
     kind: "geometry",
     propertyArgs: ["name", "antialias"],
@@ -344,6 +381,8 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       "rect-inset",
       "circle",
       "polygon",
+      "polygon-regular",
+      "polygon-star",
       "path",
       "group",
       "mask"
@@ -378,6 +417,8 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       "rect-inset",
       "circle",
       "polygon",
+      "polygon-regular",
+      "polygon-star",
       "path",
       "group"
     ],
@@ -396,6 +437,8 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       "rect-inset",
       "circle",
       "polygon",
+      "polygon-regular",
+      "polygon-star",
       "path",
       "group",
       "mask"
@@ -627,6 +670,10 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   createSingleValuePropertyDefinition("value", "token"),
   createSingleValuePropertyDefinition("width", "integer", { min: 1 }),
   createSingleValuePropertyDefinition("height", "integer", { min: 1 }),
+  createSingleValuePropertyDefinition("sides", "integer", { min: 3 }),
+  createSingleValuePropertyDefinition("points", "integer", { min: 3 }),
+  createSingleValuePropertyDefinition("inner-radius", "integer", { min: 1 }),
+  createSingleValuePropertyDefinition("outer-radius", "integer", { min: 1 }),
   createSingleValuePropertyDefinition("antialias", "boolean", {
     enumValues: booleanValues
   }),

@@ -96,6 +96,8 @@ const syntaxGuideSections: SyntaxGuideSection[] = [
           "rect-inset",
           "circle",
           "polygon",
+          "polygon-regular",
+          "polygon-star",
           "path"
         ],
         detail: "create pixels or drawable regions."

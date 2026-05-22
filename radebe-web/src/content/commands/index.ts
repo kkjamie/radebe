@@ -5,6 +5,8 @@ import { lineDoc } from "./line.js";
 import { rectInsetDoc } from "./rect-inset.js";
 import { circleDoc } from "./circle.js";
 import { polygonDoc } from "./polygon.js";
+import { polygonRegularDoc } from "./polygon-regular.js";
+import { polygonStarDoc } from "./polygon-star.js";
 import { pathDoc } from "./path.js";
 import { rectDoc } from "./rect.js";
 import { solidDoc } from "./solid.js";
@@ -26,6 +28,8 @@ export const commandDocs: ExampleDoc[] = [
   rectInsetDoc,
   circleDoc,
   polygonDoc,
+  polygonRegularDoc,
+  polygonStarDoc,
   pathDoc,
   rectDoc,
   solidDoc,

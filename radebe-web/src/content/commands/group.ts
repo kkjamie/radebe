@@ -15,6 +15,8 @@ export const groupDoc: ExampleDoc = {
       "rect-inset",
       "circle",
       "polygon",
+      "polygon-regular",
+      "polygon-star",
       "path",
       "group",
       "mask",

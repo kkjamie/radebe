@@ -86,6 +86,8 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
     "rect-inset",
     "circle",
     "polygon",
+    "polygon-regular",
+    "polygon-star",
     "path",
     "group",
     "mask",
@@ -114,6 +116,8 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
       "rect-inset",
       "circle",
       "polygon",
+      "polygon-regular",
+      "polygon-star",
       "path",
       "group"
     ]
@@ -229,6 +233,11 @@ test("getLanguageSmartEdits removes shorthand color when fill command is complet
   assert.equal(
     applySmartEdits("polygon 0 0 8 0 8 8 black\n  fill|"),
     "polygon 0 0 8 0 8 8\n  fill"
+  );
+
+  assert.equal(
+    applySmartEdits("polygon-star 5 8 18 black\n  fill|"),
+    "polygon-star 5 8 18\n  fill"
   );
 
   assert.equal(

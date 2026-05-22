@@ -123,6 +123,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-106 | Make cached previews a Playground feature | M2 | Gate B | P2 | Done | `codex-main` | None | Playground now accepts a cached preview image override, shows the editable source immediately, displays the generated preview inside the normal preview frame, and switches that row to live rendering on the first source change |
 | T-107 | Stabilize Playground Fit zoom sizing | M2 | Gate B | P2 | Done | `codex-main` | None | Playground Fit zoom now measures the preview well content box rather than a sprite-expanded viewport, and normal preview wells have a stable responsive height so small sprites scale up to a useful starting size |
 | T-108 | Add a Radebe-authored brand icon | M2 | Gate B | P2 | Done | `codex-main` | None | The web shell now uses a generated-from-Radebe geometric brand mark in the top bar, homepage preview, favicon output, and editable Examples page |
+| T-109 | Add regular polygon and star geometry commands | M2 | Gate B | P1 | Done | `codex-main` | None | `polygon-regular <sides> <radius>` and `polygon-star <points> <inner-radius> <outer-radius>` now generate sprite-centered polygon contours with shared fill, stroke, shadow, glow, antialias, mask, editor metadata, web reference docs, Syntax vocabulary, and example coverage |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

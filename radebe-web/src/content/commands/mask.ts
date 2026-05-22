@@ -10,7 +10,7 @@ export const maskDoc: ExampleDoc = {
     childCommands: ["shape", "contents", "name", "invert", "show"],
     notes: [
       "`shape` defines the clipping coverage and must come before `contents`.",
-      "Shape drawables inside `shape` get implicit coverage, so a mask shape can use `rect`, `circle`, or `polygon` without adding a visible fill color.",
+      "Shape drawables inside `shape` get implicit coverage, so a mask shape can use `rect`, `circle`, `polygon`, `polygon-regular`, or `polygon-star` without adding a visible fill color.",
       "`contents` contains the drawables clipped by the mask shape.",
       "`invert=true` keeps content outside the mask shape instead of inside it.",
       "`show` defaults to `masked-content`; use `show=shape-only` or `show=content-only` to debug either side of the mask without changing child source.",

@@ -10,7 +10,7 @@ export const strokeDoc: ExampleDoc = {
     childCommands: ["fill"],
     notes: [
         "`stroke 2 white` is shorthand for width plus an implicit solid fill color.",
-        "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry, paths, composited groups, and nested stroke envelopes.",
+        "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry including generated regular/star polygons, paths, composited groups, and nested stroke envelopes.",
         "Supported align values are `inside`, `center`, and `outside`.",
         "Supported style values are `solid`, `dashed`, and `dotted`.",
         "Nested `stroke` attaches another outline to the generated stroke envelope."

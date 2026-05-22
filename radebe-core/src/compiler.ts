@@ -1434,6 +1434,41 @@ function compilePolygonPoint(
   return { x, y };
 }
 
+function getPolygonDoubledArea(points: PolygonPoint[]): number {
+  return points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length]!;
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0);
+}
+
+function validatePolygonPoints(
+  node: ParsedCommandNode,
+  points: PolygonPoint[],
+  diagnostics: RadebeDiagnostic[]
+): boolean {
+  if (points.length < 3) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command requires at least three points.`,
+        node
+      )
+    );
+    return false;
+  }
+
+  if (getPolygonDoubledArea(points) === 0) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command requires points that enclose a non-zero area.`,
+        node
+      )
+    );
+    return false;
+  }
+
+  return true;
+}
+
 function compilePolygonCommand(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[],
@@ -1660,28 +1695,7 @@ function compilePolygonCommand(
     fills.push(createMaskShapeFill());
   }
 
-  if (points.length < 3) {
-    diagnostics.push(
-      createCompilerDiagnostic(
-        "The polygon command requires at least three points.",
-        node
-      )
-    );
-    return null;
-  }
-
-  const doubledArea = points.reduce((sum, point, index) => {
-    const next = points[(index + 1) % points.length]!;
-    return sum + point.x * next.y - next.x * point.y;
-  }, 0);
-
-  if (doubledArea === 0) {
-    diagnostics.push(
-      createCompilerDiagnostic(
-        "The polygon command requires points that enclose a non-zero area.",
-        node
-      )
-    );
+  if (!validatePolygonPoints(node, points, diagnostics)) {
     return null;
   }
 
@@ -1706,6 +1720,176 @@ function compilePolygonCommand(
     "antialias",
     diagnostics
   );
+
+  return {
+    kind: "polygon",
+    lineNumber: node.lineNumber,
+    ...(antialias === null ? {} : { antialias }),
+    points,
+    fills,
+    ...(shadows.length === 0 ? {} : { shadows }),
+    ...(glows.length === 0 ? {} : { glows }),
+    strokes
+  };
+}
+
+function generateRadialPolygonPoints(
+  sprite: SpriteHeader,
+  radii: number[]
+): PolygonPoint[] {
+  const centerX = Math.floor(sprite.width / 2);
+  const centerY = Math.floor(sprite.height / 2);
+  const step = (Math.PI * 2) / radii.length;
+
+  return radii.map((radius, index) => {
+    const angle = -Math.PI / 2 + step * index;
+
+    return {
+      x: Math.round(centerX + Math.cos(angle) * radius),
+      y: Math.round(centerY + Math.sin(angle) * radius)
+    };
+  });
+}
+
+function compileGeneratedPolygonCommand(
+  node: ParsedCommandNode,
+  sprite: SpriteHeader,
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
+): PolygonCommand | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  const resolvedProperties = resolveCommandProperties(node, definition);
+  diagnostics.push(...resolvedProperties.diagnostics);
+
+  const color = readOptionalString(resolvedProperties.values, "color");
+  const antialias = readOptionalBoolean(
+    node,
+    resolvedProperties.values,
+    "antialias",
+    diagnostics
+  );
+  const appearances = compileShapeAppearances(node, diagnostics);
+  const fills: RectFill[] = appearances.fills;
+  const glows: GlowAppearance[] = appearances.glows;
+  const shadows: ShadowAppearance[] = appearances.shadows;
+  const strokes: StrokeAppearance[] = appearances.strokes;
+  let points: PolygonPoint[] | null = null;
+
+  if (node.name === "polygon-regular") {
+    const sides = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "sides",
+      diagnostics,
+      { min: 3 }
+    );
+    const radius = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "radius",
+      diagnostics,
+      { min: 1 }
+    );
+
+    if (sides !== null && radius !== null) {
+      points = generateRadialPolygonPoints(
+        sprite,
+        Array.from({ length: sides }, () => radius)
+      );
+    }
+  } else {
+    const starPoints = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "points",
+      diagnostics,
+      { min: 3 }
+    );
+    const innerRadius = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "inner-radius",
+      diagnostics,
+      { min: 1 }
+    );
+    const outerRadius = readRequiredInteger(
+      node,
+      resolvedProperties.values,
+      "outer-radius",
+      diagnostics,
+      { min: 1 }
+    );
+
+    if (
+      innerRadius !== null &&
+      outerRadius !== null &&
+      outerRadius <= innerRadius
+    ) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          'The polygon-star command expects "outer-radius" to be greater than "inner-radius".',
+          node
+        )
+      );
+    }
+
+    if (
+      starPoints !== null &&
+      innerRadius !== null &&
+      outerRadius !== null &&
+      outerRadius > innerRadius
+    ) {
+      points = generateRadialPolygonPoints(
+        sprite,
+        Array.from({ length: starPoints * 2 }, (_, index) =>
+          index % 2 === 0 ? outerRadius : innerRadius
+        )
+      );
+    }
+  }
+
+  if (color !== null) {
+    fills.unshift({
+      kind: "solid",
+      color,
+      alpha: 1
+    });
+  }
+
+  if (
+    options.maskShape &&
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
+    fills.push(createMaskShapeFill());
+  }
+
+  if (points === null || !validatePolygonPoints(node, points, diagnostics)) {
+    return null;
+  }
+
+  if (
+    fills.length === 0 &&
+    glows.length === 0 &&
+    shadows.length === 0 &&
+    strokes.length === 0
+  ) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${node.name} command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.`,
+        node
+      )
+    );
+    return null;
+  }
 
   return {
     kind: "polygon",
@@ -2694,6 +2878,10 @@ function compileDrawCommand(
 
   if (node.name === "polygon") {
     return compilePolygonCommand(node, diagnostics, options);
+  }
+
+  if (node.name === "polygon-regular" || node.name === "polygon-star") {
+    return compileGeneratedPolygonCommand(node, sprite, diagnostics, options);
   }
 
   if (node.name === "path") {

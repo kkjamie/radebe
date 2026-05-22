@@ -10,7 +10,7 @@ export const shadowDoc: ExampleDoc = {
     childCommands: ["blur", "fill"],
     notes: [
       "`shadow 2 2 black` is shorthand for `x`, `y`, and an implicit solid fill color.",
-      "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry, and composited groups.",
+      "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry including generated regular/star polygons, and composited groups.",
       "Positive `spread` grows the shadow silhouette outward; negative `spread` shrinks it inward.",
       "`blur` applies a deterministic box blur to the shadow alpha; `blur 0` keeps the hard-edged behavior.",
       "Shadows render behind the source shape or group and preserve authoring order among multiple shadow nodes."

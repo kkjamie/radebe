@@ -401,10 +401,14 @@ Initial geometry types discussed in the recovered spec and current direction:
 - `circle <x> <y> <radius>`
 - `polygon <x1> <y1> <x2> <y2> <x3> <y3> ...`
 - `polygon` with child `point <x> <y>`
+- `polygon-regular <sides> <radius>`
+- `polygon-star <points> <inner-radius> <outer-radius>`
 - `rect` with child `cut` or child `radius`
 - `path <name?>`
 - `path` with child `point <x> <y>` and child `stroke`
 - `shape <name?>`
+
+Generated polygon commands are centered on the sprite because their shorthand forms do not include explicit position arguments.
 
 Example:
 
@@ -589,7 +593,7 @@ line 16 24 220 24 #70c8e8
 - The current browser preview artifact is a temporary text-grid artifact used for fast feedback, not the recovered canonical end-state product output.
 - The current `@text` and `@repeat` command syntax in the codebase is not part of the recovered canonical language design.
 - The current Unity import baseline treats `.rdb` files as source assets, invokes the packaged CLI with `compile <file> --format unity-json`, and imports the resulting `unity-sprite` artifact into generated Unity `Texture2D` and `Sprite` subassets.
-- The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, `circle`, `polygon`, and stroke-first `path` commands.
+- The current implemented geometry set now includes a small `sprite` header block plus root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, `circle`, `polygon`, `polygon-regular`, `polygon-star`, and stroke-first `path` commands.
 - The current implemented appearance slice includes `fill` with `solid`, `gradient-linear`, and `gradient-radial` variants, explicit per-pass `alpha`, and a shared shape-level `fill` / `stroke` child model driven by schema capability matching.
 - The current implemented appearance slice also includes `shadow` on rectangle-backed shapes, circles, polygons, and composited groups with `x`, `y`, `spread`, `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; `blur 0` preserves the original hard-edged behavior.
 - The current implemented effect slice includes `glow` on rectangle-backed shapes, circles, polygons, and composited groups with `mode`, non-negative `spread`, non-negative `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; outer glow draws outside the source contour and inner glow clips inside it.

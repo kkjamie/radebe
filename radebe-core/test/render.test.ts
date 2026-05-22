@@ -63,6 +63,8 @@ test("schema exposes context-aware child command metadata", () => {
     "rect-inset",
     "circle",
     "polygon",
+    "polygon-regular",
+    "polygon-star",
     "path",
     "group",
     "mask",
@@ -113,6 +115,8 @@ test("schema exposes context-aware child command metadata", () => {
     "rect-inset",
     "circle",
     "polygon",
+    "polygon-regular",
+    "polygon-star",
     "path",
     "group",
     "mask",
@@ -167,6 +171,33 @@ test("schema records editor hints for inline child commands and smart expansions
     ],
     trailingArgument: { name: "color", valueKind: "color" }
   });
+
+  const regular = getCommandDefinition("polygon-regular");
+  const star = getCommandDefinition("polygon-star");
+
+  assert.ok(regular);
+  assert.ok(star);
+  assert.deepEqual(getShorthandArgumentDefinitions(regular).map((argument) => ({
+    name: argument.name,
+    valueKind: argument.valueKind,
+    required: argument.required,
+    min: argument.min
+  })), [
+    { name: "sides", valueKind: "integer", required: true, min: 3 },
+    { name: "radius", valueKind: "integer", required: true, min: 1 },
+    { name: "color", valueKind: "color", required: undefined, min: undefined }
+  ]);
+  assert.deepEqual(getShorthandArgumentDefinitions(star).map((argument) => ({
+    name: argument.name,
+    valueKind: argument.valueKind,
+    required: argument.required,
+    min: argument.min
+  })), [
+    { name: "points", valueKind: "integer", required: true, min: 3 },
+    { name: "inner-radius", valueKind: "integer", required: true, min: 1 },
+    { name: "outer-radius", valueKind: "integer", required: true, min: 1 },
+    { name: "color", valueKind: "color", required: undefined, min: undefined }
+  ]);
 });
 
 test("parseSource returns a nested command tree for indentation-based source", () => {
@@ -539,6 +570,48 @@ test("compileDocument supports polygon shorthand and point children without comm
         { x: 7, y: 7 }
       ],
       fills: [{ kind: "solid", color: "#ffffff", alpha: 1 }],
+      strokes: []
+    }
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument supports generated regular polygons and stars", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-regular 4 3 #70c8e8\npolygon-star 5 2 4\n  fill solid white"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.document.commands, [
+    {
+      kind: "polygon",
+      lineNumber: 5,
+      points: [
+        { x: 5, y: 2 },
+        { x: 8, y: 5 },
+        { x: 5, y: 8 },
+        { x: 2, y: 5 }
+      ],
+      fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
+      strokes: []
+    },
+    {
+      kind: "polygon",
+      lineNumber: 6,
+      points: [
+        { x: 5, y: 1 },
+        { x: 6, y: 3 },
+        { x: 9, y: 4 },
+        { x: 7, y: 6 },
+        { x: 7, y: 8 },
+        { x: 5, y: 7 },
+        { x: 3, y: 8 },
+        { x: 3, y: 6 },
+        { x: 1, y: 4 },
+        { x: 4, y: 3 }
+      ],
+      fills: [{ kind: "solid", color: "white", alpha: 1 }],
       strokes: []
     }
   ]);
@@ -1781,6 +1854,22 @@ test("renderDocument rasterizes polygon fills from whitespace-separated point pa
     "........",
     "........"
   ]);
+});
+
+test("renderDocument rasterizes generated regular polygons and stars", () => {
+  const regular = renderSource({
+    source:
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-regular 4 3 #ffffff"
+  });
+  const star = renderSource({
+    source:
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-star 5 2 4 #ffffff"
+  });
+
+  assert.deepEqual(regular.diagnostics, []);
+  assert.deepEqual(star.diagnostics, []);
+  assert.equal(regular.artifact.pixels[5]?.[5], "#ffffff");
+  assert.ok(star.artifact.pixels.flat().includes("#ffffff"));
 });
 
 test("renderDocument rasterizes polygon gradients across the polygon bounds", () => {

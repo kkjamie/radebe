@@ -564,3 +564,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The Examples page can show editable source immediately while the preview starts from cheap generated image assets in the same preview frame and zoom path as live rendering. Generated preview files are build artifacts ignored from git; dev/build commands regenerate them so stale previews are not the source of truth. Live render and diagnostics begin per row after the first edit.
 - Related tasks: T-105, T-106, T-101, T-103, T-104
 - Supersedes: N/A
+
+---
+
+### DEC-050: Center Generated Polygon Shapes On The Sprite
+- Date: `2026-05-22`
+- Status: Accepted
+- Context: T-109 added `polygon-regular <sides> <radius>` and `polygon-star <points> <inner-radius> <outer-radius>` without explicit x/y position arguments.
+- Decision: Generate both commands around the current sprite center, place the first outer vertex at the top, then proceed clockwise.
+- Consequences: The requested compact forms are immediately useful for centered badges and icons; authors who need manual positioning or asymmetry should use explicit `polygon` points until a broader transform or anchor model exists.
+- Related tasks: T-109, T-069, T-087
+- Supersedes: N/A

@@ -13,7 +13,7 @@ export const glowDoc: ExampleDoc = {
       "`mode` defaults to `outer`; use `mode=inner` or a child `mode inner` command to clip the glow inside the source region.",
       "Outer glow uses the same deterministic box-blur alpha sampling as soft shadows, but clips the source interior out of the glow coverage.",
       "Positive `spread` widens an outer glow or pushes an inner glow farther inward before blur is applied.",
-      "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry, and composited groups."
+      "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry including generated regular/star polygons, and composited groups."
     ],
     examples: [
       {
