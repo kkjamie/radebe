@@ -5,13 +5,13 @@ export const gradientLinearDoc: ExampleDoc = {
     title: "Linear Gradient",
     navGroup: "Appearance Commands",
     summary:
-      "Defines a linear gradient fill. It supports the old two-color shorthand through `gradient`, the explicit `gradient-linear` variant, stop lists, axis directions, and custom angles.",
+      "Defines a linear gradient fill. Use `gradient` as the compact alias or `gradient-linear` when the source should name the variant explicitly.",
     args: ["from", "to", "direction", "angle"],
     childCommands: ["stop"],
     notes: [
       "`gradient` remains a linear-gradient alias for compatibility, while `gradient-linear` is the explicit name.",
       "Use either `direction` or `angle`, not both.",
-      "Supported directions are currently `horizontal` and `vertical`.",
+      "Supported directions are `horizontal` and `vertical`.",
       "Expanded stop form supports multiple colors and alpha-capable hex values like `#0000ff80`."
     ],
     examples: [

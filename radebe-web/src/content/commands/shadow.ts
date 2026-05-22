@@ -3,14 +3,14 @@ import type { ExampleDoc } from "../../types.js";
 export const shadowDoc: ExampleDoc = {
     id: "shadow",
     title: "Shadow",
-    navGroup: "Appearance Commands",
+    navGroup: "Effect Commands",
     summary:
       "Defines an offset silhouette pass behind supported filled shapes and composited groups, with optional spread and soft blur.",
     args: ["x", "y", "color", "spread", "blur", "alpha"],
     childCommands: ["blur", "fill"],
     notes: [
       "`shadow 2 2 black` is shorthand for `x`, `y`, and an implicit solid fill color.",
-      "Current rendering support covers rectangle-backed shapes, circle geometry, polygon geometry, and composited groups.",
+      "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry, and composited groups.",
       "Positive `spread` grows the shadow silhouette outward; negative `spread` shrinks it inward.",
       "`blur` applies a deterministic box blur to the shadow alpha; `blur 0` keeps the hard-edged behavior.",
       "Shadows render behind the source shape or group and preserve authoring order among multiple shadow nodes."

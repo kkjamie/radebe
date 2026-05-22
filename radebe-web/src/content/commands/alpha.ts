@@ -9,7 +9,7 @@ export const alphaDoc: ExampleDoc = {
     args: ["value 0..1"],
     childCommands: [],
     notes: [
-      "Currently implemented on `fill` and `stroke`.",
+      "`alpha` applies to `fill` and `stroke` appearance passes.",
       "`alpha` defaults to `1` when omitted.",
       "Nested child strokes do not inherit parent stroke alpha automatically.",
       "Pass alpha multiplies with any alpha already present in solid colors or gradient stop colors."

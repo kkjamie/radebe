@@ -5,15 +5,15 @@ export const pathDoc: ExampleDoc = {
     title: "Path",
     navGroup: "Drawable Commands",
     summary:
-      "Defines an open polyline path from child points. In the current slice, a path is visible only through stroke, which makes it the multi-segment counterpart to `line` without introducing fill or winding semantics yet.",
+      "Defines an open polyline path from child points. A path is visible through `stroke`, making it the multi-segment counterpart to `line`.",
     args: ["optional name", "antialias"],
     childCommands: ["point", "stroke", "antialias"],
     notes: [
       "Use child `point` commands to define the path in order.",
-      "A path currently requires at least one `stroke` child because open paths do not produce fill coverage.",
-      "The current path slice supports only `stroke` align `center`.",
+      "A path requires at least one `stroke` child because open paths do not produce fill coverage.",
+      "Path strokes accept only `align center`.",
       "`antialias` smooths the generated stroke coverage for curved-looking route segments and diagonals.",
-      "This is an open path primitive; closed fillable contour semantics remain future work."
+      "Closed or fillable path contours are not supported."
     ],
     examples: [
       {

@@ -1,6 +1,6 @@
 import { homePreviewSource } from "./content/home.js";
 import { releases } from "./content/releases.js";
-import { roadmapFeatures } from "./content/roadmap.js";
+import { roadmapSections } from "./content/roadmap.js";
 import {
   argumentFormNotes,
   argsExample,
@@ -17,6 +17,7 @@ import {
   createCodeBlock,
   createFeatureGrid,
   createHero,
+  createHighlightedCodeBlock,
   createInfoList,
   createMiniPreview,
   createPlainList
@@ -58,11 +59,11 @@ export function renderSyntaxPage(content: HTMLElement): void {
     ),
     createFeatureGrid(syntaxFeatureCards),
     createInfoList("Indentation Creates Children", indentationNotes),
-    createCodeBlock(indentationExample),
+    createHighlightedCodeBlock(indentationExample),
     createInfoList("Three Argument Forms", argumentFormNotes),
-    createCodeBlock(argsExample),
+    createHighlightedCodeBlock(argsExample),
     createInfoList("Command Vocabulary", commandVocabularyNotes),
-    createCodeBlock(commandExample)
+    createHighlightedCodeBlock(commandExample)
   );
 }
 
@@ -98,29 +99,43 @@ export function renderRoadmapPage(content: HTMLElement): void {
     )
   );
 
-  const grid = document.createElement("section");
-  grid.style.cssText =
-    "display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));";
-
-  roadmapFeatures.forEach((feature) => {
-    const article = document.createElement("article");
+  roadmapSections.forEach((section) => {
+    const sectionElement = document.createElement("section");
     const heading = document.createElement("h3");
-    const meta = document.createElement("p");
-    const body = document.createElement("p");
+    const summary = document.createElement("p");
+    const grid = document.createElement("div");
 
-    article.style.cssText =
-      "display: grid; gap: 10px; align-content: start; border: 1px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.035); padding: 16px; min-width: 0;";
-    heading.textContent = feature.title;
-    heading.style.cssText = "margin: 0; font-size: 1.08rem; color: #fff3e1;";
-    meta.textContent = feature.task;
-    meta.style.cssText = "margin: 0; color: #9fb4b2; font-size: 0.9rem;";
-    body.textContent = feature.body;
-    body.style.cssText = "margin: 0; color: #d2c7b4; line-height: 1.55;";
-    article.append(heading, meta, body, createCodeBlock(feature.syntax));
-    grid.append(article);
+    sectionElement.style.cssText = "margin: 0 0 34px;";
+    heading.textContent = section.title;
+    heading.style.cssText = "margin: 0 0 8px; font-size: 1.45rem; color: #fff3e1;";
+    summary.textContent = section.summary;
+    summary.style.cssText =
+      "margin: 0 0 16px; color: #d8cdbf; line-height: 1.6; max-width: 78ch;";
+    grid.style.cssText =
+      "display: grid; align-items: start; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));";
+
+    section.features.forEach((feature) => {
+      const article = document.createElement("article");
+      const featureHeading = document.createElement("h4");
+      const body = document.createElement("p");
+
+      article.style.cssText =
+        "display: grid; gap: 16px; align-content: start; border: 1px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.035); padding: 28px; min-width: 0;";
+      featureHeading.textContent = feature.title;
+      featureHeading.style.cssText = "margin: 0; font-size: 1.14rem; color: #fff3e1;";
+      body.textContent = feature.body;
+      body.style.cssText = "margin: 0; color: #d2c7b4; line-height: 1.55;";
+      article.append(
+        featureHeading,
+        body,
+        createHighlightedCodeBlock(feature.syntax, { strictCommands: false })
+      );
+      grid.append(article);
+    });
+
+    sectionElement.append(heading, summary, grid);
+    content.append(sectionElement);
   });
-
-  content.append(grid);
 }
 
 export function renderIntegrationPage(
@@ -191,7 +206,7 @@ export function renderExamplePage(
     label.style.cssText =
       "margin: 0 0 10px; color: #fff3e1; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.08em;";
     body.textContent =
-      "This feature is listed in the product direction but does not have a shared-core implementation yet. When it lands, this page will gain live editable examples like the implemented pages.";
+      "This reference page is reserved for a planned command. Once the command is part of the public language, this page will include syntax, arguments, and live editable examples.";
     body.style.cssText = "margin: 0; color: #d2c7b4; line-height: 1.6; max-width: 72ch;";
 
     placeholder.append(label, body);

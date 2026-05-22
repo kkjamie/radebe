@@ -3,7 +3,7 @@ import type { ExampleDoc } from "../../types.js";
 export const varsDoc: ExampleDoc = {
     id: "vars",
     title: "Vars",
-    navGroup: "Structure Commands",
+    navGroup: "Declarations",
     summary:
       "Defines reusable file-scoped values for later commands. Use root `var` declarations for small files or a `vars` block when grouping makes the source easier to scan.",
     args: ["var name value", "$name usage"],
@@ -12,7 +12,7 @@ export const varsDoc: ExampleDoc = {
       "`var` is the semantic declaration command and can appear at the file root after the sprite header.",
       "`vars` is an optional grouping command that accepts `var` children.",
       "Variables must be defined before they are used.",
-      "A variable reference must occupy a whole value token such as `$accent`; embedded expressions remain future work."
+      "A variable reference must occupy a whole value token such as `$accent`; embedded expressions are not supported."
     ],
     examples: [
       {

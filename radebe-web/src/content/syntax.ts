@@ -34,9 +34,10 @@ export const commandVocabularyNotes = [
   "Declaration commands define reusable values: `var`, `vars`.",
   "Drawable commands produce pixels or drawable regions: `plot`, `line`, `rect`, `circle`, `polygon`, `path`, `group`.",
   "Geometry modifier commands change shape coverage before painting: `cut`, `radius`.",
-  "Appearance commands paint or derive pixels from a region: `fill`, `stroke`, `shadow`, `glow`, `alpha`.",
+  "Appearance passes paint a drawable region: `fill`, `stroke`, `solid`, `gradient-linear`, `gradient-radial`, `alpha`.",
+  "Effect passes derive pixels from an existing drawable region: `shadow`, `glow`.",
   "Property commands configure existing commands: `antialias`, `size`, `background`.",
-  "Structure commands create hierarchy or scope: `group`, `mask`, `shape`, `contents`."
+  "Structural containers create hierarchy or scope: `group`, `mask`, `shape`, `contents`."
 ];
 
 export const indentationExample = [

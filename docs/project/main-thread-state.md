@@ -1,7 +1,7 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-21`
+Last updated: `2026-05-22`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
@@ -24,7 +24,7 @@ Last updated: `2026-05-21`
 - File-scoped variables are now available through root `var name value` declarations plus optional `vars` grouping blocks. References resolve top-to-bottom as whole value tokens such as `$accent`, including named argument values like `color=$accent`; embedded expression forms such as `left+$pad` remain deferred.
 - Structural `group` containers are now available for organizing draw commands. Groups may be named and nested; they stay transparent when no group-level passes are present, and `fill`, `stroke`, `shadow`, or `glow` under a group now rasterizes children into an offscreen layer, applies the passes to the combined alpha/pixels, then composites back into the parent rather than inheriting defaults into each child.
 - Explicit `mask` containers are now available for clipping arbitrary drawables. A mask has a `shape` container for coverage and a `contents` container for clipped drawing; mask shape drawables can use implicit coverage without visible fills, `invert=true` keeps content outside the shape area instead of inside it, and `show=shape-only|content-only` provides debug views while omitted `show` behaves normally.
-- The product spec now has canonical author-facing vocabulary: drawable commands, pixel primitives, shape drawables, path drawables, geometry modifiers, property commands, appearance passes, effect passes, structural containers, mask shape, and masked content. T-074 tracks folding this into the web reference docs and editor assistance.
+- The product spec now has canonical author-facing vocabulary: drawable commands, pixel primitives, shape drawables, path drawables, geometry modifiers, property commands, appearance passes, effect passes, structural containers, mask shape, and masked content. T-084 completed an initial web reference copy sweep and sidebar/category realignment; T-074 remains for deeper editor assistance, autocomplete detail, and VS Code help metadata polish.
 - The accepted ordering direction is to preserve source-order intuition by rejecting confusing child phases instead of silently reordering them. Groups now diagnose passes before content and content after group-level passes; T-075 remains for broader diagnostics such as geometry modifiers after appearance/effect passes.
 - Optional real output antialiasing is now available through a sprite-level `antialias` default plus per-geometry overrides on line, rectangle, circle, polygon, and path commands. The omitted default remains `false`, so existing pixel-perfect output remains unchanged unless authors opt in.
 - Source comments now use hash-prefixed lines only. The parser ignores lines whose trimmed text starts with `#`; `//` is no longer a comment marker and will be parsed as ordinary source.
@@ -80,13 +80,14 @@ Last updated: `2026-05-21`
 - T-081 is complete. `radebe-web` has been converted from an examples-first workbench into the main homepage/reference site, the top-bar placeholder package mark plus `Radebe` title link back home, route changes reset the document scroll to the top so bottom-sidebar navigation does not land mid-page, and `radebe-web/vite.config.ts` now serves known local release artifacts from `/downloads/...` during dev so the VS Code and Unity pages have working local download links.
 - T-082 is complete. The web app deliberately stays on Vite + TypeScript + CodeMirror + modular direct DOM rather than switching frameworks at this mostly-static stage. `radebe-web/src/main.ts` is now shell/router wiring only, with page/content data in `data.ts`, renderers in `pages.ts`, editor/playground internals in `playground.ts`, reusable panels in `ui.ts`, injected styles in `styles.ts`, and shared page shapes in `types.ts`.
 - T-083 is complete. `radebe-web/src/data.ts` is now a thin registry over page-owned content modules under `radebe-web/src/content`, command reference docs are split one file per command page, static Syntax/Release Notes/Roadmap/Integration/Home data moved beside their page concerns, and the homepage now shows only the hero plus syntax-highlighted mini preview.
+- T-084 is complete. The public Roadmap page now groups planned work into Rendering And Appearance, Language Expressiveness, and Tooling And Integrations sections; roadmap cards use wider columns and larger padding, omit internal task IDs, and let article/body height size to content; roadmap examples and Syntax guide snippets use static syntax highlighting; and command reference copy was swept away from implementation-state phrasing such as "current slice" and "now supports" toward behavior-focused API docs.
 - T-079 tracks the deferred mask composition modes (`add`, `intersect`, `subtract`, `replace`) that need a real mask-stack or region-composition model rather than single-mask clipping.
-- T-074 is a backlog task to standardize the author-facing vocabulary across web reference docs, examples, autocomplete detail text, and VS Code/web editor help.
+- T-074 is a backlog task for remaining vocabulary consistency across autocomplete detail text and VS Code/web editor help after the initial web reference copy sweep in T-084.
 - T-075 is a backlog task to add compiler ordering restrictions for command child phases, with tuning expected around property/argument forms, geometry modifiers, appearance passes, and effects. The group-specific content-before-passes rule landed with T-076.
 - T-077 is a backlog task to allow mixed per-corner rectangle treatments, such as `cut top-left 8` plus `radius top-right 12`, without treating omitted corners as explicit zero-valued cuts or radii.
 
 ## Best Next Tasks
-1. Consider T-074 editor/help vocabulary standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
+1. Consider the remaining T-074 editor/help vocabulary standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
 2. Consider T-068 symbolic expressions, T-077 mixed rectangle corners, or T-079 mask composition modes if the next goal is visible language/effects capability.
 3. Keep T-054 and T-055 postponed; reopen T-043 only if hands-on Eddie importer validation is explicitly requested.
 

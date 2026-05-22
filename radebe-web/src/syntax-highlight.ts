@@ -1,5 +1,9 @@
 import { getCommandDefinition } from "@radebe/core";
 
+export type HighlightSourceOptions = {
+  strictCommands?: boolean;
+};
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -11,11 +15,13 @@ function spanSyntax(className: string, value: string): string {
   return `<span class="${className}">${escapeHtml(value)}</span>`;
 }
 
-function highlightCommandToken(token: string): string {
+function highlightCommandToken(token: string, options: HighlightSourceOptions): string {
   const definition = getCommandDefinition(token);
 
   if (!definition) {
-    return spanSyntax("syntax-unknown", token);
+    return options.strictCommands === false
+      ? spanSyntax("syntax-command", token)
+      : spanSyntax("syntax-unknown", token);
   }
 
   if (definition.kind === "property") {
@@ -75,7 +81,7 @@ function highlightArgumentToken(
   return highlightValueToken(token);
 }
 
-function highlightSourceLine(line: string): string {
+function highlightSourceLine(line: string, options: HighlightSourceOptions): string {
   if (line.trimStart().startsWith("#")) {
     return spanSyntax("syntax-comment", line);
   }
@@ -94,7 +100,7 @@ function highlightSourceLine(line: string): string {
       if (!hasCommandToken) {
         hasCommandToken = true;
         commandName = token;
-        return highlightCommandToken(token);
+        return highlightCommandToken(token, options);
       }
 
       const highlighted = highlightArgumentToken(token, {
@@ -107,10 +113,10 @@ function highlightSourceLine(line: string): string {
     .join("");
 }
 
-export function highlightSource(source: string): string {
+export function highlightSource(source: string, options: HighlightSourceOptions = {}): string {
   const highlighted = source
     .split("\n")
-    .map(highlightSourceLine)
+    .map((line) => highlightSourceLine(line, options))
     .join("\n");
 
   if (highlighted.length === 0) {

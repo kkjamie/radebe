@@ -8,7 +8,7 @@ export const lineDoc: ExampleDoc = {
     args: ["x1", "y1", "x2", "y2", "color", "antialias"],
     childCommands: ["antialias"],
     notes: [
-      "The current MVP rasterizer handles integer coordinates.",
+      "Line coordinates are integer pixel coordinates.",
       "`antialias` can override the sprite default for this line.",
       "Child-property form is equivalent to inline positional or named args."
     ],

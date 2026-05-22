@@ -1,6 +1,7 @@
 import { renderSource } from "@radebe/core";
 
 import { highlightSource } from "./syntax-highlight.js";
+import type { HighlightSourceOptions } from "./syntax-highlight.js";
 import type { DownloadLink } from "./types.js";
 
 const codeBlockStyle =
@@ -57,12 +58,15 @@ export function createCodeBlock(source: string): HTMLElement {
   return pre;
 }
 
-function createHighlightedCodeBlock(source: string): HTMLElement {
+export function createHighlightedCodeBlock(
+  source: string,
+  options: HighlightSourceOptions = {}
+): HTMLElement {
   const pre = document.createElement("pre");
   const code = document.createElement("code");
 
   pre.style.cssText = codeBlockStyle;
-  code.innerHTML = highlightSource(source);
+  code.innerHTML = highlightSource(source, options);
   pre.append(code);
   return pre;
 }

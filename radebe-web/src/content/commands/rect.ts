@@ -13,9 +13,9 @@ export const rectDoc: ExampleDoc = {
       "Width and height must be positive integers.",
       "Direct color shorthand lowers into an implicit solid fill.",
       "`cut` and `radius` are geometry modifiers on the same base rectangle model.",
-      'A rectangle currently cannot use both `cut` and `radius` at the same time.',
+      'A rectangle cannot use both `cut` and `radius` at the same time.',
       "`antialias` is most visible on cut and rounded rectangle contours; plain integer-aligned rectangles remain crisp.",
-      "Rectangle-backed strokes now follow cut and rounded contours instead of the plain rectangle envelope."
+      "Rectangle-backed strokes follow cut and rounded contours instead of the plain rectangle envelope."
     ],
     examples: [
       {
@@ -42,7 +42,7 @@ export const rectDoc: ExampleDoc = {
       {
         id: "rect-radius",
         title: "Rounded Corners With Radius",
-        summary: "Rounded corners now come from a `radius` child on the base rectangle rather than a separate shape command.",
+        summary: "Rounded corners come from a `radius` child on the base rectangle rather than a separate shape command.",
         source: [
           "sprite rect-radius-demo",
           "  size 128 64",
@@ -102,7 +102,7 @@ export const rectDoc: ExampleDoc = {
       {
         id: "rect-contour-stroke",
         title: "Contour-Aware Stroke",
-        summary: "Stroke now follows the modified rectangle silhouette instead of ignoring cut and radius.",
+        summary: "Stroke follows the modified rectangle silhouette instead of ignoring cut and radius.",
         source: [
           "sprite rect-stroke-contour-demo",
           "  size 128 72",

@@ -5,7 +5,7 @@ export const polygonDoc: ExampleDoc = {
     title: "Polygon",
     navGroup: "Drawable Commands",
     summary:
-      "Defines a polygon coverage region from at least three points. It now supports the shared fill and stroke appearance model while keeping the syntax on the same whitespace-based token rules as the rest of the language.",
+      "Defines a polygon shape drawable from at least three points. Polygons accept shared fill, stroke, shadow, glow, and antialias controls.",
     args: ["x y point pairs", "optional color shorthand", "antialias"],
     childCommands: ["point", "fill", "stroke", "antialias"],
     notes: [
@@ -13,7 +13,7 @@ export const polygonDoc: ExampleDoc = {
       "The canonical readable form is repeated `point` children under `polygon`.",
       "A trailing color shorthand lowers into an implicit solid fill.",
       "`antialias` can smooth polygon fill, stroke, and shadow coverage.",
-      "Polygon stroke now uses the shared `stroke` command model, including align, style, and gradient fill support."
+      "Polygon stroke uses the shared `stroke` command model, including align, style, and gradient fill support."
     ],
     examples: [
       {

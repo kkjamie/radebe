@@ -5,21 +5,21 @@ export const strokeDoc: ExampleDoc = {
     title: "Stroke",
     navGroup: "Appearance Commands",
     summary:
-      "Defines a generated stroked region around supported shapes. The current slice supports solid, dashed, and dotted strokes with fill-based color.",
+      "Defines a generated stroked region around a supported shape, path, group layer, or nested stroke envelope. Strokes can be solid, dashed, or dotted and are painted through the fill model.",
     args: ["width", "color", "align", "style", "dash-length", "gap-length", "dot-spacing"],
     childCommands: ["fill"],
     notes: [
         "`stroke 2 white` is shorthand for width plus an implicit solid fill color.",
-        "Current rendering support covers rectangle-backed shapes, circle geometry, and polygon geometry.",
+        "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry, paths, composited groups, and nested stroke envelopes.",
         "Supported align values are `inside`, `center`, and `outside`.",
         "Supported style values are `solid`, `dashed`, and `dotted`.",
-        "Nested `stroke` is supported on the generated stroke envelope in this first recursive slice."
+        "Nested `stroke` attaches another outline to the generated stroke envelope."
       ],
     examples: [
       {
         id: "stroke-shape-showcase",
         title: "All Supported Shapes",
-        summary: "One sprite showing every currently supported stroked shape type: plain rectangle, cut rectangle, rounded rectangle, circle, and polygon.",
+        summary: "One sprite showing supported stroked shape types: plain rectangle, cut rectangle, rounded rectangle, circle, and polygon.",
         source: [
           "sprite stroke-shape-showcase",
           "  size 568 264",
@@ -143,7 +143,7 @@ export const strokeDoc: ExampleDoc = {
         {
           id: "stroke-nested",
           title: "Nested Stroke",
-          summary: "A stroke can now own another stroke so double-outline treatments stay inside the same appearance model.",
+          summary: "A stroke can own another stroke so double-outline treatments stay inside the same appearance model.",
           source: [
             "sprite stroke-nested-demo",
             "  size 128 64",

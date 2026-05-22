@@ -3,7 +3,7 @@ import type { ExampleDoc } from "../../types.js";
 export const maskDoc: ExampleDoc = {
     id: "mask",
     title: "Mask",
-    navGroup: "Structure Commands",
+    navGroup: "Structural Containers",
     summary:
       "Clips arbitrary child drawing using an explicit mask shape rather than implicit shape coverage.",
     args: ["optional name", "invert=true|false", "show=masked-content|shape-only|content-only"],
@@ -14,7 +14,7 @@ export const maskDoc: ExampleDoc = {
       "`contents` contains the drawables clipped by the mask shape.",
       "`invert=true` keeps content outside the mask shape instead of inside it.",
       "`show` defaults to `masked-content`; use `show=shape-only` or `show=content-only` to debug either side of the mask without changing child source.",
-      "Mask composition modes such as add, intersect, subtract, and replace remain deferred."
+      "Mask composition modes such as add, intersect, subtract, and replace are not supported."
     ],
     examples: [
       {

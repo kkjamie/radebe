@@ -16,7 +16,7 @@ export const integrationPages: Extract<PageDefinition, { kind: "integration" }>[
     ],
     commands: ["npm run package:vscode", "npm run install:vscode"],
     details: [
-      "The current local package is generated under `Temp/radebe-language-support-0.1.0.vsix`.",
+      "Local packaging writes `Temp/radebe-language-support-0.1.0.vsix`.",
       "Marketplace publishing is intentionally out of scope for this local development release.",
       "The extension consumes the shared core language service directly, so completions and diagnostics match the web editor."
     ]
@@ -48,7 +48,7 @@ export const integrationPages: Extract<PageDefinition, { kind: "integration" }>[
     details: [
       "The Unity bridge consumes `radebe-cli`; it does not reimplement the renderer in C#.",
       "Repo automation deploys `radebe-unity/Assets` plus the packaged CLI payload into a configured Unity project.",
-      "The current importer baseline handles `.rdb` source assets and produces generated Sprite main assets."
+      "The importer handles `.rdb` source assets and produces generated Sprite main assets."
     ]
   }
 ];

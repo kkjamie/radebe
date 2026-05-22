@@ -5,15 +5,15 @@ export const circleDoc: ExampleDoc = {
     title: "Circle",
     navGroup: "Drawable Commands",
     summary:
-      "Defines a circular coverage region from a center point and radius. It now shares the current fill and stroke appearance model used by shape geometry.",
+      "Defines a circular shape drawable from a center point and radius. Circles accept the shared shape fill, stroke, shadow, glow, and antialias controls.",
     args: ["x", "y", "radius", "color shorthand", "fill", "antialias"],
     childCommands: ["fill", "stroke", "antialias"],
     notes: [
-      "The current center uses integer pixel coordinates.",
+      "The center uses integer pixel coordinates.",
       "Direct color shorthand lowers into an implicit solid fill.",
       "Circle fill variants reuse the same solid, linear-gradient, and radial-gradient model as rectangles.",
       "`antialias` can smooth circle fill, stroke, and shadow coverage while preserving pixel-perfect defaults.",
-      "Circle strokes now use the shared `stroke` command model, including shorthand, align, style, and nested stroke support."
+      "Circle strokes use the shared `stroke` command model, including shorthand, align, style, and nested stroke support."
     ],
     examples: [
       {

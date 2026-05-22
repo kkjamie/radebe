@@ -3,7 +3,7 @@ import type { ExampleDoc } from "../../types.js";
 export const groupDoc: ExampleDoc = {
     id: "group",
     title: "Group",
-    navGroup: "Structure Commands",
+    navGroup: "Structural Containers",
     summary:
       "Collects drawing commands into an ordered structure that can stay transparent or receive composited appearance passes.",
     args: ["optional name"],
@@ -29,8 +29,8 @@ export const groupDoc: ExampleDoc = {
       "With group-level passes, children render into an offscreen layer first; the combined alpha becomes the group drawable.",
       "Group-level `shadow` and outer `glow` draw behind the composited children, `fill` overlays the combined child alpha, inner `glow` clips inside it, and `stroke` follows the combined child contour.",
       "Child draw commands and nested groups must come before group-level appearance or effect passes.",
-      "An optional group name is accepted for authoring clarity and future tooling.",
-      "Group alpha, blend, filters, and transforms remain deferred."
+      "An optional group name is accepted for authoring clarity and diagnostics.",
+      "Group alpha, blend, filters, and transforms are not supported."
     ],
     examples: [
       {
