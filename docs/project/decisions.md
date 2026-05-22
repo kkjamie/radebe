@@ -542,3 +542,25 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Page edits become local to one component file, `data.ts` remains a registry instead of a content store, command reference docs keep their dedicated content ownership, and future simple page additions should start with co-located data plus component markup.
 - Related tasks: T-086, T-085, T-083
 - Supersedes: N/A
+
+---
+
+### DEC-048: Use The Preact Vite Preset For Web HMR
+- Date: `2026-05-22`
+- Status: Accepted
+- Context: After converting `radebe-web` to TSX components, CSS hot reload worked but TSX edits could leave the dev page black until the Vite server restarted. The Vite config was still using plain TSX handling plus the local downloads middleware instead of Preact's supported refresh integration.
+- Decision: Add `@preact/preset-vite` as a web dev dependency and run `preact()` first in `radebe-web/vite.config.ts` before the custom local-downloads plugin.
+- Consequences: TSX component/page edits use the supported Preact refresh path during web development, while the existing local download middleware and production build remain intact. The web package now carries the preset's Babel/prefresh dev dependencies in `package-lock.json`.
+- Related tasks: T-092, T-085
+- Supersedes: N/A
+
+---
+
+### DEC-049: Generate Examples Page Static Previews Before Web Serve/Build
+- Date: `2026-05-22`
+- Status: Accepted
+- Context: Rendering every complete Examples page source as a live CodeMirror playground made the page expensive to load, but the page still needs visual previews before an author chooses to edit.
+- Decision: Keep the complete example sources in shared web JSON data, generate PNG previews from those sources with `@radebe/core` before `vite` dev/build, serve the generated images from `public/generated/examples/`, and let `Playground` accept a cached preview image that overrides the live preview canvas until the source changes.
+- Consequences: The Examples page can show editable source immediately while the preview starts from cheap generated image assets in the same preview frame and zoom path as live rendering. Generated preview files are build artifacts ignored from git; dev/build commands regenerate them so stale previews are not the source of truth. Live render and diagnostics begin per row after the first edit.
+- Related tasks: T-105, T-106, T-101, T-103, T-104
+- Supersedes: N/A

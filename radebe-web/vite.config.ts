@@ -1,6 +1,7 @@
 import { fileURLToPath } from "node:url";
 import { createReadStream, existsSync, statSync } from "node:fs";
 
+import preact from "@preact/preset-vite";
 import { defineConfig } from "vite";
 
 const workspaceRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -46,6 +47,7 @@ function getDownloadContentType(route: string): string {
 
 export default defineConfig({
   plugins: [
+    preact(),
     {
       name: "radebe-local-downloads",
       configureServer(server) {

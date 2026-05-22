@@ -496,6 +496,80 @@ body {
   line-height: 1.55;
 }
 
+.syntax-guide {
+  display: grid;
+  gap: 26px;
+  max-width: 1180px;
+}
+
+.syntax-guide-section {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(320px, 1.1fr);
+  gap: 24px;
+  align-items: start;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding: 24px 0 0;
+}
+
+.syntax-guide-copy {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.syntax-guide-eyebrow {
+  margin: 0;
+  color: #7dd3fc;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.syntax-guide-title {
+  margin: 0;
+  color: #7dd3fc;
+  font-size: 1.32rem;
+  line-height: 1.2;
+}
+
+.syntax-guide-body {
+  margin: 0;
+  color: #d8cdbf;
+  line-height: 1.6;
+}
+
+.syntax-guide-body code,
+.syntax-guide-term-detail code {
+  color: #d8f8ff;
+}
+
+.syntax-guide-terms {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.syntax-guide-term {
+  display: grid;
+  gap: 3px;
+}
+
+.syntax-guide-term-name {
+  color: #fff3e1;
+  font-weight: 700;
+}
+
+.syntax-guide-term-detail {
+  margin: 0;
+  color: #d8cdbf;
+  line-height: 1.5;
+}
+
+.syntax-guide-example {
+  min-width: 0;
+}
+
 .feature-grid,
 .example-info-grid {
   display: grid;
@@ -560,12 +634,30 @@ body {
   justify-content: center;
   min-height: 180px;
   overflow: hidden;
+  background: #0d1011;
 }
 
 .mini-preview-canvas,
+.sprite-cached-preview,
 .sprite-canvas {
+  display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+.sprite-cached-preview[hidden],
+.sprite-canvas[hidden] {
+  display: none;
+}
+
+.examples-list {
+  display: grid;
+  gap: 32px;
+  max-width: 1280px;
+}
+
+.examples-list .playground {
+  margin-bottom: 0;
 }
 
 .release-card,
@@ -611,7 +703,7 @@ body {
   display: grid;
   align-items: start;
   gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
 }
 
 .roadmap-card {
@@ -802,15 +894,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  height: clamp(260px, 34vh, 360px);
   min-height: 180px;
   max-height: min(60vh, 520px);
   margin: 0 0 18px;
   padding: 20px;
   border: 1px solid rgba(255,255,255,0.08);
+  background: #0d1011;
   overflow: hidden;
 }
 
 .playground--immersive .sprite-viewport {
+  height: auto;
   max-height: none;
   min-height: 0;
 }
@@ -821,10 +916,6 @@ body {
   justify-content: stretch;
   flex: 0 0 auto;
   box-shadow: 0 18px 40px rgba(0,0,0,0.35);
-}
-
-.sprite-canvas {
-  display: block;
 }
 
 .diagnostics-heading {
@@ -844,6 +935,10 @@ body {
 @media (max-width: 920px) {
   .mini-preview,
   .playground-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .syntax-guide-section {
     grid-template-columns: minmax(0, 1fr);
   }
 

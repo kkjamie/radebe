@@ -1,0 +1,140 @@
+[
+  {
+    "id": "showcase-play-button",
+    "title": "Play Button",
+    "summary": "A soft mobile-game button with a chunky rounded base, highlight pass, and play icon.",
+    "preview": "/generated/examples/showcase-play-button.png",
+    "source": [
+      "sprite play-button",
+      "  size 168 72",
+      "  background transparent",
+      "  antialias true",
+      "",
+      "rect 8 10 152 52",
+      "  radius 14",
+      "  shadow 0 5 #2f6b24 alpha=0.42 blur=2",
+      "  fill",
+      "    gradient-linear direction=vertical",
+      "      stop #7cf36f 0",
+      "      stop #2fc85f 0.62",
+      "      stop #1f9448 1",
+      "  stroke 3 #fff8d8 alpha=0.85",
+      "",
+      "rect 20 16 128 16 #ffffff40",
+      "  radius 8",
+      "",
+      "polygon 72 25 72 49 96 37 #fff8d8",
+      "  shadow 1 2 #17602e alpha=0.35"
+    ]
+  },
+  {
+    "id": "showcase-message-icon",
+    "title": "Message Icon",
+    "summary": "A rounded chat bubble with a small tail and soft mobile-game color treatment.",
+    "preview": "/generated/examples/showcase-message-icon.png",
+    "source": [
+      "sprite message-icon",
+      "  size 96 80",
+      "  background transparent",
+      "  antialias true",
+      "",
+      "group bubble",
+      "  polygon 30 58 18 72 48 58 white",
+      "  rect 12 10 72 50 white",
+      "    radius 12",
+      "  shadow 0 4 #1e4f8f alpha=0.35 blur=2",
+      "  fill",
+      "    gradient-linear direction=vertical",
+      "      stop #7bdfff 0",
+      "      stop #48a7ff 0.58",
+      "      stop #236fe2 1",
+      "  stroke 3 #d8f8ff",
+      "",
+      "rect 26 25 44 5 #fff8d899",
+      "  radius 2",
+      "rect 26 38 32 5 #fff8d877",
+      "  radius 2"
+    ]
+  },
+  {
+    "id": "showcase-tick-badge",
+    "title": "Tick Badge",
+    "summary": "A chunky confirmation icon built from a radial badge and a thick stroked path.",
+    "preview": "/generated/examples/showcase-tick-badge.png",
+    "source": [
+      "sprite tick-badge",
+      "  size 96 96",
+      "  background transparent",
+      "  antialias true",
+      "",
+      "circle 48 48 34",
+      "  shadow 0 4 #1c6b38 alpha=0.42 blur=3",
+      "  fill gradient-radial #7cf36f #239c50",
+      "  stroke 3 #fff8d8",
+      "",
+      "path check antialias=true",
+      "  point 28 49",
+      "  point 42 63",
+      "  point 70 31",
+      "  stroke 7 #fff8d8"
+    ]
+  },
+  {
+    "id": "showcase-star-prize",
+    "title": "Star Prize",
+    "summary": "A bright reward icon with a polygon star, warm radial fill, and soft glow.",
+    "preview": "/generated/examples/showcase-star-prize.png",
+    "source": [
+      "sprite star-prize",
+      "  size 96 96",
+      "  background transparent",
+      "  antialias true",
+      "",
+      "polygon 48 10 58 36 84 36 63 52 71 80 48 63 25 80 33 52 12 36 38 36",
+      "  shadow 0 4 #9f5a16 alpha=0.35 blur=3",
+      "  fill gradient-radial #fff8d8 #ffb02e",
+      "  stroke 3 #9f5a16 alpha=0.7",
+      "  glow #ffd766 blur=4 alpha=0.45"
+    ]
+  },
+  {
+    "id": "showcase-heart-pickup",
+    "title": "Heart Pickup",
+    "summary": "A simple heart-style pickup made by layering circles and a polygon inside a composited group.",
+    "preview": "/generated/examples/showcase-heart-pickup.png",
+    "source": [
+      "sprite heart-pickup",
+      "  size 96 88",
+      "  background transparent",
+      "  antialias true",
+      "",
+      "group heart",
+      "  circle 34 30 18 #ff6f9a",
+      "  circle 62 30 18 #ff6f9a",
+      "  polygon 17 36 79 36 48 76 #ff6f9a",
+      "  shadow 0 4 #9a244d alpha=0.35 blur=3",
+      "  stroke 2 #fff3f8 alpha=0.7",
+      "  glow #ff6f9a blur=4 alpha=0.35",
+      "",
+      "circle 38 25 7 #fff8d855"
+    ]
+  },
+  {
+    "id": "showcase-simple-sci-fi-panel",
+    "title": "Simple Sci-Fi Panel",
+    "summary": "A clean empty panel shell with chamfered corners, glow, and no internal contents.",
+    "preview": "/generated/examples/showcase-simple-sci-fi-panel.png",
+    "source": [
+      "sprite simple-sci-fi-panel",
+      "  size 160 56",
+      "  background transparent",
+      "",
+      "rect-inset 6",
+      "  cut 8",
+      "  shadow 3 4 black alpha=0.35 blur=2",
+      "  fill gradient-linear #101820 #243847",
+      "  stroke 2 #70c8e8",
+      "  glow #70c8e8 blur=4 alpha=0.55"
+    ]
+  }
+]

@@ -37,6 +37,11 @@ export type PageDefinition =
       examples: ExamplePlayground[];
     }
   | {
+      id: "examples";
+      kind: "examples";
+      title: string;
+    }
+  | {
       id: "syntax";
       kind: "syntax";
       title: string;

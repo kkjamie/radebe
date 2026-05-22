@@ -5,6 +5,7 @@ coverage/
 .DS_Store
 artifacts/
 Temp/
+radebe-web/public/generated/
 .env
 .env.local
 .env.*.local

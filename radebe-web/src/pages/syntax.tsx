@@ -1,10 +1,5 @@
 import type { PageDefinition } from "../types.js";
-import {
-  FeatureGrid,
-  Hero,
-  HighlightedCodeBlock,
-  InfoList
-} from "../ui.js";
+import { Hero, HighlightedCodeBlock } from "../ui.js";
 
 export const syntaxPage: Extract<PageDefinition, { kind: "syntax" }> = {
   id: "syntax",
@@ -12,76 +7,215 @@ export const syntaxPage: Extract<PageDefinition, { kind: "syntax" }> = {
   title: "Syntax"
 };
 
-const syntaxFeatureCards = [
+type InlineTextPart = string | { code: string };
+
+type SyntaxGuideSection = {
+  title: string;
+  body: InlineTextPart[];
+  terms?: SyntaxGuideTerm[];
+  example: string;
+};
+
+type SyntaxGuideTerm = {
+  name: string;
+  commands: string[];
+  detail: string;
+};
+
+const syntaxGuideSections: SyntaxGuideSection[] = [
   {
-    title: "Child commands",
-    body: "Indent by two spaces to attach a command to the line above it. A `stroke` indented under a `rect` paints that rectangle."
+    title: "Structure",
+    body: [
+      "Radebe source is a tree. A line starts a command, and two-space indentation attaches the next command to the line above it."
+    ],
+    example: [
+      "# Parent command",
+      "rect-inset 8 #101820",
+      "  # Child command attached by indentation",
+      "  cut 6",
+      "  # Another child on the same parent",
+      "  stroke 2 #70c8e8"
+    ].join("\n")
   },
   {
-    title: "Auto args",
-    body: "Commands with a known shorthand order can consume positional values, such as `plot 4 4 white`."
+    title: "Arguments",
+    body: [
+      "Arguments can be defined in 3 ways: As children, inline as positional ordered args, or inline as named arguments."
+    ],
+    example: [
+      "# Args as children:",
+      "plot",
+      "  x 4",
+      "  y 4",
+      "  color white",
+      "",
+      "# Auto args: positional shorthand (plot <x> <y> <color>)",
+      "plot 4 4 white",
+      "",
+      "# Named args: explicit inline fields, good for out of order or optional/defaulted args",
+      "plot x=4 y=4 color=white",
+      "",
+      "# Combined...",
+      "plot 4 y=4",
+      "  color white"
+    ].join("\n")
   },
   {
-    title: "Named args",
-    body: "Inline `name=value` arguments can appear in any order when you want compact but explicit source."
+    title: "Shorthand",
+    body: [
+      "Some commands accept convenience values that expand into child commands. A rectangle color is shorthand for an explicit solid fill: ",
+      { code: "rect" },
+      " does not actually have a color argument, even though the trailing color looks like one."
+    ],
+    example: [
+      "# Shorthand form: white expands into a fill",
+      "rect 8 8 32 16 white",
+      "",
+      "# Equivalent expanded form: fill owns the color",
+      "rect 8 8 32 16",
+      "  fill solid white"
+    ].join("\n")
   },
   {
-    title: "Child args",
-    body: "Expanded property commands such as `x 16` and `color white` are useful when a command needs room to breathe."
+    title: "Vocabulary",
+    body: [
+      "Commands fall into roles. The role tells you where a command can appear and what kind of work it does."
+    ],
+    terms: [
+      {
+        name: "Header commands",
+        commands: ["sprite", "size", "background"],
+        detail: "describe the whole sprite."
+      },
+      {
+        name: "Geometry commands",
+        commands: [
+          "plot",
+          "line",
+          "rect",
+          "rect-inset",
+          "circle",
+          "polygon",
+          "path"
+        ],
+        detail: "create pixels or drawable regions."
+      },
+      {
+        name: "Geometry modifiers",
+        commands: ["cut", "radius"],
+        detail: "change shape coverage before painting."
+      },
+      {
+        name: "Property commands",
+        commands: ["x", "y", "color", "antialias"],
+        detail:
+          "and similar children configure a parent command without drawing by themselves."
+      },
+      {
+        name: "Appearance commands",
+        commands: [
+          "fill",
+          "stroke",
+          "solid",
+          "gradient-linear",
+          "gradient-radial"
+        ],
+        detail: "paint an existing drawable region."
+      },
+      {
+        name: "Effect commands",
+        commands: ["shadow", "glow"],
+        detail: "derive extra pixels from an existing shape or group."
+      },
+      {
+        name: "Structural commands",
+        commands: ["group", "mask", "shape", "contents", "vars"],
+        detail: "create scope, organization, clipping, or grouped declarations."
+      }
+    ],
+    example: [
+      "# Structural container",
+      "group badge",
+      "  # Drawable command",
+      "  rect 8 8 80 32 #101820",
+      "    # Geometry modifier",
+      "    radius 6",
+      "    # Appearance pass",
+      "    stroke 2 #70c8e8",
+      "  # Another drawable command",
+      "  circle 74 24 10 #ffcc88",
+      "  # Effect pass",
+      "  glow #70c8e8 blur=4 alpha=0.5"
+    ].join("\n")
   }
 ];
 
-const indentationNotes = [
-  "`cut` modifies the rectangle coverage before it is painted.",
-  "`stroke` is an appearance pass attached to the same rectangle.",
-  "Ordering should stay readable: modifiers and properties first, appearance and effects after."
-];
+function InlineText(props: { parts: InlineTextPart[] }) {
+  return (
+    <>
+      {props.parts.map((part, index) =>
+        typeof part === "string" ? (
+          <span key={index}>{part}</span>
+        ) : (
+          <code key={index}>{part.code}</code>
+        )
+      )}
+    </>
+  );
+}
 
-const argumentFormNotes = [
-  "Auto args are positional shorthand in the command schema.",
-  "Named args are inline key/value pairs.",
-  "Child args are property commands in the indented block."
-];
+function CommandList(props: { commands: string[] }) {
+  return (
+    <>
+      {props.commands.map((command, index) => (
+        <span key={command}>
+          {getCommandSeparator(index, props.commands.length)}
+          <code>{command}</code>
+        </span>
+      ))}
+    </>
+  );
+}
 
-const commandVocabularyNotes = [
-  "Header commands define sprite metadata: `sprite`, `size`, `background`.",
-  "Declaration commands define reusable values: `var`, `vars`.",
-  "Drawable commands produce pixels or drawable regions: `plot`, `line`, `rect`, `circle`, `polygon`, `path`, `group`.",
-  "Geometry modifier commands change shape coverage before painting: `cut`, `radius`.",
-  "Appearance passes paint a drawable region: `fill`, `stroke`, `solid`, `gradient-linear`, `gradient-radial`, `alpha`.",
-  "Effect passes derive pixels from an existing drawable region: `shadow`, `glow`.",
-  "Property commands configure existing commands: `antialias`, `size`, `background`.",
-  "Structural containers create hierarchy or scope: `group`, `mask`, `shape`, `contents`."
-];
+function getCommandSeparator(index: number, length: number) {
+  if (index === 0) {
+    return "";
+  }
 
-const indentationExample = [
-  "rect-inset 8 #101820",
-  "  cut 6",
-  "  stroke 2 #70c8e8"
-].join("\n");
+  if (index === length - 1) {
+    return length === 2 ? " and " : ", and ";
+  }
 
-const argsExample = [
-  "# Auto args: positional shorthand",
-  "plot 4 4 white",
-  "",
-  "# Named args: readable inline fields",
-  "plot x=10 y=4 color=#70c8e8",
-  "",
-  "# Child args: expanded properties",
-  "plot",
-  "  x 16",
-  "  y 4",
-  "  color #ffcc88"
-].join("\n");
+  return ", ";
+}
 
-const commandExample = [
-  "group badge",
-  "  rect 8 8 80 32 #101820",
-  "    radius 6",
-  "    stroke 2 #70c8e8",
-  "  circle 74 24 10 #ffcc88",
-  "  glow #70c8e8 blur=4 alpha=0.5"
-].join("\n");
+function SyntaxGuideSectionView(props: { section: SyntaxGuideSection }) {
+  return (
+    <article className="syntax-guide-section">
+      <div className="syntax-guide-copy">
+        <p className="syntax-guide-title">{props.section.title}</p>
+        <p className="syntax-guide-body">
+          <InlineText parts={props.section.body} />
+        </p>
+        {props.section.terms ? (
+          <dl className="syntax-guide-terms">
+            {props.section.terms.map((term) => (
+              <div className="syntax-guide-term" key={term.name}>
+                <dt className="syntax-guide-term-name">{term.name}</dt>
+                <dd className="syntax-guide-term-detail">
+                  <CommandList commands={term.commands} /> {term.detail}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
+      </div>
+      <div className="syntax-guide-example">
+        <HighlightedCodeBlock source={props.section.example} />
+      </div>
+    </article>
+  );
+}
 
 export function SyntaxPage() {
   return (
@@ -90,13 +224,11 @@ export function SyntaxPage() {
         title="Syntax"
         summary="Radebe source is a command tree. Lines create commands, indentation creates children, and arguments configure the current command either compactly or explicitly."
       />
-      <FeatureGrid items={syntaxFeatureCards} />
-      <InfoList title="Indentation Creates Children" items={indentationNotes} />
-      <HighlightedCodeBlock source={indentationExample} />
-      <InfoList title="Three Argument Forms" items={argumentFormNotes} />
-      <HighlightedCodeBlock source={argsExample} />
-      <InfoList title="Command Vocabulary" items={commandVocabularyNotes} />
-      <HighlightedCodeBlock source={commandExample} />
+      <section className="syntax-guide">
+        {syntaxGuideSections.map((section) => (
+          <SyntaxGuideSectionView key={section.title} section={section} />
+        ))}
+      </section>
     </>
   );
 }

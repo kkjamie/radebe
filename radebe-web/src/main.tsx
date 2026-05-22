@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { appVersion, exampleDocs, integrationPages, pages } from "./data.js";
 import {
   ExamplePage,
+  ExamplesPage,
   HomePage,
   IntegrationPage,
   ReleaseNotesPage,
@@ -150,6 +151,8 @@ function Page(props: {
       return <HomePage />;
     case "playground":
       return <TryItPage page={props.page} sourceState={props.sourceState} />;
+    case "examples":
+      return <ExamplesPage sourceState={props.sourceState} />;
     case "syntax":
       return <SyntaxPage />;
     case "releases":
@@ -245,7 +248,7 @@ function App() {
             <span className="topbar-title">Radebe</span>
           </a>
           <span className="topbar-tagline">
-            Text-first procedural UI sprites
+            Procedural image authoring language
           </span>
         </div>
         <span className="version-pill">v{appVersion}</span>
@@ -269,6 +272,12 @@ function App() {
                 label="Try it"
                 onNavigate={handleNavigate}
                 pageId="try-it"
+              />
+              <NavLink
+                activePageId={page.id}
+                label="Examples"
+                onNavigate={handleNavigate}
+                pageId="examples"
               />
               <NavLink
                 activePageId={page.id}

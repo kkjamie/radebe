@@ -130,9 +130,9 @@ export function MiniPreview(props: { source: string }) {
       </div>
       <div className="mini-preview-panel">
         <p className="mini-preview-label">Rendered artifact</p>
-        <div className="mini-preview-canvas-wrap canvas-checkerboard">
+        <div className="mini-preview-canvas-wrap">
           <canvas
-            className="mini-preview-canvas"
+            className="mini-preview-canvas canvas-checkerboard"
             ref={canvasRef}
             style={{
               height: `${height * scale}px`,

@@ -2,6 +2,7 @@ import type { ExampleDoc, PageDefinition } from "./types.js";
 import { commandDocs } from "./content/commands/index.js";
 import { appVersion } from "./content/version.js";
 import {
+  examplesPage,
   homePage,
   integrationPages,
   releaseNotesPage,
@@ -17,6 +18,7 @@ export const exampleDocs: ExampleDoc[] = commandDocs;
 export const pages: PageDefinition[] = [
   homePage,
   tryItPage,
+  examplesPage,
   syntaxPage,
   releaseNotesPage,
   roadmapPage,

@@ -4,6 +4,8 @@ import {
   EditorState,
   Prec,
   RangeSetBuilder,
+  StateEffect,
+  StateField,
   Transaction,
   type TransactionSpec
 } from "@codemirror/state";
@@ -43,6 +45,15 @@ type SourceTokenSpan = {
   text: string;
   from: number;
   to: number;
+};
+
+const ASSIST_UPDATE_DELAY_MS = 35;
+const PREVIEW_RENDER_DELAY_MS = 90;
+
+type CachedPreview = {
+  src: string;
+  width: number;
+  height: number;
 };
 
 function getLanguagePosition(source: string, offset: number): LanguageServiceRequest["position"] {
@@ -508,10 +519,12 @@ function getDiagnosticTokenRange(
   };
 }
 
-function createSourceDiagnosticDecorations(view: EditorView): DecorationSet {
+function createSourceDiagnosticDecorations(
+  view: EditorView,
+  diagnostics: RadebeDiagnostic[]
+): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
-  const source = view.state.doc.toString();
-  const ranges = renderSource({ source }).diagnostics
+  const ranges = diagnostics
     .map((diagnostic) => {
       const range = getDiagnosticTokenRange(view, diagnostic);
 
@@ -541,6 +554,26 @@ function createSourceDiagnosticDecorations(view: EditorView): DecorationSet {
   return builder.finish();
 }
 
+const setDiagnosticDecorations = StateEffect.define<DecorationSet>();
+
+const diagnosticDecorations = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, transaction) {
+    let nextDecorations = decorations.map(transaction.changes);
+
+    for (const effect of transaction.effects) {
+      if (effect.is(setDiagnosticDecorations)) {
+        nextDecorations = effect.value;
+      }
+    }
+
+    return nextDecorations;
+  },
+  provide: (field) => EditorView.decorations.from(field)
+});
+
 const sourceSyntaxHighlighter = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
@@ -552,25 +585,6 @@ const sourceSyntaxHighlighter = ViewPlugin.fromClass(
     update(update: ViewUpdate): void {
       if (update.docChanged || update.viewportChanged) {
         this.decorations = createSourceSyntaxDecorations(update.view);
-      }
-    }
-  },
-  {
-    decorations: (plugin) => plugin.decorations
-  }
-);
-
-const sourceDiagnosticHighlighter = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-
-    constructor(view: EditorView) {
-      this.decorations = createSourceDiagnosticDecorations(view);
-    }
-
-    update(update: ViewUpdate): void {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = createSourceDiagnosticDecorations(update.view);
       }
     }
   },
@@ -601,6 +615,7 @@ const sourceColorSwatches = ViewPlugin.fromClass(
 export function Playground(props: {
   playground: ExamplePlayground;
   sourceState: Map<string, string>;
+  cachedPreview?: CachedPreview;
   immersive?: boolean;
 }) {
   const sourceEditorRef = useRef<HTMLDivElement>(null);
@@ -613,6 +628,7 @@ export function Playground(props: {
   const diagnosticsOutputRef = useRef<HTMLPreElement>(null);
   const spriteViewportRef = useRef<HTMLDivElement>(null);
   const spriteSurfaceRef = useRef<HTMLDivElement>(null);
+  const cachedPreviewImageRef = useRef<HTMLImageElement>(null);
   const spriteCanvasRef = useRef<HTMLCanvasElement>(null);
   const immersive = props.immersive === true;
 
@@ -627,6 +643,7 @@ export function Playground(props: {
     const diagnosticsOutput = diagnosticsOutputRef.current!;
     const spriteViewport = spriteViewportRef.current!;
     const spriteSurface = spriteSurfaceRef.current!;
+    const cachedPreviewImage = cachedPreviewImageRef.current;
     const spriteCanvas = spriteCanvasRef.current!;
 
     if (
@@ -649,7 +666,10 @@ export function Playground(props: {
 
     const initialSource =
       props.sourceState.get(props.playground.id) ?? props.playground.source;
+    const cachedPreview = props.cachedPreview;
     let editorView: EditorView;
+    let livePreviewActive =
+      cachedPreview === undefined || props.sourceState.has(props.playground.id);
     let currentArtifactSize = { width: 1, height: 1 };
     let completionResult: LanguageCompletionResult | null = null;
     let activeCompletionIndex = 0;
@@ -657,6 +677,26 @@ export function Playground(props: {
     let completionSuppressedUntilInput = false;
     let suppressAssistForNextChange = false;
     let argumentHelpOpen = false;
+    let previewUpdateTimer: number | null = null;
+    let assistUpdateTimer: number | null = null;
+    let fitScaleFrame: number | null = null;
+    let disposed = false;
+
+    function getViewportContentSize(): { width: number; height: number } {
+      const viewportRect = spriteViewport.getBoundingClientRect();
+      const viewportStyle = window.getComputedStyle(spriteViewport);
+      const horizontalPadding =
+        (Number.parseFloat(viewportStyle.paddingLeft) || 0) +
+        (Number.parseFloat(viewportStyle.paddingRight) || 0);
+      const verticalPadding =
+        (Number.parseFloat(viewportStyle.paddingTop) || 0) +
+        (Number.parseFloat(viewportStyle.paddingBottom) || 0);
+
+      return {
+        width: Math.max(viewportRect.width - horizontalPadding, 1),
+        height: Math.max(viewportRect.height - verticalPadding, 1)
+      };
+    }
 
     function applyCanvasScale(width: number, height: number): void {
       currentArtifactSize = {
@@ -667,14 +707,14 @@ export function Playground(props: {
       let scale = Number.parseInt(zoomSelect.value, 10);
 
       if (zoomSelect.value === "fit") {
-        const viewportWidth = Math.max(spriteViewport.clientWidth - 40, 1);
-        const viewportHeight = Math.max(spriteViewport.clientHeight - 40, 1);
+        const viewportSize = getViewportContentSize();
+
         scale = Math.max(
           Math.min(
             Math.floor(
               Math.min(
-                viewportWidth / currentArtifactSize.width,
-                viewportHeight / currentArtifactSize.height
+                viewportSize.width / currentArtifactSize.width,
+                viewportSize.height / currentArtifactSize.height
               )
             ),
             32
@@ -683,10 +723,40 @@ export function Playground(props: {
         );
       }
 
-      spriteCanvas.style.width = `${currentArtifactSize.width * scale}px`;
-      spriteCanvas.style.height = `${currentArtifactSize.height * scale}px`;
+      const scaledWidth = `${currentArtifactSize.width * scale}px`;
+      const scaledHeight = `${currentArtifactSize.height * scale}px`;
+
+      spriteCanvas.style.width = scaledWidth;
+      spriteCanvas.style.height = scaledHeight;
+      if (cachedPreviewImage) {
+        cachedPreviewImage.style.width = scaledWidth;
+        cachedPreviewImage.style.height = scaledHeight;
+      }
       spriteSurface.style.width = spriteCanvas.style.width;
       spriteSurface.style.height = spriteCanvas.style.height;
+    }
+
+    function showCachedPreview(): void {
+      if (!cachedPreview) {
+        return;
+      }
+
+      spriteCanvas.hidden = true;
+      if (cachedPreviewImage) {
+        cachedPreviewImage.hidden = false;
+      }
+      applyCanvasScale(cachedPreview.width, cachedPreview.height);
+      status.textContent = "Cached preview.";
+      previewMeta.textContent =
+        `Artifact: sprite-grid ${cachedPreview.width}x${cachedPreview.height}`;
+      diagnosticsOutput.textContent = "(cached preview)";
+    }
+
+    function showLiveCanvas(): void {
+      spriteCanvas.hidden = false;
+      if (cachedPreviewImage) {
+        cachedPreviewImage.hidden = true;
+      }
     }
 
     function drawCheckerboardFallback(width: number, height: number): void {
@@ -744,6 +814,71 @@ export function Playground(props: {
       return editorView.state.selection.main.head;
     }
 
+    function clearPreviewUpdate(): void {
+      if (previewUpdateTimer === null) {
+        return;
+      }
+
+      window.clearTimeout(previewUpdateTimer);
+      previewUpdateTimer = null;
+    }
+
+    function schedulePreviewUpdate(): void {
+      clearPreviewUpdate();
+      previewUpdateTimer = window.setTimeout(() => {
+        previewUpdateTimer = null;
+
+        if (!disposed) {
+          updatePreview(getEditorSource());
+        }
+      }, PREVIEW_RENDER_DELAY_MS);
+    }
+
+    function cancelAssistUpdate(): void {
+      if (assistUpdateTimer === null) {
+        return;
+      }
+
+      window.clearTimeout(assistUpdateTimer);
+      assistUpdateTimer = null;
+    }
+
+    function cancelFitScaleUpdate(): void {
+      if (fitScaleFrame === null) {
+        return;
+      }
+
+      window.cancelAnimationFrame(fitScaleFrame);
+      fitScaleFrame = null;
+    }
+
+    function scheduleFitScaleUpdate(): void {
+      if (zoomSelect.value !== "fit") {
+        return;
+      }
+
+      cancelFitScaleUpdate();
+      fitScaleFrame = window.requestAnimationFrame(() => {
+        fitScaleFrame = null;
+
+        if (!disposed && zoomSelect.value === "fit") {
+          applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
+        }
+      });
+    }
+
+    function scheduleAssistUpdate(): void {
+      cancelAssistUpdate();
+
+      assistUpdateTimer = window.setTimeout(() => {
+        assistUpdateTimer = null;
+
+        if (!disposed) {
+          updateAssist();
+        }
+      }, ASSIST_UPDATE_DELAY_MS);
+    }
+
     function updatePreview(source: string): void {
       const result = renderSource({ source });
       const diagnosticsText = result.diagnostics
@@ -757,10 +892,17 @@ export function Playground(props: {
         })
         .join("\n");
 
+      showLiveCanvas();
       status.textContent = `Parsed ${result.parsed.commands.length} root command(s), compiled ${result.compiled.commands.length} draw command(s).`;
       previewMeta.textContent = `Artifact: ${result.artifact.kind} ${result.artifact.width}x${result.artifact.height} background=${result.artifact.background}`;
       diagnosticsOutput.textContent =
         diagnosticsText === "" ? "(no diagnostics)" : diagnosticsText;
+      editorView.dispatch({
+        effects: setDiagnosticDecorations.of(
+          createSourceDiagnosticDecorations(editorView, result.diagnostics)
+        ),
+        annotations: Transaction.addToHistory.of(false)
+      });
 
       if (result.artifact.width === 0 || result.artifact.height === 0) {
         applyCanvasScale(1, 1);
@@ -891,6 +1033,7 @@ export function Playground(props: {
     }
 
     function hideAssist(): void {
+      cancelAssistUpdate();
       completionResult = null;
       completionListExplicit = false;
       completionSuppressedUntilInput = true;
@@ -970,8 +1113,14 @@ export function Playground(props: {
     function handleSourceChange(): void {
       const source = getEditorSource();
       props.sourceState.set(props.playground.id, source);
-      updatePreview(source);
-      updateAssist();
+      if (livePreviewActive) {
+        schedulePreviewUpdate();
+      } else {
+        livePreviewActive = true;
+        clearPreviewUpdate();
+        updatePreview(source);
+      }
+      scheduleAssistUpdate();
     }
 
     function getVisibleCompletionCount(): number {
@@ -1039,12 +1188,6 @@ export function Playground(props: {
     }
 
     function shouldOpenArgumentHelpAfterUpdate(update: ViewUpdate): boolean {
-      const help = getArgumentHelp(createLanguageRequest());
-
-      if (!help) {
-        return false;
-      }
-
       if (!update.docChanged) {
         return argumentHelpOpen;
       }
@@ -1227,7 +1370,7 @@ export function Playground(props: {
           EditorView.lineWrapping,
           sourceSyntaxHighlighter,
           sourceColorSwatches,
-          sourceDiagnosticHighlighter,
+          diagnosticDecorations,
           smartEditTransactionFilter,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
@@ -1271,21 +1414,35 @@ export function Playground(props: {
     }
 
     const resizeObserver = new ResizeObserver(() => {
-      if (zoomSelect.value === "fit") {
-        applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
-      }
+      scheduleFitScaleUpdate();
     });
 
     zoomSelect.addEventListener("change", handleZoomChange);
     resizeObserver.observe(spriteViewport);
-    updatePreview(initialSource);
+    if (livePreviewActive) {
+      updatePreview(initialSource);
+    } else {
+      showCachedPreview();
+    }
+    scheduleFitScaleUpdate();
 
     return () => {
+      disposed = true;
+      clearPreviewUpdate();
+      cancelAssistUpdate();
+      cancelFitScaleUpdate();
       zoomSelect.removeEventListener("change", handleZoomChange);
       resizeObserver.disconnect();
       editorView.destroy();
     };
-  }, [props.playground.id, props.playground.source, props.sourceState]);
+  }, [
+    props.cachedPreview?.height,
+    props.cachedPreview?.src,
+    props.cachedPreview?.width,
+    props.playground.id,
+    props.playground.source,
+    props.sourceState
+  ]);
 
   return (
     <section className={`playground${immersive ? " playground--immersive" : ""}`}>
@@ -1319,9 +1476,25 @@ export function Playground(props: {
               </select>
             </label>
           </div>
-          <div className="sprite-viewport canvas-checkerboard" ref={spriteViewportRef}>
+          <div className="sprite-viewport" ref={spriteViewportRef}>
             <div className="sprite-surface canvas-checkerboard" ref={spriteSurfaceRef}>
-              <canvas className="sprite-canvas" ref={spriteCanvasRef} />
+              {props.cachedPreview ? (
+                <img
+                  alt={`${props.playground.title} cached preview`}
+                  className="sprite-cached-preview"
+                  hidden={props.sourceState.has(props.playground.id)}
+                  ref={cachedPreviewImageRef}
+                  src={props.cachedPreview.src}
+                />
+              ) : null}
+              <canvas
+                className="sprite-canvas"
+                hidden={
+                  props.cachedPreview !== undefined &&
+                  !props.sourceState.has(props.playground.id)
+                }
+                ref={spriteCanvasRef}
+              />
             </div>
           </div>
           <h4 className="diagnostics-heading">Diagnostics</h4>

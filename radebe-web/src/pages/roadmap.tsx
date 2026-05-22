@@ -69,6 +69,34 @@ const roadmapSections = [
         ].join("\n")
       },
       {
+        title: "Built-in sprite variables",
+        body:
+          "Read-only sprite values for width, height, center, and bounds without declaring them in every file.",
+        syntax: [
+          "rect 0 0 $sprite.width $sprite.height #101820",
+          "line 0 $sprite.center-y $sprite.width $sprite.center-y #d8f8ff"
+        ].join("\n")
+      },
+      {
+        title: "Relative dimension units",
+        body:
+          "Width- and height-relative values for responsive source that still compiles to deterministic pixels.",
+        syntax: [
+          "rect 10%W 12%H 80%W 76%H #101820",
+          "line 0 0.5h 1w 0.5h #70c8e8"
+        ].join("\n")
+      },
+      {
+        title: "Inline comments",
+        body:
+          "End-of-line notes for explaining source without moving the explanation onto its own line.",
+        syntax: [
+          "rect 8 8 96 40 #101820",
+          "  cut 4 # chamfer each corner",
+          "  stroke 2 #70c8e8 # outline the panel"
+        ].join("\n")
+      },
+      {
         title: "Transforms",
         body:
           "Translate, rotate, scale, and mirror for shapes or groups while keeping pixel output predictable.",
