@@ -7,11 +7,13 @@ import {
   parseRadebeColorToken,
   renderSource
 } from "../../radebe-core/dist/src/index.js";
+import brandIcon from "../src/content/brand-icon.json" with { type: "json" };
 import examples from "../src/content/examples.json" with { type: "json" };
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptDir, "..");
 const publicRoot = path.join(webRoot, "public");
+const generatedBrandRoot = path.join(publicRoot, "generated", "brand");
 const generatedRoot = path.join(publicRoot, "generated", "examples");
 
 const pngSignature = Buffer.from([
@@ -134,11 +136,15 @@ function getPreviewOutputPath(previewPath) {
   return path.join(publicRoot, relativePreviewPath);
 }
 
+await rm(generatedBrandRoot, { recursive: true, force: true });
 await rm(generatedRoot, { recursive: true, force: true });
+await mkdir(generatedBrandRoot, { recursive: true });
 await mkdir(generatedRoot, { recursive: true });
 
-for (const example of examples) {
-  const source = example.source.join("\n");
+const previewSources = [brandIcon, ...examples];
+
+for (const previewSource of previewSources) {
+  const source = previewSource.source.join("\n");
   const result = renderSource({ source });
 
   if (result.diagnostics.length > 0) {
@@ -146,13 +152,15 @@ for (const example of examples) {
       .map((diagnostic) => diagnostic.message)
       .join("\n");
 
-    throw new Error(`Cannot render preview for ${example.id}:\n${messages}`);
+    throw new Error(`Cannot render preview for ${previewSource.id}:\n${messages}`);
   }
 
-  const outputPath = getPreviewOutputPath(example.preview);
+  const outputPath = getPreviewOutputPath(previewSource.preview);
 
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, encodePng(result.artifact));
 }
 
-console.log(`Generated ${examples.length} example preview image(s).`);
+console.log(
+  `Generated ${examples.length} example preview image(s) and 1 brand icon.`
+);

@@ -1,3 +1,4 @@
+import brandIconData from "../content/brand-icon.json" with { type: "json" };
 import showcaseExamplesData from "../content/examples.json" with { type: "json" };
 import { Playground } from "../playground.js";
 import type { PageDefinition } from "../types.js";
@@ -37,8 +38,9 @@ function getSourceSize(source: string): { width: number; height: number } {
   };
 }
 
-const showcaseExamples = (showcaseExamplesData as ShowcaseExampleData[]).map(
-  (example): ShowcaseExample => {
+const showcaseExamples = (
+  [brandIconData, ...showcaseExamplesData] as ShowcaseExampleData[]
+).map((example): ShowcaseExample => {
     const source = example.source.join("\n");
     const size = getSourceSize(source);
 
@@ -48,8 +50,7 @@ const showcaseExamples = (showcaseExamplesData as ShowcaseExampleData[]).map(
       previewWidth: size.width,
       source
     };
-  }
-);
+  });
 
 export function ExamplesPage(props: { sourceState: Map<string, string> }) {
   return (

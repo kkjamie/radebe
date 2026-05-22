@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
+import { BrandIcon } from "./brand-icon.js";
 import { appVersion, exampleDocs, integrationPages, pages } from "./data.js";
 import {
   ExamplePage,
@@ -244,7 +245,7 @@ function App() {
             href="#/home"
             onClick={handleTopbarHomeClick}
           >
-            <span aria-hidden="true" className="package-icon" />
+            <BrandIcon />
             <span className="topbar-title">Radebe</span>
           </a>
           <span className="topbar-tagline">
