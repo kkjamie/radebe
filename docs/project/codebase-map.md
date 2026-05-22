@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-05-21`
+Last updated: `2026-05-22`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -28,20 +28,21 @@ Last updated: `2026-05-21`
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.
-- `radebe-web/src/main.ts`: browser site shell, top bar/sidebar wiring, hash routing, active navigation, and shared source-state ownership.
-- `radebe-web/src/data.ts`: lightweight page registry that aggregates the page-owned web content modules.
-- `radebe-web/src/content/home.ts`: homepage page definition and highlighted mini-preview source.
-- `radebe-web/src/content/try-it.ts`: default full-page Try it editor example data.
-- `radebe-web/src/content/syntax.ts`: syntax guide feature cards, notes, and example snippets.
-- `radebe-web/src/content/releases.ts`: release-note history data.
-- `radebe-web/src/content/roadmap.ts`: public roadmap feature cards and planned syntax examples.
-- `radebe-web/src/content/integrations.ts`: VS Code extension and Unity plugin page data plus local download links.
+- `radebe-web/src/main.tsx`: Preact browser site shell, top bar/sidebar wiring, hash routing, active navigation, and shared source-state ownership.
+- `radebe-web/src/data.ts`: lightweight page registry that combines page definitions exported from `src/pages/` with command reference docs.
+- `radebe-web/src/pages/home.tsx`: homepage component with its page definition and highlighted mini-preview source co-located at the top.
+- `radebe-web/src/pages/try-it.tsx`: full-page Try it component with its page definition and default editor example data co-located at the top.
+- `radebe-web/src/pages/syntax.tsx`: syntax guide component with feature cards, notes, and example snippets co-located at the top.
+- `radebe-web/src/pages/release-notes.tsx`: release notes component with release-note history data co-located at the top.
+- `radebe-web/src/pages/roadmap.tsx`: public roadmap component with feature cards and planned syntax examples co-located at the top.
+- `radebe-web/src/pages/integrations.tsx`: integration page component with VS Code extension and Unity plugin page data plus local download links co-located at the top.
+- `radebe-web/src/pages/command-reference.tsx`: generic command reference page component that renders command docs and examples.
+- `radebe-web/src/pages/index.ts`: barrel exports for page components and page definitions.
 - `radebe-web/src/content/commands/*.ts`: one command reference doc module per sidebar command page, with `content/commands/index.ts` preserving navigation order.
-- `radebe-web/src/pages.ts`: page renderer functions for Home, Try it, Syntax, Release Notes, Roadmap, integration pages, and command reference pages.
-- `radebe-web/src/playground.ts`: CodeMirror-backed Radebe editor/preview surface, schema-driven assists, diagnostics, color swatches, and preview rendering.
+- `radebe-web/src/playground.tsx`: Preact-hosted CodeMirror Radebe editor/preview surface, schema-driven assists, diagnostics, color swatches, and preview rendering.
 - `radebe-web/src/syntax-highlight.ts`: shared static source highlighter used outside CodeMirror surfaces.
-- `radebe-web/src/ui.ts`: reusable DOM helper panels and small UI primitives used by page renderers.
-- `radebe-web/src/styles.ts`: style injection for the current web shell, editor, sidebar, and shared components.
+- `radebe-web/src/ui.tsx`: reusable Preact page panels and small UI primitives used by page renderers.
+- `radebe-web/src/styles.css`: stylesheet for the web shell, editor, sidebar, and shared components.
 - `radebe-web/src/types.ts`: web-only page/content types shared across the web modules.
 - `radebe-vscode/src/extension.ts`: VS Code extension activation for `.rdb` completions, signature help, diagnostics, color decorations/picker presentations, smart newline indentation, smart edits, and text render preview.
 - `radebe-vscode/src/language-adapter.ts`: pure adapter layer that converts VS Code-style offsets into shared `@radebe/core` language-service, color-token, and diagnostic-range calls.
@@ -76,6 +77,7 @@ Last updated: `2026-05-21`
 - Keep this file high-signal and architecture-focused.
 - Avoid duplicating detailed implementation notes from session logs.
 - Workspace tooling is now `npm` workspaces plus TypeScript project references, with `radebe-unity` intentionally kept outside the npm workspace boundary.
+- `radebe-web` is a Vite + TypeScript + Preact app; keep public pages and reusable panels in TSX components, while treating CodeMirror-specific editor behavior as an imperative island inside `playground.tsx`.
 - `radebe-core` now exposes both a root API and subpath exports so downstream packages can choose between whole-pipeline usage and stage-specific integration.
 - The recommended executable path is Node SEA so the repo can stay on the current Node/npm toolchain and only add release-time bundling plus per-platform artifact generation.
 - The first VS Code surface consumes `@radebe/core` directly inside the extension host; introduce an LSP adapter only if multiple editor hosts need the protocol boundary.

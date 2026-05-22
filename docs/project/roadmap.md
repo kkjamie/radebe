@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-05-21`
+Last updated: `2026-05-22`
 
 ## Planning Horizon
 - Current: `2026-05-17` to `2026-05-24`
@@ -39,7 +39,7 @@ Last updated: `2026-05-21`
 - T-057 followed user validation of the VS Code host by promoting Radebe color-token knowledge into shared `@radebe/core` metadata. VS Code now decorates named colors such as `white` through a real color provider, and the web CodeMirror editor now shows clickable color swatches with browser-picker-backed hex replacement.
 - T-058 added local VS Code extension deployment automation. `npm run install:vscode` builds the workspace, stages a VSIX with the copied `@radebe/core` runtime instead of workspace symlinks, packages it with local `@vscode/vsce`, and installs it into the normal VS Code profile without Marketplace publishing.
 - T-081 converted `radebe-web` from an examples-first workbench into the main user-facing site. The index route now introduces Radebe, the top bar shows `v0.1.0`, the sidebar can collapse and uses Commands sections aligned to the author vocabulary, the old experimental page is now a full-height `Try it` editor, and new Syntax, Release Notes, Roadmap, VS Code Extension, and Unity Plugin pages are available. The public roadmap page is intentionally filtered to user-facing features from the task board rather than internal fixes.
-- T-082 split the web site implementation into maintainable TypeScript modules while keeping the accepted Vite + TypeScript + CodeMirror stack and avoiding a frontend framework switch for this mostly-static stage.
+- T-082 split the web site implementation into maintainable TypeScript modules, and T-085 later superseded the no-framework direction by converting `radebe-web` to a Vite + TypeScript + Preact component app with CodeMirror retained as an editor island.
 - Future language/effects backlog still includes mask composition modes, procedural fills such as noise, clouds, Voronoi, and patterns, plus follow-ons for blend modes, expressions, transforms, reusable symbols, richer paths, source-authored import metadata, boolean region operations, vocabulary/reference-doc polish, compiler ordering restrictions, and mixed per-corner rectangle treatments. T-059 `group` landed the transparent structural slice, T-076 extended groups with composited `fill`, `stroke`, and `shadow` passes, T-061 added soft shadow blur on the existing `shadow` command, T-062 added inner/outer `glow`, and T-060 added explicit mask clipping with inversion.
 
 ## Gate Policy

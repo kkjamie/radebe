@@ -1,4 +1,18 @@
-export const syntaxFeatureCards = [
+import type { PageDefinition } from "../types.js";
+import {
+  FeatureGrid,
+  Hero,
+  HighlightedCodeBlock,
+  InfoList
+} from "../ui.js";
+
+export const syntaxPage: Extract<PageDefinition, { kind: "syntax" }> = {
+  id: "syntax",
+  kind: "syntax",
+  title: "Syntax"
+};
+
+const syntaxFeatureCards = [
   {
     title: "Child commands",
     body: "Indent by two spaces to attach a command to the line above it. A `stroke` indented under a `rect` paints that rectangle."
@@ -17,19 +31,19 @@ export const syntaxFeatureCards = [
   }
 ];
 
-export const indentationNotes = [
+const indentationNotes = [
   "`cut` modifies the rectangle coverage before it is painted.",
   "`stroke` is an appearance pass attached to the same rectangle.",
   "Ordering should stay readable: modifiers and properties first, appearance and effects after."
 ];
 
-export const argumentFormNotes = [
+const argumentFormNotes = [
   "Auto args are positional shorthand in the command schema.",
   "Named args are inline key/value pairs.",
   "Child args are property commands in the indented block."
 ];
 
-export const commandVocabularyNotes = [
+const commandVocabularyNotes = [
   "Header commands define sprite metadata: `sprite`, `size`, `background`.",
   "Declaration commands define reusable values: `var`, `vars`.",
   "Drawable commands produce pixels or drawable regions: `plot`, `line`, `rect`, `circle`, `polygon`, `path`, `group`.",
@@ -40,13 +54,13 @@ export const commandVocabularyNotes = [
   "Structural containers create hierarchy or scope: `group`, `mask`, `shape`, `contents`."
 ];
 
-export const indentationExample = [
+const indentationExample = [
   "rect-inset 8 #101820",
   "  cut 6",
   "  stroke 2 #70c8e8"
 ].join("\n");
 
-export const argsExample = [
+const argsExample = [
   "# Auto args: positional shorthand",
   "plot 4 4 white",
   "",
@@ -60,7 +74,7 @@ export const argsExample = [
   "  color #ffcc88"
 ].join("\n");
 
-export const commandExample = [
+const commandExample = [
   "group badge",
   "  rect 8 8 80 32 #101820",
   "    radius 6",
@@ -68,3 +82,21 @@ export const commandExample = [
   "  circle 74 24 10 #ffcc88",
   "  glow #70c8e8 blur=4 alpha=0.5"
 ].join("\n");
+
+export function SyntaxPage() {
+  return (
+    <>
+      <Hero
+        title="Syntax"
+        summary="Radebe source is a command tree. Lines create commands, indentation creates children, and arguments configure the current command either compactly or explicitly."
+      />
+      <FeatureGrid items={syntaxFeatureCards} />
+      <InfoList title="Indentation Creates Children" items={indentationNotes} />
+      <HighlightedCodeBlock source={indentationExample} />
+      <InfoList title="Three Argument Forms" items={argumentFormNotes} />
+      <HighlightedCodeBlock source={argsExample} />
+      <InfoList title="Command Vocabulary" items={commandVocabularyNotes} />
+      <HighlightedCodeBlock source={commandExample} />
+    </>
+  );
+}

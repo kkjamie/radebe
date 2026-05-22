@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-21`
+Last updated: `2026-05-22`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -514,9 +514,31 @@ Use for significant decisions only. Keep entries short and explicit.
 
 ### DEC-045: Keep The Web Site On Modular Vanilla TypeScript
 - Date: `2026-05-21`
-- Status: Accepted
+- Status: Superseded
 - Context: After `radebe-web` became the public site, `main.ts` had grown into a multi-thousand-line mix of static content, page rendering, editor internals, styling, and router wiring. The site needs reusable panels and easier editing, but it remains mostly static and does not yet need framework-level state management.
 - Decision: Keep `radebe-web` on Vite, TypeScript, CodeMirror 6, and direct DOM construction for now, but split the app into modules for data, page renderers, playground/editor internals, shared UI helpers, styles, shared types, and shell/router wiring. Do not introduce React or another frontend framework solely for this stage.
 - Consequences: Page and docs edits become easier without framework churn. A future React/Preact/Svelte decision remains open if the web app gains richer persistent state, reusable interactive panels, or hostable editor-package needs that justify a component framework.
 - Related tasks: T-082, T-081, T-054
+- Supersedes: N/A
+
+---
+
+### DEC-046: Use Preact For The Web Component Layer
+- Date: `2026-05-22`
+- Status: Accepted
+- Context: After the content split, editing the public web site still required verbose page-level DOM construction and inline style strings. The web surface now benefits from reusable components and real markup, but it still does not need heavyweight framework state management.
+- Decision: Convert `radebe-web` to a Vite + TypeScript + Preact TSX app. Keep CodeMirror 6 as an imperative editor island inside a Preact `Playground` component, keep page/content data in the existing modules, and move site styling into a normal CSS import.
+- Consequences: Shell, page renderers, and shared UI panels become component markup; the web runtime adds a small `preact` dependency; editor internals can remain close to CodeMirror's DOM APIs; future page work should prefer TSX components and CSS classes over manual page-level `document.createElement` assembly.
+- Related tasks: T-085, T-082, T-083, T-084
+- Supersedes: DEC-045
+
+---
+
+### DEC-047: Co-Locate Simple Web Page Data With Page Components
+- Date: `2026-05-22`
+- Status: Accepted
+- Context: After the Preact migration, a single `pages.tsx` still mixed every page component while simple page data lived in separate content modules. That made edits require bouncing between files for small public pages.
+- Decision: Split the web page layer into focused modules under `radebe-web/src/pages/`, with each simple public page keeping its page definition and static page data at the top of the same file as the component. Keep command reference docs under `content/commands` because they are already one module per command and feed a generic command reference component.
+- Consequences: Page edits become local to one component file, `data.ts` remains a registry instead of a content store, command reference docs keep their dedicated content ownership, and future simple page additions should start with co-located data plus component markup.
+- Related tasks: T-086, T-085, T-083
 - Supersedes: N/A

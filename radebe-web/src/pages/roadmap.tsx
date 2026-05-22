@@ -1,4 +1,13 @@
-export const roadmapSections = [
+import type { PageDefinition } from "../types.js";
+import { Hero, HighlightedCodeBlock } from "../ui.js";
+
+export const roadmapPage: Extract<PageDefinition, { kind: "roadmap" }> = {
+  id: "roadmap",
+  kind: "roadmap",
+  title: "Roadmap"
+};
+
+const roadmapSections = [
   {
     title: "Rendering And Appearance",
     summary:
@@ -140,3 +149,32 @@ export const roadmapSections = [
     ]
   }
 ];
+
+export function RoadmapPage() {
+  return (
+    <>
+      <Hero
+        title="Roadmap"
+        summary="This page tracks user-facing capabilities from the project task board. New language, rendering, editor, and integration features belong here; internal fixes generally stay off the public roadmap unless they change the author workflow."
+      />
+      {roadmapSections.map((section) => (
+        <section className="roadmap-section" key={section.title}>
+          <h3 className="roadmap-heading">{section.title}</h3>
+          <p className="roadmap-summary">{section.summary}</p>
+          <div className="roadmap-grid">
+            {section.features.map((feature) => (
+              <article className="roadmap-card" key={feature.title}>
+                <h4 className="roadmap-card-title">{feature.title}</h4>
+                <p className="roadmap-card-body">{feature.body}</p>
+                <HighlightedCodeBlock
+                  source={feature.syntax}
+                  options={{ strictCommands: false }}
+                />
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
+  );
+}

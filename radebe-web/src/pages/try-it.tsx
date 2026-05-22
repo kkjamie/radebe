@@ -1,3 +1,4 @@
+import { Playground } from "../playground.js";
 import type { PageDefinition } from "../types.js";
 
 export const tryItPage: Extract<PageDefinition, { kind: "playground" }> = {
@@ -27,3 +28,21 @@ export const tryItPage: Extract<PageDefinition, { kind: "playground" }> = {
     }
   ]
 };
+
+export function TryItPage(props: {
+  sourceState: Map<string, string>;
+  page: Extract<PageDefinition, { kind: "playground" }>;
+}) {
+  return (
+    <>
+      {props.page.examples.map((example) => (
+        <Playground
+          immersive
+          key={example.id}
+          playground={example}
+          sourceState={props.sourceState}
+        />
+      ))}
+    </>
+  );
+}
