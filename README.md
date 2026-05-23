@@ -59,7 +59,7 @@ Build the website with its downloadable release artifacts with:
 npm run build:release:web
 ```
 
-This packages the VS Code extension and Unity plugin first, then builds `radebe-web` so the deployed static site includes those downloads under `dist/downloads/`.
+This packages the VS Code extension and Unity plugin first, then builds `radebe-web`. The current temporary Pages-safe setup only emits small web-served download assets under `dist/downloads/`; the large public release binaries are being moved to external hosting next.
 
 ## CLI SEA Packaging
 

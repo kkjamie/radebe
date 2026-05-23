@@ -18,20 +18,8 @@ const coreSourceRoot = fileURLToPath(
 const localDownloads = new Map(
   [
     [
-      "/downloads/radebe-language-support-0.1.0.vsix",
-      new URL("../Temp/radebe-language-support-0.1.0.vsix", import.meta.url)
-    ],
-    [
       "/downloads/radebe-unity-bridge.manifest.json",
       new URL("../radebe-unity/bridge.manifest.json", import.meta.url)
-    ],
-    [
-      "/downloads/radebe-unity-plugin-0.1.0.unitypackage",
-      new URL("../Temp/radebe-unity-plugin-0.1.0.unitypackage", import.meta.url)
-    ],
-    [
-      "/downloads/radebe-cli-win32-x64.exe",
-      new URL("../artifacts/radebe-cli/sea/win32-x64/radebe.exe", import.meta.url)
     ]
   ].map(([route, url]) => [route, fileURLToPath(url as URL)])
 );

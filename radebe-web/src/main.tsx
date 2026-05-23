@@ -363,18 +363,20 @@ function App() {
                 onNavigate={handleNavigate}
               />
             </div>
-            <div className="nav-section nav-bottom">
-              <p className="nav-section-title">Integrations</p>
-              {integrationPages.map((integrationPage) => (
-                <NavLink
-                  activePageId={page.id}
-                  key={integrationPage.id}
-                  label={integrationPage.title}
-                  onNavigate={handleNavigate}
-                  pageId={integrationPage.id}
-                />
-              ))}
-            </div>
+            {integrationPages.length > 0 ? (
+              <div className="nav-section nav-bottom">
+                <p className="nav-section-title">Integrations</p>
+                {integrationPages.map((integrationPage) => (
+                  <NavLink
+                    activePageId={page.id}
+                    key={integrationPage.id}
+                    label={integrationPage.title}
+                    onNavigate={handleNavigate}
+                    pageId={integrationPage.id}
+                  />
+                ))}
+              </div>
+            ) : null}
           </nav>
         </div>
       </aside>

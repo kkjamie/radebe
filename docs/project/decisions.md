@@ -696,3 +696,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The project keeps the Windows build requirement for packaged downloads while reducing deploy-environment drift against the legacy Cloudflare flow. This also makes deploy troubleshooting clearer by separating build failures from Cloudflare upload behavior.
 - Related tasks: T-119
 - Supersedes: N/A
+
+---
+
+### DEC-062: Do Not Ship Large Release Binaries Through Cloudflare Pages
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: A hosted deploy run proved that Cloudflare Pages rejects files larger than `25 MiB`, and the current site output included a `66.9 MiB` Windows CLI binary plus other large release downloads.
+- Decision: Temporarily remove the oversized public download binaries from the Pages site output and hide the integration pages that advertise them until release artifacts are moved to external hosting such as Cloudflare R2.
+- Consequences: The site itself can now deploy through Pages without being blocked by large binaries, but public download links for the VS Code extension, Unity package, and Windows CLI are intentionally unavailable until the external artifact host is in place.
+- Related tasks: T-119
+- Supersedes: N/A

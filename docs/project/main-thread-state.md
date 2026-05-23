@@ -116,6 +116,7 @@ Last updated: `2026-05-23`
 - `azure-pipelines.yml` now also links the Azure DevOps Library variable group `Radebe Variables` directly in YAML. The next hosted check should confirm the pipeline is authorized to use that group and that the expected Cloudflare values resolve correctly in the new repo context.
 - A later hosted install failure showed the old repo Node pin itself had become too old for the current VS Code packaging toolchain because `cheerio@1.2.0` now requires Node `>=20.18.1`. The workspace and pipeline baseline have now been advanced to Node `20.18.1` while keeping npm `10.9.2`.
 - After the pipeline was merged to `master`, Cloudflare showed the production-branch update audit but no actual deployment entry. The pipeline has now been reshaped into a Windows build stage plus a Linux deploy stage so the real `wrangler pages deploy` path matches the legacy environment more closely while still building the Windows CLI payload on CI.
+- A later deploy log showed the concrete Cloudflare Pages blocker: `wrangler pages deploy` rejected `downloads/radebe-cli-win32-x64.exe` at `66.9 MiB` because Pages only supports files up to `25 MiB`. The website is now in a temporary Pages-safe mode: oversized binaries are no longer copied into `dist`, and the public integration pages are hidden until external download hosting is added.
 - T-091 is a backlog task for inline comments after commands. The likely syntax treats a standalone `#` token as the start of the comment so examples like `cut 4 # chamfer each corner` work without breaking hex color values like `#70c8e8`.
 - T-079 tracks the deferred mask composition modes (`add`, `intersect`, `subtract`, `replace`) that need a real mask-stack or region-composition model rather than single-mask clipping.
 - T-074 is a backlog task for remaining vocabulary consistency across autocomplete detail text and VS Code/web editor help after the initial web reference copy sweep in T-084.
@@ -125,7 +126,7 @@ Last updated: `2026-05-23`
 ## Best Next Tasks
 1. Consider the remaining T-074 editor/help vocabulary standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
 2. Consider T-068 symbolic expressions, T-087 built-in sprite variables, T-088 relative dimension units, T-091 inline comments, T-077 mixed rectangle corners, or T-079 mask composition modes if the next goal is visible language/effects capability.
-3. Re-run the hosted Azure DevOps pipeline after the Windows-build/Linux-deploy split, then inspect whether Cloudflare now records a real deployment event before changing deploy semantics further.
+3. Re-run the hosted Azure DevOps pipeline with the temporary Pages-safe web output, confirm the site deploy succeeds, then move the large public downloads to external hosting such as Cloudflare R2.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.
