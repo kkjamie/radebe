@@ -663,3 +663,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Hosted builds now match the repo's pinned runtime contract instead of weakening engine enforcement to fit the agent image. Pipeline failures after this point are more likely to reflect real dependency or environment issues than tool-version drift.
 - Related tasks: T-119, T-111
 - Supersedes: N/A
+
+---
+
+### DEC-059: Link Azure Library Variables In YAML For The New Repo Pipeline
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The old pipeline could not be cleanly retargeted to the new repo, and the new Azure DevOps setup now stores deploy values in a Library variable group named `Radebe Variables`.
+- Decision: Reference `Radebe Variables` directly from `azure-pipelines.yml` with `variables: - group: Radebe Variables` instead of relying on pipeline-UI-only linkage.
+- Consequences: The pipeline's dependency on Azure Library configuration is visible in repo history and portable across recreated pipeline definitions. The pipeline still requires Azure authorization to use that variable group, and bad or missing values in the group will surface at runtime.
+- Related tasks: T-119
+- Supersedes: N/A

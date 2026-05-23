@@ -12,12 +12,19 @@ pool:
   vmImage: windows-latest
 
 variables:
-  nodeVersion: "20.9.0"
-  npmVersion: "10.9.2"
-  siteOutputDir: "radebe-web/dist"
-  cloudflareProjectName: "radebe"
-  productionBranch: "refs/heads/master"
-  cloudflareProductionBranch: "master"
+  - group: Radebe Variables
+  - name: nodeVersion
+    value: "20.9.0"
+  - name: npmVersion
+    value: "10.9.2"
+  - name: siteOutputDir
+    value: "radebe-web/dist"
+  - name: cloudflareProjectName
+    value: "radebe"
+  - name: productionBranch
+    value: "refs/heads/master"
+  - name: cloudflareProductionBranch
+    value: "master"
 
 steps:
   - task: NodeTool@0
