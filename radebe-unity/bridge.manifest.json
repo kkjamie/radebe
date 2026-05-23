@@ -7,7 +7,7 @@
   "artifactRoot": "artifacts/radebe-cli/sea/<platform>-<arch>",
   "executableBaseName": "radebe",
   "metadataManifest": "artifact-manifest.json",
-  "recommendedInstallRoot": "Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>",
+  "recommendedInstallRoot": "Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>",
   "importArtifact": "unity-sprite",
   "sourceExtensions": [
     "rdb"

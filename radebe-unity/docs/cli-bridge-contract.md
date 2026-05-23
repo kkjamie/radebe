@@ -41,7 +41,7 @@ Unity should treat the platform folder as an atomic payload. The executable is t
 ## Install and Update Model
 - Source of truth for packaged payloads is the SEA artifact directory produced by `npm run package:cli:sea`.
 - Unity should copy one whole `<platform>-<arch>` folder into a Unity-managed install root rather than cherry-picking only the executable.
-- Recommended Unity install root: `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`
+- Recommended Unity install root: `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`
 - Updates should replace the entire installed platform folder with a newly packaged platform folder from the same artifact layout.
 - Unity should compare the bundled `artifact-manifest.json` when deciding whether an installed payload needs refresh.
 - Unity should not require a system Node.js install in production use.
@@ -82,7 +82,8 @@ Unity should treat the platform folder as an atomic payload. The executable is t
 - Unity-side bridge smoke tests should invoke the executable with a known source string and assert stdout plus exit code.
 - The current editor helper baseline exposes `RunSmokeTest()` which validates the installed payload, invokes the packaged executable with a spec-aligned smoke source, expects stdout `....\n.#..\n....\n`, and tolerates the known unsigned SEA stderr warning as non-fatal noise when the process still succeeds.
 - The current editor helper baseline also exposes `InvokeCompileFile()` for ScriptedImporter use, and `RadebeSpriteImporter` turns the `unity-sprite` JSON artifact into generated `Texture2D` and `Sprite` subassets.
-- The current local deployment baseline uses `npm run deploy:unity`, driven by `.env` / `RADEBE_UNITY_PROJECT_PATH`, to copy `radebe-unity/Assets` plus the current platform SEA payload into a configured Unity test project.
+- The current local deployment baseline uses `npm run deploy:unity`, driven by `.env` / `RADEBE_UNITY_PROJECT_PATH`, to copy `radebe-unity/Assets`, `bridge.manifest.json`, and the current platform SEA payload into `Assets/Plugins/Radebe` in a configured Unity test project.
+- The current packaging baseline uses `npm run package:unity`, which builds the latest SEA payload and assembles the `.unitypackage` directly from repo-owned plugin contents plus checked-in Unity metadata without requiring Unity itself.
 
 ## Forward-Compatibility Notes
 - Unity should continue consuming `radebe-cli` rather than a parallel runtime path.

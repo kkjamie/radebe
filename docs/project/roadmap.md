@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-05-22`
+Last updated: `2026-05-23`
 
 ## Planning Horizon
 - Current: `2026-05-17` to `2026-05-24`
@@ -39,6 +39,9 @@ Last updated: `2026-05-22`
 - T-057 followed user validation of the VS Code host by promoting Radebe color-token knowledge into shared `@radebe/core` metadata. VS Code now decorates named colors such as `white` through a real color provider, and the web CodeMirror editor now shows clickable color swatches with browser-picker-backed hex replacement.
 - T-058 added local VS Code extension deployment automation. `npm run install:vscode` builds the workspace, stages a VSIX with the copied `@radebe/core` runtime instead of workspace symlinks, packages it with local `@vscode/vsce`, and installs it into the normal VS Code profile without Marketplace publishing.
 - T-081 converted `radebe-web` from an examples-first workbench into the main user-facing site. The index route now introduces Radebe, the top bar shows `v0.1.0`, the sidebar can collapse and uses Commands sections aligned to the author vocabulary, the old experimental page is now a full-height `Try it` editor, and new Syntax, Release Notes, Roadmap, VS Code Extension, and Unity Plugin pages are available. The public roadmap page is intentionally filtered to user-facing features from the task board rather than internal fixes.
+- T-115 reshaped the Unity bridge around a single plugin-root install layout. `Assets/Plugins/Radebe` is now the canonical target for editor scripts, bridge metadata, and the packaged CLI payload under `Tools/radebe-cli/<platform>-<arch>/`; the earlier `StreamingAssets` split is no longer the intended architecture.
+- T-116 added a Unity-driven export path, but that path has now been superseded and is no longer exposed as a supported packaging command.
+- T-117 proved and promoted the `.unitypackage` path without Unity. The default `npm run package:unity` command now emits the package directly from repo assets plus the packaged CLI payload, imports successfully under `Assets/Plugins/Radebe` in fresh temp Unity projects, prefers harvested Unity-authored `.meta` files checked into the repo, and matches Unity's package entry layout closely enough to import without the earlier `.meta` warnings. This gives the project a stronger zero-Unity CI direction, with synthesis reduced to fallback behavior instead of the primary metadata source.
 - T-082 split the web site implementation into maintainable TypeScript modules, and T-085 later superseded the no-framework direction by converting `radebe-web` to a Vite + TypeScript + Preact component app with CodeMirror retained as an editor island.
 - Future language/effects backlog still includes mask composition modes, procedural fills such as noise, clouds, Voronoi, and patterns, plus follow-ons for blend modes, expressions, built-in sprite dimension variables, relative dimension units, inline comments, transforms, reusable symbols, richer paths, source-authored import metadata, boolean region operations, vocabulary/reference-doc polish, compiler ordering restrictions, and mixed per-corner rectangle treatments. T-059 `group` landed the transparent structural slice, T-076 extended groups with composited `fill`, `stroke`, and `shadow` passes, T-061 added soft shadow blur on the existing `shadow` command, T-062 added inner/outer `glow`, and T-060 added explicit mask clipping with inversion.
 

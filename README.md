@@ -45,6 +45,14 @@ Start with:
 
 The intended CLI distribution path is a packaged executable so Unity and other consumers do not need a separate Node.js installation at runtime.
 
+Build a local Unity plugin package with:
+
+```powershell
+npm run package:unity
+```
+
+This is now the default zero-Unity packaging path. It builds the latest SEA payload, assembles the canonical `Assets/Plugins/Radebe` package contents directly from the repo, uses the checked-in Unity `.meta` files where available, and writes `Temp/radebe-unity-plugin-0.1.0-poc.unitypackage`.
+
 ## CLI SEA Packaging
 
 Build a local Node SEA executable artifact with:

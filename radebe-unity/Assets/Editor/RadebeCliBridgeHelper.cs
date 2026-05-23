@@ -24,6 +24,12 @@ namespace Radebe.UnityBridge.Editor
             "....\n";
         private const string DefaultArtifactSourceRoot = "artifacts/radebe-cli/sea";
         private const string ArtifactSourceRootEnvironmentVariable = "RADEBE_CLI_ARTIFACT_ROOT";
+        private static readonly string InstalledPayloadRoot = Path.Combine(
+            Application.dataPath,
+            "Plugins",
+            "Radebe",
+            "Tools",
+            "radebe-cli");
 
         public static RadebeCliInstallValidationResult ValidateInstalledPayload()
         {
@@ -373,11 +379,7 @@ namespace Radebe.UnityBridge.Editor
 
         private static string GetInstalledPayloadDirectory(string platformKey)
         {
-            return Path.Combine(
-                Application.streamingAssetsPath,
-                "Radebe",
-                "radebe-cli",
-                platformKey);
+            return Path.Combine(InstalledPayloadRoot, platformKey);
         }
 
         private static string ResolveSourcePayloadDirectory(string artifactRootDirectory, string platformKey)

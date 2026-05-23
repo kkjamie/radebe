@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-05-22`
+Last updated: `2026-05-23`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -49,10 +49,11 @@ Last updated: `2026-05-22`
 - `radebe-vscode/src/extension.ts`: VS Code extension activation for `.rdb` completions, signature help, diagnostics, color decorations/picker presentations, smart newline indentation, smart edits, and text render preview.
 - `radebe-vscode/src/language-adapter.ts`: pure adapter layer that converts VS Code-style offsets into shared `@radebe/core` language-service, color-token, and diagnostic-range calls.
 - `radebe-vscode/syntaxes/radebe.tmLanguage.json`: TextMate grammar for `.rdb` syntax highlighting.
-- `radebe-unity/README.md`: bridge direction and planned Unity asset layout.
+- `radebe-unity/README.md`: bridge direction and the canonical `Assets/Plugins/Radebe` Unity asset layout.
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
-- `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`: Unity-side install validation, payload copy/update, and smoke-invocation helper for the packaged CLI payload.
+- `radebe-unity/PackageRoot.meta` and `radebe-unity/PackageRoot/**/*.meta`: repo-owned Unity-authored metadata mirror for package-root assets that do not live directly under `radebe-unity/Assets`, such as `bridge.manifest.json` and packaged CLI payload entries.
+- `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`: Unity-side install validation, plugin-local payload copy/update, and smoke-invocation helper for the packaged CLI payload under `Assets/Plugins/Radebe/Tools/radebe-cli/`.
 - `radebe-unity/Assets/Editor/RadebeSpriteImporter.cs`: Unity `.rdb` ScriptedImporter that invokes `radebe-cli compile <file> --format unity-json` and creates generated `Texture2D` plus `Sprite` subassets.
 - `radebe-unity/Assets/Editor/RadebeUnityMenu.cs`: Unity editor menu entrypoints for payload validation, install/update, and smoke testing.
 - `radebe-unity/Assets/Editor/RadebeUnityImportVerifier.cs`: batchmode-friendly utility for asserting that a configured `.rdb` asset imports as a generated Sprite.
@@ -60,7 +61,9 @@ Last updated: `2026-05-22`
 ## Tooling / Build Paths
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.
 - `scripts/src/sea.ts`: release-time bundling and Node SEA packaging automation for `radebe-cli`.
-- `scripts/src/unity-deploy.ts`: local Unity plugin deployment helper that reads `.env` / `RADEBE_UNITY_PROJECT_PATH`, copies `radebe-unity/Assets` into a configured Unity project, and installs the current platform packaged CLI payload.
+- `scripts/src/unity-common.ts`: shared Unity deploy/package config parsing and filesystem helpers.
+- `scripts/src/unity-deploy.ts`: local Unity plugin deployment helper that reads `.env` / `RADEBE_UNITY_PROJECT_PATH`, copies `radebe-unity/Assets` plus `bridge.manifest.json` into `Assets/Plugins/Radebe`, and installs the current platform packaged CLI payload under `Tools/radebe-cli/`.
+- `scripts/src/unity-package-native-poc.ts`: experimental zero-Unity packer that emits a `.unitypackage` directly from the repo's canonical plugin layout plus the built CLI payload, now preferring harvested repo `.meta` files, excluding `.meta` files from ordinary asset payload collection, and matching Unity's export structure more closely with GUID directory entries plus `asset` / `asset.meta` / `pathname` ordering.
 - `scripts/install-vscode-extension.mjs`: local VS Code deployment helper that stages the extension plus copied `@radebe/core` runtime files, packages a VSIX through `@vscode/vsce`, and optionally installs it with the VS Code CLI.
 - root workspace config files: npm workspaces, TypeScript project references, and shared build settings.
 - CLI packaging pipeline: bundle `radebe-cli` plus `@radebe/core` into a single release entry script, then build per-platform Node SEA executables from a pinned Node LTS binary.

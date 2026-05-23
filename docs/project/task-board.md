@@ -1,7 +1,7 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-05-22`
+Last updated: `2026-05-23`
 
 Use this as the single source of truth for active execution state. Keep `Active` limited to live execution items; closed work belongs in `Completed`.
 
@@ -129,6 +129,9 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-112 | Add first-render performance instrumentation to the web app | M2 | Gate B | P1 | Done | `codex-main` | None | `radebe-web` now supports a `?perf=1` timing overlay that records app boot, first frame, home mini-preview work, playground editor setup, cached-preview display, and first live preview milestones so white-screen delays can be diagnosed from the browser instead of guessed from bundle size |
 | T-113 | Diagnose the web app white-screen delay with real browser timings | M2 | Gate B | P1 | Done | `codex-main` | None | Headless Edge runs against `?perf=1` showed the dominant delay is synchronous `renderSource(...)` work on the initial route, especially the top-bar `BrandIcon` render (~2.24s) and, on `#/home`, a second render of the same icon source inside `MiniPreview` (~2.22s); syntax highlighting, CodeMirror setup, and the first playground preview were comparatively small |
 | T-114 | Remove runtime brand-icon compilation from the initial render path | M2 | Gate B | P1 | Done | `codex-main` | None | The top bar and Home mini preview now use the generated brand PNG instead of compiling the icon source at runtime; headless Edge `?perf=1` reruns improved Home first frame from about `4739ms` to `324ms` and Try it first frame from about `2520ms` to `603ms` |
+| T-115 | Reshape Unity plugin install root under `Assets/Plugins/Radebe` | M2 | Gate C | P1 | Done | `codex-main` | None | The Unity bridge now treats `Assets/Plugins/Radebe` as the canonical install root, deploys the packaged CLI payload under `Tools/radebe-cli/<platform>-<arch>/`, and no longer models `StreamingAssets` as the intended plugin layout |
+| T-116 | Add Unity-driven `.unitypackage` export script | M2 | Gate C | P1 | Done | `codex-main` | Superseded by the native default packaging path and no longer exposed as a supported command | Historical Unity-driven export code exists only as prior implementation context; the supported packaging flow is now the repo-native `npm run package:unity` path |
+| T-117 | Prove repo-native `.unitypackage` assembly without Unity | M2 | Gate C | P1 | Done | `codex-main` | None | `npm run package:unity` now defaults to the repo-native package builder, which assembles the `.unitypackage` directly from the canonical plugin layout plus SEA payload, prefers harvested Unity-authored `.meta` files checked into `radebe-unity`, matches Unity's package entry structure closely, and imports cleanly into fresh temp Unity projects under `Assets/Plugins/Radebe` without the earlier `.meta` warnings |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

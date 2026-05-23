@@ -19,7 +19,8 @@ Unity-facing integration assets will live here.
 - `Assets/Editor/RadebeSpriteImporterEditor.cs`: custom importer inspector that exposes Unity-facing sprite, slicing, filtering, and bridge options for `.rdb` assets.
 - `Assets/Editor/RadebeUnityMenu.cs`: editor menu helpers for payload validation, payload install/update, and smoke execution.
 - `Assets/Editor/RadebeUnityImportVerifier.cs`: batchmode-friendly importer assertion helper for configured smoke assets.
-- `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`: installed CLI payload copied from the packaged SEA artifact.
+- `Assets/Plugins/Radebe/`: canonical Unity plugin root for the bridge code, metadata, and packaged CLI payload.
+- `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`: installed CLI payload copied from the packaged SEA artifact.
 - `docs/`: integration notes, bridge contract, and smoke-test instructions.
 
 ## Current Baseline
@@ -33,8 +34,8 @@ Unity-facing integration assets will live here.
   - `artifact-manifest.json`
 
 ## Editor Helper Baseline
-- `RadebeCliBridgeHelper.ValidateInstalledPayload()` checks the installed `StreamingAssets` payload for the current platform.
-- `RadebeCliBridgeHelper.InstallOrUpdatePayload()` validates the packaged SEA source folder, compares manifests, and copies or refreshes the whole platform directory into `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`.
+- `RadebeCliBridgeHelper.ValidateInstalledPayload()` checks the installed plugin-local CLI payload for the current platform.
+- `RadebeCliBridgeHelper.InstallOrUpdatePayload()` validates the packaged SEA source folder, compares manifests, and copies or refreshes the whole platform directory into `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`.
 - `RadebeCliBridgeHelper.InvokeCompileFile()` invokes `radebe compile <file> --format unity-json` for importer use.
 - `RadebeCliBridgeHelper.RunSmokeTest()` invokes the installed packaged CLI with the current spec-aligned source-string contract and asserts the rendered row output.
 - The helper defaults its source artifact root to `../artifacts/radebe-cli/sea/` relative to the Unity project when no explicit path is provided.
@@ -56,6 +57,8 @@ Unity-facing integration assets will live here.
 
 ## Local Deploy Testing
 - Root script: `npm run deploy:unity`
+- Package script: `npm run package:unity`
 - Required local config: copy `.env.example` to `.env` and set `RADEBE_UNITY_PROJECT_PATH`.
-- Default deploy target: `Assets/Radebe` in the configured Unity project.
-- The deploy script also copies the current platform SEA payload into the configured Unity project's `Assets/StreamingAssets/Radebe/radebe-cli/<platform>-<arch>/`.
+- Default deploy target: `Assets/Plugins/Radebe` in the configured Unity project.
+- The deploy script also copies the current platform SEA payload into the configured Unity project's `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`.
+- The package script is now the default non-Unity path. It builds the latest SEA payload, assembles the `.unitypackage` directly from the repo's canonical plugin layout, uses the checked-in Unity-authored `.meta` files where available, and emits `Temp/radebe-unity-plugin-0.1.0-poc.unitypackage`.

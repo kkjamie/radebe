@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-22`
+Last updated: `2026-05-23`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -585,4 +585,59 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Pin the local workspace runtime to Node.js `20.9.0` and npm `10.9.2`, declare both in the root `package.json` `engines`, enforce them with root `.npmrc` `engine-strict=true`, and add `.nvmrc` plus README setup guidance so the expected runtime is explicit across environments.
 - Consequences: Contributors get one clearly documented and enforced baseline instead of ad hoc local versions, and runtime mismatches fail early during npm usage rather than later during script execution. Contributors must switch to the pinned runtime before installing or working in the repo.
 - Related tasks: T-110, T-111
+- Supersedes: N/A
+
+---
+
+### DEC-052: Mount The Unity Bridge Under `Assets/Plugins/Radebe`
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The first Unity bridge baseline used a split install shape with editor code under `Assets/Radebe` and the packaged CLI payload under `Assets/StreamingAssets/Radebe/...`, which is awkward for a future one-step Unity import experience.
+- Decision: Treat `Assets/Plugins/Radebe` as the canonical Unity plugin root, with the packaged CLI payload installed under `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`.
+- Consequences: The Unity-facing plugin becomes a single removable or distributable directory, `StreamingAssets` is no longer part of the intended bridge architecture, and future `.unitypackage` assembly can package one coherent root while `artifacts/...` remains an internal build staging location.
+- Related tasks: T-115, T-055
+- Supersedes: N/A
+
+---
+
+### DEC-053: Export The Unity Package Through Unity Itself
+- Date: `2026-05-23`
+- Status: Superseded
+- Context: After moving the bridge to `Assets/Plugins/Radebe`, the next packaging step needs a real `.unitypackage` output. Re-implementing Unity's archive format in repo tooling would be brittle and would sidestep Unity's own asset export behavior.
+- Decision: Add repo automation that deploys the canonical plugin root into a configured Unity project, then invokes `AssetDatabase.ExportPackage` through a repo-owned batchmode editor method to produce the `.unitypackage`.
+- Consequences: This established a comparison baseline against Unity-authored packages, but the project later removed the Unity-driven export path from the supported workflow after the native path imported cleanly.
+- Related tasks: T-116, T-115
+- Supersedes: N/A
+
+---
+
+### DEC-054: Keep Native `.unitypackage` Assembly As A POC Until Real `.meta` Files Exist
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The project needs a zero-Unity, zero-project packaging path for CI, but the current repo does not yet store Unity-authored `.meta` files for the plugin tree.
+- Decision: Prove the `.unitypackage` format with a repo-native Node POC that synthesizes deterministic `.meta` content and writes the GUID-folder tar.gz structure directly, while keeping the Unity-driven exporter as the more authoritative path for now.
+- Consequences: The repo now has evidence that `.unitypackage` creation can happen without Unity, but the native packer remains a proof of concept until the project decides how to manage real `.meta` files and import settings in source control.
+- Related tasks: T-117, T-116
+- Supersedes: N/A
+
+---
+
+### DEC-055: Keep Harvested Unity `.meta` Files In Repo For The Native Packaging Path
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: After the native `.unitypackage` POC imported successfully in a clean Unity project, the weakest part of the zero-Unity path was the synthetic metadata fallback.
+- Decision: Harvest Unity-authored `.meta` files from the clean verification project and check them into the repo alongside the canonical plugin content or package-root metadata mirror. Make the native packer prefer those checked-in `.meta` files and use synthesis only as a fallback.
+- Consequences: The repo-native packer now more closely mirrors a real Unity-authored package, GUID stability improves, and future work can decide whether to eliminate synthetic fallback entirely once metadata coverage is complete.
+- Related tasks: T-117
+- Supersedes: N/A
+
+---
+
+### DEC-056: Make The Native Unity Package Builder The Default Export Path
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The repo-native `.unitypackage` builder now imports cleanly in fresh Unity projects, no longer emits the earlier `.meta` warnings, and better matches the project's zero-Unity CI goals than the Unity-driven exporter.
+- Decision: Promote the native builder to the default and only supported `npm run package:unity` command. Remove the Unity-driven export path from the supported command surface.
+- Consequences: The main packaging story no longer depends on a Unity install or a configured Unity project, and contributors have one clear supported path instead of a split export model. The earlier Unity-driven export code has now been removed from the supported workflow.
+- Related tasks: T-117, T-116
 - Supersedes: N/A

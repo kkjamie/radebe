@@ -1,7 +1,7 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-22`
+Last updated: `2026-05-23`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
@@ -51,7 +51,7 @@ Last updated: `2026-05-22`
 - T-080 normalized the web example sources: non-plot sprites are at least 64x32, the few tiny examples were scaled up, sprite backgrounds are transparent except the Sprite Header background-color demo, variables appear only on the Vars page, and the Line page uses one three-line example that includes an antialiased diagonal.
 - `radebe-web` now has a Vite resolver config that maps `@radebe/core` and its exported subpaths to `radebe-core/src` for web dev/build bundling, so `npm run dev:web` no longer requires a pre-existing `radebe-core/dist`.
 - M2 Gate C is now passed through T-011. The current Unity plugin baseline keeps `.rdb` as source, adds a ScriptedImporter that turns Unity JSON output into generated `Texture2D` and `Sprite` subassets, and deploys repo-owned plugin code plus the packaged CLI payload into a configured Unity project through `.env` / environment variables rather than committed Eddie-specific paths.
-- Current configured-project validation: a local ignored `.env` points `RADEBE_UNITY_PROJECT_PATH` at `D:/projects/personal/eddie`; `npm run deploy:unity` successfully redeployed `radebe-unity/Assets` to `Assets/Radebe` and the packaged CLI payload to `Assets/StreamingAssets/Radebe/radebe-cli/win32-x64`; and manual editor verification in Eddie confirmed the deployed `.rdb` importer produces a generated Sprite main asset.
+- Current Unity validation baseline: earlier Eddie verification proved the bridge works end-to-end, but it was captured before the install-root migration and used the older split layout. The code and docs now target `Assets/Plugins/Radebe`; a fresh configured-project deploy and import verification should be run against that new path before deeper Unity work resumes.
 - A separate Eddie batchmode package-resolution issue around `com.unity.test-framework` still exists, but it no longer blocks Gate C closure because the Unity integration objective for this task was verified manually in-editor.
 
 ## Open Decisions / Blockers
@@ -107,6 +107,9 @@ Last updated: `2026-05-22`
 - T-112 is complete. `radebe-web` now has a `?perf=1` browser timing overlay backed by lightweight instrumentation in `main.tsx`, `ui.tsx`, `playground.tsx`, and `perf.ts`, so threads can measure app boot, home mini-preview work, playground editor setup, cached-preview display, and first live preview milestones directly in the rendered app before attempting performance fixes.
 - T-113 is complete. Real headless Edge runs against the `?perf=1` overlay showed the white-screen delay is dominated by synchronous `renderSource(...)` work during the initial render, not by CodeMirror setup or syntax highlighting. The top-bar `BrandIcon` costs about `2.24s` on both `#/home` and `#/try-it`, and the Home route then pays a second `~2.22s` render for the same icon source inside `MiniPreview`. By comparison, `highlightSource` was about `0.6ms`, `playground-editor-ready` about `15ms`, and the first Try it preview render about `45ms`.
 - T-114 is complete. The top bar and Home mini preview now use the generated `/generated/brand/radebe-icon.png` asset instead of calling `renderSource(...)` during initial render. Headless Edge reruns against `?perf=1` improved Home first frame from about `4739ms` to `324ms` and Try it first frame from about `2520ms` to `603ms`. After the fix, the remaining Try it cost is mainly the real playground preview render (`~58ms`) plus normal app boot, while Home is down to static highlighting and image load events in the low-millisecond range.
+- T-115 is complete. The Unity bridge now treats `Assets/Plugins/Radebe` as the canonical install root, with packaged CLI payloads installed under `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`; this replaces the earlier intended `StreamingAssets` split as the target plugin shape for future Unity packaging.
+- T-116 is complete and superseded. The earlier Unity-driven export path is no longer exposed as a supported packaging command.
+- T-117 is complete and promoted. `npm run package:unity` now emits `Temp/radebe-unity-plugin-0.1.0-poc.unitypackage` without Unity by packaging the canonical plugin root plus SEA payload directly into a Unity-like archive structure with GUID directory entries and `asset` / `asset.meta` / `pathname` ordering. The repo now includes harvested Unity-authored `.meta` files for the plugin root, editor scripts, bridge manifest, and payload mirror, and the native packer prefers those real `.meta` files over synthesized fallback while excluding `.meta` files from ordinary asset payload collection. The emitted package was successfully imported into fresh temp Unity projects under `Assets/Plugins/Radebe`, and the earlier `.meta` warnings were resolved after the layout fix.
 - T-091 is a backlog task for inline comments after commands. The likely syntax treats a standalone `#` token as the start of the comment so examples like `cut 4 # chamfer each corner` work without breaking hex color values like `#70c8e8`.
 - T-079 tracks the deferred mask composition modes (`add`, `intersect`, `subtract`, `replace`) that need a real mask-stack or region-composition model rather than single-mask clipping.
 - T-074 is a backlog task for remaining vocabulary consistency across autocomplete detail text and VS Code/web editor help after the initial web reference copy sweep in T-084.
@@ -116,7 +119,7 @@ Last updated: `2026-05-22`
 ## Best Next Tasks
 1. Consider the remaining T-074 editor/help vocabulary standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
 2. Consider T-068 symbolic expressions, T-087 built-in sprite variables, T-088 relative dimension units, T-091 inline comments, T-077 mixed rectangle corners, or T-079 mask composition modes if the next goal is visible language/effects capability.
-3. Visually review the Preact web surface in the browser before the next web-design pass; keep T-054 and T-055 postponed, and reopen T-043 only if hands-on Eddie importer validation is explicitly requested.
+3. If Unity packaging becomes the next focus, treat `npm run package:unity` as the one supported CI-friendly path; otherwise keep T-054 and T-055 postponed.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

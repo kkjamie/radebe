@@ -35,8 +35,8 @@ export const integrationPages: Extract<PageDefinition, { kind: "integration" }>[
         download: true
       },
       {
-        label: "Download Unity Plugin ZIP",
-        href: "/downloads/radebe-unity-plugin-0.1.0.zip",
+        label: "Download Unity Package",
+        href: "/downloads/radebe-unity-plugin-0.1.0.unitypackage",
         download: true
       },
       {
@@ -45,10 +45,11 @@ export const integrationPages: Extract<PageDefinition, { kind: "integration" }>[
         download: true
       }
     ],
-    commands: ["npm run package:cli:sea", "npm run deploy:unity"],
+    commands: ["npm run package:unity", "npm run deploy:unity"],
     details: [
       "The Unity bridge consumes `radebe-cli`; it does not reimplement the renderer in C#.",
-      "Repo automation deploys `radebe-unity/Assets` plus the packaged CLI payload into a configured Unity project.",
+      "The default packaging path now assembles the `.unitypackage` directly from repo assets plus the packaged CLI payload without requiring Unity.",
+      "Local deploy automation still exists for pushing the plugin root plus payload into an existing Unity project for quick testing.",
       "The importer handles `.rdb` source assets and produces generated Sprite main assets."
     ]
   }

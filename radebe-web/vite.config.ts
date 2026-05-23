@@ -19,8 +19,8 @@ const localDownloads = new Map(
       new URL("../radebe-unity/bridge.manifest.json", import.meta.url)
     ],
     [
-      "/downloads/radebe-unity-plugin-0.1.0.zip",
-      new URL("../Temp/radebe-unity-plugin-0.1.0.zip", import.meta.url)
+      "/downloads/radebe-unity-plugin-0.1.0.unitypackage",
+      new URL("../Temp/radebe-unity-plugin-0.1.0.unitypackage", import.meta.url)
     ],
     [
       "/downloads/radebe-cli-win32-x64.exe",
@@ -34,7 +34,11 @@ function getDownloadContentType(route: string): string {
     return "application/json";
   }
 
-  if (route.endsWith(".zip") || route.endsWith(".vsix")) {
+  if (
+    route.endsWith(".unitypackage") ||
+    route.endsWith(".zip") ||
+    route.endsWith(".vsix")
+  ) {
     return "application/zip";
   }
 

@@ -12,6 +12,7 @@
     "sea:smoke": "node ./dist/src/sea.js smoke",
     "test": "node --test dist/test",
     "unity:deploy": "node ./dist/src/unity-deploy.js",
+    "unity:package": "node ./dist/src/unity-package-native-poc.js",
     "typecheck": "tsc -b"
   },
   "devDependencies": {
