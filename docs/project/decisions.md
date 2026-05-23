@@ -641,3 +641,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The main packaging story no longer depends on a Unity install or a configured Unity project, and contributors have one clear supported path instead of a split export model. The earlier Unity-driven export code has now been removed from the supported workflow.
 - Related tasks: T-117, T-116
 - Supersedes: N/A
+
+---
+
+### DEC-057: Build Release Downloads On Windows Before Static Site Deploy
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The deployed website links directly to a Windows SEA CLI payload, a packaged Unity plugin, and a packaged VS Code extension, so the web deploy build must produce and embed those files first instead of deploying a site with broken download links.
+- Decision: Add an Azure DevOps pipeline that follows the existing Cloudflare Pages deploy flow from `radebe-legacy`, but runs on `windows-latest` and drives one repo-owned `npm run build:release:web` command. Have the website build copy the packaged downloads and bridge manifest into `radebe-web/dist/downloads/` so the static deploy output is self-contained.
+- Consequences: CI now matches the website's download contract, the Windows `.exe` linked by the site is built on the same agent that prepares the rest of the release artifacts, and website deploy no longer relies on dev-server-only middleware behavior. Azure DevOps still needs the expected Cloudflare secrets and any pipeline variables configured before the deploy can run in the hosted environment.
+- Related tasks: T-119, T-117, T-058
+- Supersedes: N/A

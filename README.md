@@ -51,7 +51,15 @@ Build a local Unity plugin package with:
 npm run package:unity
 ```
 
-This is now the default zero-Unity packaging path. It builds the latest SEA payload, assembles the canonical `Assets/Plugins/Radebe` package contents directly from the repo, uses the checked-in Unity `.meta` files where available, and writes `Temp/radebe-unity-plugin-0.1.0-poc.unitypackage`.
+This is now the default zero-Unity packaging path. It builds the latest SEA payload, assembles the canonical `Assets/Plugins/Radebe` package contents directly from the repo, uses the checked-in Unity `.meta` files where available, and writes `Temp/radebe-unity-plugin-0.1.0.unitypackage`.
+
+Build the website with its downloadable release artifacts with:
+
+```powershell
+npm run build:release:web
+```
+
+This packages the VS Code extension and Unity plugin first, then builds `radebe-web` so the deployed static site includes those downloads under `dist/downloads/`.
 
 ## CLI SEA Packaging
 

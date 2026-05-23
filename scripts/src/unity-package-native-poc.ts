@@ -24,7 +24,7 @@ type CliArgs = {
   outputPath: string;
 };
 
-const DEFAULT_OUTPUT_PATH = "Temp/radebe-unity-plugin-0.1.0-poc.unitypackage";
+const DEFAULT_OUTPUT_PATH = "Temp/radebe-unity-plugin-0.1.0.unitypackage";
 const FolderMetaPrefix = "folder";
 const FileMetaPrefix = "file";
 const UnitySourceRoot = join(REPO_ROOT, "radebe-unity");
@@ -404,7 +404,7 @@ function run(): number {
 
   writeUnityPackage(options.outputPath, assets);
   console.log(
-    `Wrote native POC Unity package with ${assets.length} asset entries to ${options.outputPath}`
+    `Wrote native Unity package with ${assets.length} asset entries to ${options.outputPath}`
   );
   return 0;
 }
