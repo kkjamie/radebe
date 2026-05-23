@@ -674,3 +674,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The pipeline's dependency on Azure Library configuration is visible in repo history and portable across recreated pipeline definitions. The pipeline still requires Azure authorization to use that variable group, and bad or missing values in the group will surface at runtime.
 - Related tasks: T-119
 - Supersedes: N/A
+
+---
+
+### DEC-060: Advance The Workspace Node Baseline To 20.18.1
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: After fixing npm pinning in Azure DevOps, the hosted install still failed because `@vscode/vsce` resolved `cheerio@1.2.0`, whose engine requires Node `>=20.18.1`. The repo's earlier Node `20.9.0` baseline was no longer sufficient for the current build tooling graph.
+- Decision: Move the repo and pipeline Node baseline from `20.9.0` to `20.18.1` while keeping npm pinned at `10.9.2`.
+- Consequences: CI and local setup now target a newer Node 20 patch that satisfies the current VS Code packaging dependency chain without introducing brittle overrides for transitive tooling packages. Contributors need to update their local Node runtime from `20.9.0` to `20.18.1`.
+- Related tasks: T-119, T-111
+- Supersedes: N/A

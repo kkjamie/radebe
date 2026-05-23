@@ -14,7 +14,7 @@ pool:
 variables:
   - group: Radebe Variables
   - name: nodeVersion
-    value: "20.9.0"
+    value: "20.18.1"
   - name: npmVersion
     value: "10.9.2"
   - name: siteOutputDir

@@ -13,7 +13,7 @@ The repo is being organized as a multi-package workspace with these primary part
 ## Workspace Tooling
 
 - Root package manager: `npm` workspaces
-- Required local runtime: Node.js `20.9.0` with npm `10.9.2`
+- Required local runtime: Node.js `20.18.1` with npm `10.9.2`
 - Shared compiler baseline: TypeScript project references
 - Browser package shell: Vite in `radebe-web`
 - Unity integration direction: `radebe-unity` consumes `radebe-cli`
@@ -23,7 +23,7 @@ The repo is being organized as a multi-package workspace with these primary part
 Use the pinned workspace runtime before installing dependencies or running scripts:
 
 ```powershell
-nvm use 20.9.0
+nvm use 20.18.1
 npm install
 ```
 
