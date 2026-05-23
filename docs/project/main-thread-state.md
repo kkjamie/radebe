@@ -115,6 +115,7 @@ Last updated: `2026-05-23`
 - The first hosted Azure DevOps run for T-119 failed during `npm ci` because the hosted Node `20.9.0` image surfaced npm `10.1.0` instead of the repo-pinned `10.9.2`. `azure-pipelines.yml` now upgrades npm explicitly before install; the next likely blockers are Azure-side secrets, variable wiring, or Cloudflare environment setup rather than engine mismatch.
 - `azure-pipelines.yml` now also links the Azure DevOps Library variable group `Radebe Variables` directly in YAML. The next hosted check should confirm the pipeline is authorized to use that group and that the expected Cloudflare values resolve correctly in the new repo context.
 - A later hosted install failure showed the old repo Node pin itself had become too old for the current VS Code packaging toolchain because `cheerio@1.2.0` now requires Node `>=20.18.1`. The workspace and pipeline baseline have now been advanced to Node `20.18.1` while keeping npm `10.9.2`.
+- After the pipeline was merged to `master`, Cloudflare showed the production-branch update audit but no actual deployment entry. The pipeline has now been reshaped into a Windows build stage plus a Linux deploy stage so the real `wrangler pages deploy` path matches the legacy environment more closely while still building the Windows CLI payload on CI.
 - T-091 is a backlog task for inline comments after commands. The likely syntax treats a standalone `#` token as the start of the comment so examples like `cut 4 # chamfer each corner` work without breaking hex color values like `#70c8e8`.
 - T-079 tracks the deferred mask composition modes (`add`, `intersect`, `subtract`, `replace`) that need a real mask-stack or region-composition model rather than single-mask clipping.
 - T-074 is a backlog task for remaining vocabulary consistency across autocomplete detail text and VS Code/web editor help after the initial web reference copy sweep in T-084.
@@ -124,7 +125,7 @@ Last updated: `2026-05-23`
 ## Best Next Tasks
 1. Consider the remaining T-074 editor/help vocabulary standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
 2. Consider T-068 symbolic expressions, T-087 built-in sprite variables, T-088 relative dimension units, T-091 inline comments, T-077 mixed rectangle corners, or T-079 mask composition modes if the next goal is visible language/effects capability.
-3. Re-run the hosted Azure DevOps pipeline after the Node `20.18.1` bump, npm pin, and YAML variable-group link, then resolve any remaining authorization, secret, or deploy-environment setup issues.
+3. Re-run the hosted Azure DevOps pipeline after the Windows-build/Linux-deploy split, then inspect whether Cloudflare now records a real deployment event before changing deploy semantics further.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

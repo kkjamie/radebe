@@ -685,3 +685,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: CI and local setup now target a newer Node 20 patch that satisfies the current VS Code packaging dependency chain without introducing brittle overrides for transitive tooling packages. Contributors need to update their local Node runtime from `20.9.0` to `20.18.1`.
 - Related tasks: T-119, T-111
 - Supersedes: N/A
+
+---
+
+### DEC-061: Build On Windows But Deploy Cloudflare Pages From Linux
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The new pipeline needs Windows to build the website-linked `win32-x64` CLI payload, but after merging to `master`, Cloudflare only showed the project-update audit and no deployment event. The legacy deploy path was already known to work from `ubuntu-latest`.
+- Decision: Split the Azure pipeline into two stages: build release artifacts on `windows-latest`, publish the website output as a pipeline artifact, then download that artifact and run the actual Cloudflare Pages deploy from `ubuntu-latest`.
+- Consequences: The project keeps the Windows build requirement for packaged downloads while reducing deploy-environment drift against the legacy Cloudflare flow. This also makes deploy troubleshooting clearer by separating build failures from Cloudflare upload behavior.
+- Related tasks: T-119
+- Supersedes: N/A
