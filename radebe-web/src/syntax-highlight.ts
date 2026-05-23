@@ -1,5 +1,7 @@
 import { getCommandDefinition } from "@radebe/core";
 
+import { timePerfSync } from "./perf.js";
+
 export type HighlightSourceOptions = {
   strictCommands?: boolean;
 };
@@ -114,14 +116,16 @@ function highlightSourceLine(line: string, options: HighlightSourceOptions): str
 }
 
 export function highlightSource(source: string, options: HighlightSourceOptions = {}): string {
-  const highlighted = source
-    .split("\n")
-    .map((line) => highlightSourceLine(line, options))
-    .join("\n");
+  return timePerfSync("highlight-source", () => {
+    const highlighted = source
+      .split("\n")
+      .map((line) => highlightSourceLine(line, options))
+      .join("\n");
 
-  if (highlighted.length === 0) {
-    return " ";
-  }
+    if (highlighted.length === 0) {
+      return " ";
+    }
 
-  return source.endsWith("\n") ? `${highlighted} ` : highlighted;
+    return source.endsWith("\n") ? `${highlighted} ` : highlighted;
+  });
 }

@@ -13,9 +13,21 @@ The repo is being organized as a multi-package workspace with these primary part
 ## Workspace Tooling
 
 - Root package manager: `npm` workspaces
+- Required local runtime: Node.js `20.9.0` with npm `10.9.2`
 - Shared compiler baseline: TypeScript project references
 - Browser package shell: Vite in `radebe-web`
 - Unity integration direction: `radebe-unity` consumes `radebe-cli`
+
+## Local Setup
+
+Use the pinned workspace runtime before installing dependencies or running scripts:
+
+```powershell
+nvm use 20.9.0
+npm install
+```
+
+The repo declares the same requirement in root `package.json`, enables npm `engine-strict`, and includes `.nvmrc` so the expected Node version is explicit across developer machines.
 
 ## Documentation
 

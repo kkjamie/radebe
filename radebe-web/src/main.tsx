@@ -4,6 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { BrandIcon } from "./brand-icon.js";
 import { appVersion, exampleDocs, integrationPages, pages } from "./data.js";
 import {
+  isPerfDebugEnabled,
+  markPerfPoint,
+  usePerfSamples
+} from "./perf.js";
+import {
   ExamplePage,
   ExamplesPage,
   HomePage,
@@ -24,6 +29,44 @@ if (!app) {
 
 if ("scrollRestoration" in window.history) {
   window.history.scrollRestoration = "manual";
+}
+
+function PerfPanel() {
+  const samples = usePerfSamples();
+
+  if (!isPerfDebugEnabled()) {
+    return null;
+  }
+
+  return (
+    <aside className="perf-panel">
+      <h2 className="perf-panel-title">Perf</h2>
+      <p className="perf-panel-summary">
+        {samples.length === 0 ? "Waiting for samples..." : `${samples.length} sample(s)`}
+      </p>
+      <div className="perf-panel-list">
+        {samples.map((sample) => {
+          const relativeMs = Math.round(sample.timestamp);
+
+          return (
+            <p className="perf-panel-item" key={sample.id}>
+              <span className="perf-panel-time">+{relativeMs}ms</span>{" "}
+              <span className="perf-panel-name">{sample.name}</span>
+              {sample.kind === "duration" ? (
+                <span className="perf-panel-duration">
+                  {" "}
+                  {sample.durationMs?.toFixed(1)}ms
+                </span>
+              ) : null}
+              {sample.detail ? (
+                <span className="perf-panel-detail"> {sample.detail}</span>
+              ) : null}
+            </p>
+          );
+        })}
+      </div>
+    </aside>
+  );
 }
 
 function getCurrentPageId(pageById: Map<string, PageDefinition>): string {
@@ -168,6 +211,13 @@ function Page(props: {
 }
 
 function App() {
+  const hasMarkedRenderStartRef = useRef(false);
+
+  if (!hasMarkedRenderStartRef.current) {
+    markPerfPoint("app-render-start");
+    hasMarkedRenderStartRef.current = true;
+  }
+
   const pageById = useMemo(
     () => new Map(pages.map((page) => [page.id, page])),
     []
@@ -190,6 +240,13 @@ function App() {
   const pageId = useCurrentPageId(pageById);
   const page = pageById.get(pageId) ?? pages[0]!;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isNarrowViewport);
+
+  useEffect(() => {
+    markPerfPoint("app-mounted", page.kind);
+    window.requestAnimationFrame(() => {
+      markPerfPoint("app-first-frame", page.kind);
+    });
+  }, []);
 
   useEffect(() => {
     setSidebarCollapsed(isNarrowViewport);
@@ -324,8 +381,10 @@ function App() {
       <section className="site-content" ref={contentRef}>
         <Page page={page} sourceState={sourceState} />
       </section>
+      <PerfPanel />
     </main>
   );
 }
 
+markPerfPoint("app-render-call");
 render(<App />, app);

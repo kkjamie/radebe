@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
@@ -7,14 +7,14 @@ import {
   parseRadebeColorToken,
   renderSource
 } from "../../radebe-core/dist/src/index.js";
-import brandIcon from "../src/content/brand-icon.json" with { type: "json" };
-import examples from "../src/content/examples.json" with { type: "json" };
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptDir, "..");
 const publicRoot = path.join(webRoot, "public");
 const generatedBrandRoot = path.join(publicRoot, "generated", "brand");
 const generatedRoot = path.join(publicRoot, "generated", "examples");
+const brandIconPath = path.join(webRoot, "src", "content", "brand-icon.json");
+const examplesPath = path.join(webRoot, "src", "content", "examples.json");
 
 const pngSignature = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a
@@ -135,6 +135,13 @@ function getPreviewOutputPath(previewPath) {
 
   return path.join(publicRoot, relativePreviewPath);
 }
+
+async function readJsonFile(filePath) {
+  return JSON.parse(await readFile(filePath, "utf8"));
+}
+
+const brandIcon = await readJsonFile(brandIconPath);
+const examples = await readJsonFile(examplesPath);
 
 await rm(generatedBrandRoot, { recursive: true, force: true });
 await rm(generatedRoot, { recursive: true, force: true });

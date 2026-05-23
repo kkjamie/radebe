@@ -1,6 +1,11 @@
 import type { PageDefinition } from "../types.js";
 import { ActionLink, Hero, MiniPreview } from "../ui.js";
-import { radebeIconSource } from "../content/brand-icon.js";
+import {
+  radebeIconPreview,
+  radebeIconPreviewHeight,
+  radebeIconPreviewWidth,
+  radebeIconSource
+} from "../content/brand-icon.js";
 
 export const homePage: Extract<PageDefinition, { kind: "home" }> = {
   id: "home",
@@ -20,7 +25,12 @@ export function HomePage() {
           <ActionLink link={{ label: "Learn syntax", href: "#/syntax" }} />
         </div>
       </Hero>
-      <MiniPreview source={radebeIconSource} />
+      <MiniPreview
+        previewHeight={radebeIconPreviewHeight}
+        previewSrc={radebeIconPreview}
+        previewWidth={radebeIconPreviewWidth}
+        source={radebeIconSource}
+      />
     </>
   );
 }

@@ -1,7 +1,7 @@
-import { renderSource } from "@radebe/core";
 import type { ComponentChildren } from "preact";
 import { useEffect, useMemo, useRef } from "preact/hooks";
 
+import { markPerfPoint, timePerfSync } from "./perf.js";
 import { highlightSource } from "./syntax-highlight.js";
 import type { HighlightSourceOptions } from "./syntax-highlight.js";
 import type { DownloadLink } from "./types.js";
@@ -81,63 +81,65 @@ export function Hero(props: {
   );
 }
 
-export function MiniPreview(props: { source: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const result = useMemo(
-    () => renderSource({ source: props.source }),
+export function MiniPreview(props: {
+  source: string;
+  previewSrc: string;
+  previewWidth: number;
+  previewHeight: number;
+}) {
+  const imageRef = useRef<HTMLImageElement>(null);
+  const highlightedSource = useMemo(
+    () =>
+      timePerfSync("mini-preview-highlight-source", () => {
+        return highlightSource(props.source);
+      }),
     [props.source]
   );
-  const width = Math.max(result.artifact.width, 1);
-  const height = Math.max(result.artifact.height, 1);
+  const width = Math.max(props.previewWidth, 1);
+  const height = Math.max(props.previewHeight, 1);
   const scale = 3;
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+    markPerfPoint("mini-preview-effect-start");
+    const image = imageRef.current;
 
-    if (!canvas) {
+    if (!image) {
       return;
     }
 
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      return;
-    }
-
-    context.clearRect(0, 0, width, height);
-
-    if (result.artifact.background !== "transparent") {
-      context.fillStyle = result.artifact.background;
-      context.fillRect(0, 0, result.artifact.width, result.artifact.height);
-    }
-
-    result.artifact.pixels.forEach((row, y) => {
-      row.forEach((pixel, x) => {
-        if (pixel !== null) {
-          context.fillStyle = pixel;
-          context.fillRect(x, y, 1, 1);
-        }
-      });
+    window.requestAnimationFrame(() => {
+      markPerfPoint("mini-preview-frame-ready");
     });
-  }, [height, result, width]);
+  }, [height, width]);
 
   return (
     <section className="mini-preview">
       <div>
-        <HighlightedCodeBlock source={props.source} />
+        <pre className="code-block">
+          <code
+            dangerouslySetInnerHTML={{
+              __html: highlightedSource
+            }}
+          />
+        </pre>
       </div>
       <div className="mini-preview-panel">
         <p className="mini-preview-label">Rendered artifact</p>
         <div className="mini-preview-canvas-wrap">
-          <canvas
+          <img
+            alt="Rendered artifact preview"
             className="mini-preview-canvas canvas-checkerboard"
-            ref={canvasRef}
+            height={height}
+            onLoad={() => {
+              markPerfPoint("mini-preview-image-loaded");
+            }}
+            ref={imageRef}
+            src={props.previewSrc}
             style={{
               height: `${height * scale}px`,
               width: `${width * scale}px`
             }}
+            width={width}
           />
         </div>
       </div>

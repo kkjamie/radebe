@@ -38,6 +38,7 @@ import {
 } from "@radebe/core";
 import { useEffect, useRef } from "preact/hooks";
 
+import { markPerfPoint, timePerfSync } from "./perf.js";
 import { isVariableUsageToken } from "./syntax-highlight.js";
 import type { ExamplePlayground } from "./types.js";
 
@@ -633,6 +634,7 @@ export function Playground(props: {
   const immersive = props.immersive === true;
 
   useEffect(() => {
+    markPerfPoint("playground-effect-start", props.playground.id);
     const sourceEditor = sourceEditorRef.current!;
     const sourceAssist = sourceAssistRef.current!;
     const completionList = completionListRef.current!;
@@ -663,6 +665,7 @@ export function Playground(props: {
     }
 
     sourceEditor.dataset.focused = "false";
+    const setupStart = performance.now();
 
     const initialSource =
       props.sourceState.get(props.playground.id) ?? props.playground.source;
@@ -879,8 +882,16 @@ export function Playground(props: {
       }, ASSIST_UPDATE_DELAY_MS);
     }
 
+    let hasReportedFirstPreview = false;
+
     function updatePreview(source: string): void {
-      const result = renderSource({ source });
+      const result = timePerfSync(
+        "playground-render-source",
+        () => {
+          return renderSource({ source });
+        },
+        props.playground.id
+      );
       const diagnosticsText = result.diagnostics
         .map((diagnostic) => {
           const location =
@@ -914,6 +925,14 @@ export function Playground(props: {
           result.artifact.height,
           result.artifact.background
         );
+      }
+
+      if (!hasReportedFirstPreview) {
+        hasReportedFirstPreview = true;
+        markPerfPoint("playground-first-preview-complete", props.playground.id);
+        window.requestAnimationFrame(() => {
+          markPerfPoint("playground-first-preview-frame", props.playground.id);
+        });
       }
     }
 
@@ -1408,6 +1427,10 @@ export function Playground(props: {
         ]
       })
     });
+    markPerfPoint(
+      "playground-editor-ready",
+      `${props.playground.id} ${(performance.now() - setupStart).toFixed(1)}ms`
+    );
 
     function handleZoomChange(): void {
       applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
@@ -1423,6 +1446,7 @@ export function Playground(props: {
       updatePreview(initialSource);
     } else {
       showCachedPreview();
+      markPerfPoint("playground-cached-preview-shown", props.playground.id);
     }
     scheduleFitScaleUpdate();
 

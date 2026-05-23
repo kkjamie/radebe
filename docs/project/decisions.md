@@ -575,3 +575,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The requested compact forms are immediately useful for centered badges and icons; authors who need manual positioning or asymmetry should use explicit `polygon` points until a broader transform or anchor model exists.
 - Related tasks: T-109, T-069, T-087
 - Supersedes: N/A
+
+---
+
+### DEC-051: Pin One Local Node And npm Baseline For The Workspace
+- Date: `2026-05-22`
+- Status: Accepted
+- Context: The repo was effectively using whatever Node.js version happened to be installed on each developer machine, which created avoidable runtime drift and already surfaced as a `dev:web` failure on `Node.js v20.9.0` when a script used unsupported JSON import-attribute syntax.
+- Decision: Pin the local workspace runtime to Node.js `20.9.0` and npm `10.9.2`, declare both in the root `package.json` `engines`, enforce them with root `.npmrc` `engine-strict=true`, and add `.nvmrc` plus README setup guidance so the expected runtime is explicit across environments.
+- Consequences: Contributors get one clearly documented and enforced baseline instead of ad hoc local versions, and runtime mismatches fail early during npm usage rather than later during script execution. Contributors must switch to the pinned runtime before installing or working in the repo.
+- Related tasks: T-110, T-111
+- Supersedes: N/A

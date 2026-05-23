@@ -219,7 +219,8 @@ body {
 
 .home-brand-link:hover .topbar-title { color: #d8f8ff; }
 
-.brand-icon-canvas {
+.brand-icon-canvas,
+.brand-icon-image {
   display: block;
   width: 26px;
   height: 26px;
@@ -370,6 +371,71 @@ body {
   grid-row: 2;
   min-width: 0;
   padding: 28px 32px 40px;
+}
+
+.perf-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(55vh, 420px);
+  overflow: hidden;
+  border: 1px solid rgba(125,211,252,0.26);
+  background: rgba(10,13,15,0.94);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.38);
+  color: #f4efe6;
+}
+
+.perf-panel-title,
+.perf-panel-summary,
+.perf-panel-item {
+  margin: 0;
+}
+
+.perf-panel-title {
+  padding: 12px 14px 6px;
+  color: #bdefff;
+  font-size: 0.98rem;
+}
+
+.perf-panel-summary {
+  padding: 0 14px 10px;
+  color: #b7ab99;
+  font-size: 0.88rem;
+}
+
+.perf-panel-list {
+  overflow: auto;
+  max-height: calc(min(55vh, 420px) - 54px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.perf-panel-item {
+  padding: 8px 14px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.perf-panel-item:first-child {
+  border-top: 0;
+}
+
+.perf-panel-time {
+  color: #7dd3fc;
+}
+
+.perf-panel-name {
+  color: #f8f4ec;
+}
+
+.perf-panel-duration {
+  color: #c4f5b1;
+}
+
+.perf-panel-detail {
+  color: #b7ab99;
 }
 
 .site-shell[data-sidebar-collapsed="true"] {

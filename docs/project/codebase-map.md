@@ -6,6 +6,8 @@ Last updated: `2026-05-22`
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
 - `docs/original-spec.md`: redirect to canonical docs after spec consolidation.
+- `.nvmrc`: pinned local Node.js runtime version for contributors and shell tooling.
+- `.npmrc`: npm workspace enforcement such as `engine-strict` for the pinned runtime.
 - `package.json`: root npm workspace manifest and shared scripts.
 - `tsconfig.base.json`: shared TypeScript compiler defaults for workspace packages.
 - `tsconfig.json`: root TypeScript project references for the active workspaces.
