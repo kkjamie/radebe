@@ -652,3 +652,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: CI now matches the website's download contract, the Windows `.exe` linked by the site is built on the same agent that prepares the rest of the release artifacts, and website deploy no longer relies on dev-server-only middleware behavior. Azure DevOps still needs the expected Cloudflare secrets and any pipeline variables configured before the deploy can run in the hosted environment.
 - Related tasks: T-119, T-117, T-058
 - Supersedes: N/A
+
+---
+
+### DEC-058: Pin npm Explicitly In Azure DevOps Instead Of Trusting The Node Image Default
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: The first hosted Azure DevOps run used Node `20.9.0` as requested, but the bundled npm was `10.1.0`, which failed the workspace's intentional engine enforcement for npm `10.9.2`.
+- Decision: Keep the strict repo engine contract and add an explicit pipeline step that installs npm `10.9.2` globally on the hosted agent before `npm ci`.
+- Consequences: Hosted builds now match the repo's pinned runtime contract instead of weakening engine enforcement to fit the agent image. Pipeline failures after this point are more likely to reflect real dependency or environment issues than tool-version drift.
+- Related tasks: T-119, T-111
+- Supersedes: N/A

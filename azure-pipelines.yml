@@ -13,6 +13,7 @@ pool:
 
 variables:
   nodeVersion: "20.9.0"
+  npmVersion: "10.9.2"
   siteOutputDir: "radebe-web/dist"
   cloudflareProjectName: "radebe"
   productionBranch: "refs/heads/master"
@@ -23,6 +24,12 @@ steps:
     inputs:
       versionSpec: "$(nodeVersion)"
     displayName: Use Node.js
+
+  - script: |
+      npm install --global npm@$(npmVersion)
+      node --version
+      npm --version
+    displayName: Pin npm
 
   - script: npm ci
     displayName: Install dependencies
