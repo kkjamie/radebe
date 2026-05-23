@@ -18,13 +18,24 @@ export function HomePage() {
     <>
       <Hero
         title="Radebe"
-        summary="A small indentation-based language for drawing procedural UI sprites as readable source files. It is built for crisp game and sci-fi interface pieces that compile through one shared TypeScript core into web previews, CLI output, VS Code tooling, and Unity imports."
+        summary="A language for authoring procedural images."
       >
+        <section className="home-features">
+          <h3 className="plain-list-title">Key features</h3>
+          <ul className="plain-list-items">
+            <li>Simple &amp; readable</li>
+            <li>Consumable as a Node package</li>
+            <li>CLI support</li>
+            <li>Unity integration</li>
+            <li>VS Code extension</li>
+          </ul>
+        </section>
         <div className="hero-actions">
           <ActionLink link={{ label: "Try it", href: "#/try-it" }} />
           <ActionLink link={{ label: "Learn syntax", href: "#/syntax" }} />
         </div>
       </Hero>
+
       <MiniPreview
         previewHeight={radebeIconPreviewHeight}
         previewSrc={radebeIconPreview}
