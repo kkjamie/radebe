@@ -78,6 +78,21 @@ test("getLanguageCompletions suggests schema-valid child commands", () => {
     ]
   );
 
+  assert.deepEqual(
+    labels("sprite panel\n  size 24 24\n\npolygon 0 0 8 0 8 8\n  |"),
+    [
+      "point",
+      "cut",
+      "radius",
+      "color",
+      "antialias",
+      "fill",
+      "shadow",
+      "glow",
+      "stroke"
+    ]
+  );
+
   assert.deepEqual(labels("sprite panel\n  size 24 24\n\ngroup frame\n  |"), [
     "plot",
     "line",
@@ -236,8 +251,8 @@ test("getLanguageSmartEdits removes shorthand color when fill command is complet
   );
 
   assert.equal(
-    applySmartEdits("polygon-star 5 8 18 black\n  fill|"),
-    "polygon-star 5 8 18\n  fill"
+    applySmartEdits("polygon-star 48 48 5 8 18 black\n  fill|"),
+    "polygon-star 48 48 5 8 18\n  fill"
   );
 
   assert.equal(

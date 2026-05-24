@@ -9,7 +9,7 @@
     "  background transparent",
     "  antialias true",
     "",
-    "polygon 32 5 53 16 58 37 44 56 20 56 6 37 11 16",
+    "polygon-regular 32 32 6 27",
     "  shadow 0 4 #000000 alpha=0.35 blur=3",
     "  fill",
     "    gradient-linear direction=vertical",
@@ -19,16 +19,12 @@
     "  stroke 2 #d8f8ff alpha=0.82",
     "  glow #70c8e8 blur=3 alpha=0.3",
     "",
-    "polygon 32 14 45 22 49 38 39 50 25 50 15 38 19 22",
+    "polygon-regular 32 32 6 16",
     "  fill",
     "    gradient-linear direction=vertical",
     "      stop #171512 0",
     "      stop #101214 1",
     "  stroke 2 #ffcc88 alpha=0.68",
-    "",
-    "polygon 25 21 39 21 33 31 44 31 28 47 32 35 21 35",
-    "  fill gradient-linear #fff8d8 #ffcc88",
-    "  shadow 1 2 #7a4914 alpha=0.35 blur=1",
-    "  glow #ffcc88 blur=2 alpha=0.45"
+    "  glow #ffcc88 blur=2 alpha=0.18"
   ]
 }

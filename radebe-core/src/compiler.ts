@@ -35,6 +35,11 @@ import type {
   SpriteHeader
 } from "./types.js";
 
+type FloatPoint = {
+  x: number;
+  y: number;
+};
+
 function createCompilerDiagnostic(
   message: string,
   node: Pick<ParsedCommandNode, "lineNumber" | "column">
@@ -1469,6 +1474,220 @@ function validatePolygonPoints(
   return true;
 }
 
+function dedupePolygonPoints(points: FloatPoint[]): PolygonPoint[] {
+  const rounded = points.map((point) => ({
+    x: Math.round(point.x),
+    y: Math.round(point.y)
+  }));
+  const deduped: PolygonPoint[] = [];
+
+  for (const point of rounded) {
+    const previous = deduped[deduped.length - 1];
+
+    if (!previous || previous.x !== point.x || previous.y !== point.y) {
+      deduped.push(point);
+    }
+  }
+
+  if (deduped.length > 1) {
+    const first = deduped[0]!;
+    const last = deduped[deduped.length - 1]!;
+
+    if (first.x === last.x && first.y === last.y) {
+      deduped.pop();
+    }
+  }
+
+  return deduped;
+}
+
+function getPolygonModifierLimit(points: PolygonPoint[], index: number): number {
+  const current = points[index]!;
+  const previous = points[(index - 1 + points.length) % points.length]!;
+  const next = points[(index + 1) % points.length]!;
+  const previousLength = Math.hypot(previous.x - current.x, previous.y - current.y);
+  const nextLength = Math.hypot(next.x - current.x, next.y - current.y);
+
+  return Math.min(previousLength, nextLength) / 2;
+}
+
+function validatePolygonCornerModifier(
+  node: ParsedCommandNode,
+  modifierName: "cut" | "radius",
+  amount: number,
+  points: PolygonPoint[],
+  diagnostics: RadebeDiagnostic[]
+): boolean {
+  if (amount <= 0) {
+    return true;
+  }
+
+  for (let index = 0; index < points.length; index += 1) {
+    const limit = getPolygonModifierLimit(points, index);
+
+    if (amount > limit) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          `The ${modifierName} command expects a value no greater than ${Math.floor(limit)} for at least one polygon corner in the current shape.`,
+          node
+        )
+      );
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function buildCutPolygonPoints(points: PolygonPoint[], amount: number): PolygonPoint[] {
+  if (amount <= 0) {
+    return points;
+  }
+
+  const cutPoints: FloatPoint[] = [];
+
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index]!;
+    const previous = points[(index - 1 + points.length) % points.length]!;
+    const next = points[(index + 1) % points.length]!;
+    const previousLength = Math.hypot(previous.x - current.x, previous.y - current.y);
+    const nextLength = Math.hypot(next.x - current.x, next.y - current.y);
+    const offset = Math.min(amount, previousLength / 2, nextLength / 2);
+    const previousDirection = {
+      x: (previous.x - current.x) / previousLength,
+      y: (previous.y - current.y) / previousLength
+    };
+    const nextDirection = {
+      x: (next.x - current.x) / nextLength,
+      y: (next.y - current.y) / nextLength
+    };
+
+    cutPoints.push({
+      x: current.x + previousDirection.x * offset,
+      y: current.y + previousDirection.y * offset
+    });
+    cutPoints.push({
+      x: current.x + nextDirection.x * offset,
+      y: current.y + nextDirection.y * offset
+    });
+  }
+
+  return dedupePolygonPoints(cutPoints);
+}
+
+function buildRoundedPolygonPoints(points: PolygonPoint[], amount: number): PolygonPoint[] {
+  if (amount <= 0) {
+    return points;
+  }
+
+  const roundedPoints: FloatPoint[] = [];
+  const segments = Math.max(2, Math.min(8, Math.ceil(amount)));
+
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index]!;
+    const previous = points[(index - 1 + points.length) % points.length]!;
+    const next = points[(index + 1) % points.length]!;
+    const previousLength = Math.hypot(previous.x - current.x, previous.y - current.y);
+    const nextLength = Math.hypot(next.x - current.x, next.y - current.y);
+    const offset = Math.min(amount, previousLength / 2, nextLength / 2);
+    const previousDirection = {
+      x: (previous.x - current.x) / previousLength,
+      y: (previous.y - current.y) / previousLength
+    };
+    const nextDirection = {
+      x: (next.x - current.x) / nextLength,
+      y: (next.y - current.y) / nextLength
+    };
+    const start = {
+      x: current.x + previousDirection.x * offset,
+      y: current.y + previousDirection.y * offset
+    };
+    const end = {
+      x: current.x + nextDirection.x * offset,
+      y: current.y + nextDirection.y * offset
+    };
+
+    for (let step = 0; step <= segments; step += 1) {
+      if (index > 0 && step === 0) {
+        continue;
+      }
+
+      const t = step / segments;
+      const inverse = 1 - t;
+
+      roundedPoints.push({
+        x: inverse * inverse * start.x + 2 * inverse * t * current.x + t * t * end.x,
+        y: inverse * inverse * start.y + 2 * inverse * t * current.y + t * t * end.y
+      });
+    }
+  }
+
+  return dedupePolygonPoints(roundedPoints);
+}
+
+function compileUniformPolygonCut(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): number | null {
+  const cut = compileRectCut(node, diagnostics);
+
+  if (cut === null) {
+    return null;
+  }
+
+  if (
+    cut.topLeft !== cut.topRight ||
+    cut.topLeft !== cut.bottomRight ||
+    cut.topLeft !== cut.bottomLeft
+  ) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The polygon family currently supports only a uniform "cut" value on every vertex.',
+        node
+      )
+    );
+    return null;
+  }
+
+  return cut.topLeft;
+}
+
+function applyPolygonCornerModifiers(
+  ownerNode: ParsedCommandNode,
+  points: PolygonPoint[],
+  cut: number | null,
+  radius: RectRadius | null,
+  diagnostics: RadebeDiagnostic[]
+): PolygonPoint[] | null {
+  if (cut !== null && radius !== null) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The ${ownerNode.name} command currently does not allow both "cut" and "radius" on the same polygon shape.`,
+        ownerNode
+      )
+    );
+    return null;
+  }
+
+  if (cut !== null) {
+    if (!validatePolygonCornerModifier(ownerNode, "cut", cut, points, diagnostics)) {
+      return null;
+    }
+
+    return buildCutPolygonPoints(points, cut);
+  }
+
+  if (radius !== null) {
+    if (!validatePolygonCornerModifier(ownerNode, "radius", radius.value, points, diagnostics)) {
+      return null;
+    }
+
+    return buildRoundedPolygonPoints(points, radius.value);
+  }
+
+  return points;
+}
+
 function compilePolygonCommand(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[],
@@ -1487,6 +1706,8 @@ function compilePolygonCommand(
   const propertyValues = new Map<string, string>();
   const points: PolygonPoint[] = [];
   let color: string | null = null;
+  let cut: number | null = null;
+  let radius: RectRadius | null = null;
 
   node.args.forEach((token) => {
     const equalsIndex = token.indexOf("=");
@@ -1652,6 +1873,16 @@ function compilePolygonCommand(
       return;
     }
 
+    if (child.name === "cut") {
+      cut = compileUniformPolygonCut(child, diagnostics);
+      return;
+    }
+
+    if (child.name === "radius") {
+      radius = compileRectRadius(child, diagnostics);
+      return;
+    }
+
     if (child.name === "antialias") {
       const childDefinition = getCommandDefinition(child.name);
 
@@ -1699,6 +1930,12 @@ function compilePolygonCommand(
     return null;
   }
 
+  const finalPoints = applyPolygonCornerModifiers(node, points, cut, radius, diagnostics);
+
+  if (finalPoints === null || !validatePolygonPoints(node, finalPoints, diagnostics)) {
+    return null;
+  }
+
   if (
     fills.length === 0 &&
     glows.length === 0 &&
@@ -1725,7 +1962,7 @@ function compilePolygonCommand(
     kind: "polygon",
     lineNumber: node.lineNumber,
     ...(antialias === null ? {} : { antialias }),
-    points,
+    points: finalPoints,
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
     ...(glows.length === 0 ? {} : { glows }),
@@ -1734,11 +1971,10 @@ function compilePolygonCommand(
 }
 
 function generateRadialPolygonPoints(
-  sprite: SpriteHeader,
+  centerX: number,
+  centerY: number,
   radii: number[]
 ): PolygonPoint[] {
-  const centerX = Math.floor(sprite.width / 2);
-  const centerY = Math.floor(sprite.height / 2);
   const step = (Math.PI * 2) / radii.length;
 
   return radii.map((radius, index) => {
@@ -1753,7 +1989,6 @@ function generateRadialPolygonPoints(
 
 function compileGeneratedPolygonCommand(
   node: ParsedCommandNode,
-  sprite: SpriteHeader,
   diagnostics: RadebeDiagnostic[],
   options: CompileDrawOptions = {}
 ): PolygonCommand | null {
@@ -1764,13 +1999,63 @@ function compileGeneratedPolygonCommand(
     return null;
   }
 
-  const resolvedProperties = resolveCommandProperties(node, definition);
-  diagnostics.push(...resolvedProperties.diagnostics);
+  validateChildren(node, definition, diagnostics);
 
-  const color = readOptionalString(resolvedProperties.values, "color");
+  const parsedArguments = parseArguments(node, definition);
+  const values = new Map(parsedArguments.values);
+  diagnostics.push(...parsedArguments.diagnostics);
+  let cut: number | null = null;
+  let modifierRadius: RectRadius | null = null;
+
+  for (const child of node.children) {
+    if (child.name === "cut") {
+      cut = compileUniformPolygonCut(child, diagnostics);
+      continue;
+    }
+
+    if (child.name === "radius") {
+      modifierRadius = compileRectRadius(child, diagnostics);
+      continue;
+    }
+
+    const childDefinition = getCommandDefinition(child.name);
+
+    if (!childDefinition) {
+      continue;
+    }
+
+    if (
+      child.name === "x" ||
+      child.name === "y" ||
+      child.name === "sides" ||
+      child.name === "points" ||
+      child.name === "inner-radius" ||
+      child.name === "outer-radius" ||
+      child.name === "color" ||
+      child.name === "antialias"
+    ) {
+      const childArguments = parseArguments(child, childDefinition);
+      diagnostics.push(...childArguments.diagnostics);
+      const value = childArguments.values.get("value");
+
+      if (!value) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            `The ${child.name} command requires "value".`,
+            child
+          )
+        );
+        continue;
+      }
+
+      setResolvedValue(values, child.name, value, node, diagnostics);
+    }
+  }
+
+  const color = readOptionalString(values, "color");
   const antialias = readOptionalBoolean(
     node,
-    resolvedProperties.values,
+    values,
     "antialias",
     diagnostics
   );
@@ -1779,48 +2064,51 @@ function compileGeneratedPolygonCommand(
   const glows: GlowAppearance[] = appearances.glows;
   const shadows: ShadowAppearance[] = appearances.shadows;
   const strokes: StrokeAppearance[] = appearances.strokes;
+  const centerX = readRequiredInteger(node, values, "x", diagnostics);
+  const centerY = readRequiredInteger(node, values, "y", diagnostics);
   let points: PolygonPoint[] | null = null;
 
   if (node.name === "polygon-regular") {
     const sides = readRequiredInteger(
       node,
-      resolvedProperties.values,
+      values,
       "sides",
       diagnostics,
       { min: 3 }
     );
     const radius = readRequiredInteger(
       node,
-      resolvedProperties.values,
+      values,
       "radius",
       diagnostics,
       { min: 1 }
     );
 
-    if (sides !== null && radius !== null) {
+    if (centerX !== null && centerY !== null && sides !== null && radius !== null) {
       points = generateRadialPolygonPoints(
-        sprite,
+        centerX,
+        centerY,
         Array.from({ length: sides }, () => radius)
       );
     }
   } else {
     const starPoints = readRequiredInteger(
       node,
-      resolvedProperties.values,
+      values,
       "points",
       diagnostics,
       { min: 3 }
     );
     const innerRadius = readRequiredInteger(
       node,
-      resolvedProperties.values,
+      values,
       "inner-radius",
       diagnostics,
       { min: 1 }
     );
     const outerRadius = readRequiredInteger(
       node,
-      resolvedProperties.values,
+      values,
       "outer-radius",
       diagnostics,
       { min: 1 }
@@ -1840,13 +2128,16 @@ function compileGeneratedPolygonCommand(
     }
 
     if (
+      centerX !== null &&
+      centerY !== null &&
       starPoints !== null &&
       innerRadius !== null &&
       outerRadius !== null &&
       outerRadius > innerRadius
     ) {
       points = generateRadialPolygonPoints(
-        sprite,
+        centerX,
+        centerY,
         Array.from({ length: starPoints * 2 }, (_, index) =>
           index % 2 === 0 ? outerRadius : innerRadius
         )
@@ -1876,6 +2167,18 @@ function compileGeneratedPolygonCommand(
     return null;
   }
 
+  const finalPoints = applyPolygonCornerModifiers(
+    node,
+    points,
+    cut,
+    modifierRadius,
+    diagnostics
+  );
+
+  if (finalPoints === null || !validatePolygonPoints(node, finalPoints, diagnostics)) {
+    return null;
+  }
+
   if (
     fills.length === 0 &&
     glows.length === 0 &&
@@ -1895,7 +2198,7 @@ function compileGeneratedPolygonCommand(
     kind: "polygon",
     lineNumber: node.lineNumber,
     ...(antialias === null ? {} : { antialias }),
-    points,
+    points: finalPoints,
     fills,
     ...(shadows.length === 0 ? {} : { shadows }),
     ...(glows.length === 0 ? {} : { glows }),
@@ -2881,7 +3184,7 @@ function compileDrawCommand(
   }
 
   if (node.name === "polygon-regular" || node.name === "polygon-star") {
-    return compileGeneratedPolygonCommand(node, sprite, diagnostics, options);
+    return compileGeneratedPolygonCommand(node, diagnostics, options);
   }
 
   if (node.name === "path") {

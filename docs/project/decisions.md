@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-23`
+Last updated: `2026-05-24`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -569,11 +569,33 @@ Use for significant decisions only. Keep entries short and explicit.
 
 ### DEC-050: Center Generated Polygon Shapes On The Sprite
 - Date: `2026-05-22`
-- Status: Accepted
+- Status: Superseded
 - Context: T-109 added `polygon-regular <sides> <radius>` and `polygon-star <points> <inner-radius> <outer-radius>` without explicit x/y position arguments.
 - Decision: Generate both commands around the current sprite center, place the first outer vertex at the top, then proceed clockwise.
 - Consequences: The requested compact forms are immediately useful for centered badges and icons; authors who need manual positioning or asymmetry should use explicit `polygon` points until a broader transform or anchor model exists.
-- Related tasks: T-109, T-069, T-087
+- Related tasks: T-109, T-069, T-087, T-120
+- Supersedes: N/A
+
+---
+
+### DEC-063: Require Explicit Centers For Generated Polygon Commands
+- Date: `2026-05-23`
+- Status: Accepted
+- Context: After T-109 landed, generated regular and star polygons were harder to position than other geometry because they implicitly used the sprite center and offered no explicit `x y` surface.
+- Decision: Change `polygon-regular` to require `<x> <y> <sides> <radius>` and `polygon-star` to require `<x> <y> <points> <inner-radius> <outer-radius>`, keeping the first outer/generated point at the top and continuing clockwise from there.
+- Consequences: Generated polygons now follow the repo's broader explicit-positioning model, can be placed without falling back to manual `polygon` points, and keep room for future transform/anchor work without depending on implicit sprite-centering behavior.
+- Related tasks: T-120, T-109, T-069, T-087
+- Supersedes: DEC-050
+
+---
+
+### DEC-064: Add Corner Modifiers To Polygon Shapes But Not Paths
+- Date: `2026-05-24`
+- Status: Accepted
+- Context: Authors wanted `polygon`, `polygon-regular`, `polygon-star`, and `path` to support `cut` and `radius`, but the current geometry model treats polygons as filled regions while `path` is still a stroke-first open polyline.
+- Decision: Add uniform per-vertex `cut` and `radius` modifiers to the polygon family only. Keep `path` unchanged and defer its corner behavior to future join/cap or richer path semantics work.
+- Consequences: Polygon-family shapes now share more of the rectangle-style modifier story without blurring the current distinction between region geometry and stroke-only paths. `path` stays simpler and avoids premature semantics that would likely conflict with later join/cap design.
+- Related tasks: T-122, T-071
 - Supersedes: N/A
 
 ---

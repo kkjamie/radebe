@@ -13,6 +13,7 @@ import {
   renderDocument,
   renderSource
 } from "../src/index.js";
+import type { CompiledDrawCommand } from "../src/types.js";
 
 test("schema exposes typed command arguments for editor assistance", () => {
   const stroke = getCommandDefinition("stroke");
@@ -183,6 +184,8 @@ test("schema records editor hints for inline child commands and smart expansions
     required: argument.required,
     min: argument.min
   })), [
+    { name: "x", valueKind: "integer", required: true, min: undefined },
+    { name: "y", valueKind: "integer", required: true, min: undefined },
     { name: "sides", valueKind: "integer", required: true, min: 3 },
     { name: "radius", valueKind: "integer", required: true, min: 1 },
     { name: "color", valueKind: "color", required: undefined, min: undefined }
@@ -193,11 +196,19 @@ test("schema records editor hints for inline child commands and smart expansions
     required: argument.required,
     min: argument.min
   })), [
+    { name: "x", valueKind: "integer", required: true, min: undefined },
+    { name: "y", valueKind: "integer", required: true, min: undefined },
     { name: "points", valueKind: "integer", required: true, min: 3 },
     { name: "inner-radius", valueKind: "integer", required: true, min: 1 },
     { name: "outer-radius", valueKind: "integer", required: true, min: 1 },
     { name: "color", valueKind: "color", required: undefined, min: undefined }
   ]);
+  assert.ok(polygon.allowedChildCommands?.includes("cut"));
+  assert.ok(polygon.allowedChildCommands?.includes("radius"));
+  assert.ok(regular.allowedChildCommands?.includes("cut"));
+  assert.ok(regular.allowedChildCommands?.includes("radius"));
+  assert.ok(star.allowedChildCommands?.includes("cut"));
+  assert.ok(star.allowedChildCommands?.includes("radius"));
 });
 
 test("parseSource returns a nested command tree for indentation-based source", () => {
@@ -579,7 +590,7 @@ test("compileDocument supports polygon shorthand and point children without comm
 test("compileDocument supports generated regular polygons and stars", () => {
   const parsed = parseSource({
     source:
-      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-regular 4 3 #70c8e8\npolygon-star 5 2 4\n  fill solid white"
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-regular 6 4 4 3 #70c8e8\npolygon-star 4 6 5 2 4\n  fill solid white"
   });
   const result = compileDocument(parsed.document);
 
@@ -588,10 +599,10 @@ test("compileDocument supports generated regular polygons and stars", () => {
       kind: "polygon",
       lineNumber: 5,
       points: [
-        { x: 5, y: 2 },
-        { x: 8, y: 5 },
-        { x: 5, y: 8 },
-        { x: 2, y: 5 }
+        { x: 6, y: 1 },
+        { x: 9, y: 4 },
+        { x: 6, y: 7 },
+        { x: 3, y: 4 }
       ],
       fills: [{ kind: "solid", color: "#70c8e8", alpha: 1 }],
       strokes: []
@@ -600,16 +611,16 @@ test("compileDocument supports generated regular polygons and stars", () => {
       kind: "polygon",
       lineNumber: 6,
       points: [
-        { x: 5, y: 1 },
-        { x: 6, y: 3 },
-        { x: 9, y: 4 },
-        { x: 7, y: 6 },
-        { x: 7, y: 8 },
-        { x: 5, y: 7 },
-        { x: 3, y: 8 },
-        { x: 3, y: 6 },
-        { x: 1, y: 4 },
-        { x: 4, y: 3 }
+        { x: 4, y: 2 },
+        { x: 5, y: 4 },
+        { x: 8, y: 5 },
+        { x: 6, y: 7 },
+        { x: 6, y: 9 },
+        { x: 4, y: 8 },
+        { x: 2, y: 9 },
+        { x: 2, y: 7 },
+        { x: 0, y: 5 },
+        { x: 3, y: 4 }
       ],
       fills: [{ kind: "solid", color: "white", alpha: 1 }],
       strokes: []
@@ -652,6 +663,47 @@ test("compileDocument supports polygon strokes through the shared appearance mod
     }
   ]);
   assert.deepEqual(result.diagnostics, []);
+});
+
+test("compileDocument supports polygon-family cut and radius modifiers", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 16 16\n  background transparent\n\npolygon 2 2 13 2 13 13 2 13 #70c8e8\n  cut 2\n\npolygon-regular 8 8 6 5 #ffffff\n  radius 1\n\npolygon-star 8 8 5 2 6 #ffcc88\n  cut 1"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.document.commands.length, 3);
+  assert.equal(result.document.commands[0]?.kind, "polygon");
+  assert.equal(result.document.commands[1]?.kind, "polygon");
+  assert.equal(result.document.commands[2]?.kind, "polygon");
+  assert.notDeepEqual(
+    (result.document.commands[0] as Extract<CompiledDrawCommand, { kind: "polygon" }>).points,
+    [
+      { x: 2, y: 2 },
+      { x: 13, y: 2 },
+      { x: 13, y: 13 },
+      { x: 2, y: 13 }
+    ]
+  );
+});
+
+test("compileDocument rejects polygon-family shapes that combine cut and radius", () => {
+  const parsed = parseSource({
+    source:
+      "sprite panel\n  size 16 16\n  background transparent\n\npolygon 2 2 13 2 13 13 2 13 #70c8e8\n  cut 2\n  radius 1"
+  });
+  const result = compileDocument(parsed.document);
+
+  assert.deepEqual(result.diagnostics, [
+    {
+      stage: "compiler",
+      line: 5,
+      column: 1,
+      message:
+        'The polygon command currently does not allow both "cut" and "radius" on the same polygon shape.'
+    }
+  ]);
 });
 
 test("compileDocument supports path as a stroke-only polyline", () => {
@@ -1859,17 +1911,39 @@ test("renderDocument rasterizes polygon fills from whitespace-separated point pa
 test("renderDocument rasterizes generated regular polygons and stars", () => {
   const regular = renderSource({
     source:
-      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-regular 4 3 #ffffff"
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-regular 6 4 4 3 #ffffff"
   });
   const star = renderSource({
     source:
-      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-star 5 2 4 #ffffff"
+      "sprite panel\n  size 10 10\n  background transparent\n\npolygon-star 4 6 5 2 4 #ffffff"
   });
 
   assert.deepEqual(regular.diagnostics, []);
   assert.deepEqual(star.diagnostics, []);
-  assert.equal(regular.artifact.pixels[5]?.[5], "#ffffff");
-  assert.ok(star.artifact.pixels.flat().includes("#ffffff"));
+  assert.equal(regular.artifact.pixels[4]?.[6], "#ffffff");
+  assert.equal(star.artifact.pixels[6]?.[4], "#ffffff");
+});
+
+test("renderDocument rasterizes polygon cut modifiers as beveled corners", () => {
+  const result = renderSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\npolygon 1 1 6 1 6 6 1 6 #ffffff\n  cut 2"
+  });
+
+  assert.equal(result.artifact.pixels[1]?.[1], null);
+  assert.equal(result.artifact.pixels[2]?.[1], "#ffffff");
+  assert.equal(result.artifact.pixels[1]?.[2], "#ffffff");
+});
+
+test("renderDocument rasterizes polygon radius modifiers as rounded corners", () => {
+  const result = renderSource({
+    source:
+      "sprite panel\n  size 8 8\n  background transparent\n\npolygon 1 1 6 1 6 6 1 6 #ffffff\n  radius 2"
+  });
+
+  assert.equal(result.artifact.pixels[1]?.[1], null);
+  assert.equal(result.artifact.pixels[2]?.[2], "#ffffff");
+  assert.equal(result.artifact.pixels[4]?.[4], "#ffffff");
 });
 
 test("renderDocument rasterizes polygon gradients across the polygon bounds", () => {

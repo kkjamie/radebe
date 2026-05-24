@@ -1,7 +1,7 @@
 # Product Spec
 
 Owner: `Main Thread`
-Last updated: `2026-05-21`
+Last updated: `2026-05-23`
 
 ## Product Summary
 - Radebe is a language and toolchain for authoring procedural UI sprites as text-first source files that compile into raster outputs and optional metadata.
@@ -401,14 +401,15 @@ Initial geometry types discussed in the recovered spec and current direction:
 - `circle <x> <y> <radius>`
 - `polygon <x1> <y1> <x2> <y2> <x3> <y3> ...`
 - `polygon` with child `point <x> <y>`
-- `polygon-regular <sides> <radius>`
-- `polygon-star <points> <inner-radius> <outer-radius>`
+- `polygon-regular <x> <y> <sides> <radius>`
+- `polygon-star <x> <y> <points> <inner-radius> <outer-radius>`
 - `rect` with child `cut` or child `radius`
+- `polygon`, `polygon-regular`, or `polygon-star` with uniform child `cut` or child `radius`
 - `path <name?>`
 - `path` with child `point <x> <y>` and child `stroke`
 - `shape <name?>`
 
-Generated polygon commands are centered on the sprite because their shorthand forms do not include explicit position arguments.
+Generated polygon commands now use explicit `x y` center arguments. Polygon-family `cut` and `radius` modifiers are currently uniform per vertex, while `path` remains a stroke-first polyline and does not use those modifiers.
 
 Example:
 

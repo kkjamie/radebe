@@ -311,7 +311,7 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       trailingArgument: arg("color", "color")
     },
     allowedChildCapabilities: ["shape-appearance"],
-    allowedChildCommands: ["point"],
+    allowedChildCommands: ["point", "cut", "radius"],
     shorthandExpansions: [colorFillExpansion()],
     editorHints: {
       indentBehavior: "child"
@@ -320,15 +320,18 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: "polygon-regular",
     kind: "geometry",
-    propertyArgs: ["sides", "radius", "color", "antialias"],
-    shorthandSchema: ["sides", "radius", "color"],
+    propertyArgs: ["x", "y", "sides", "radius", "color", "antialias"],
+    shorthandSchema: ["x", "y", "sides", "radius", "color"],
     arguments: [
+      arg("x", "integer", { required: true }),
+      arg("y", "integer", { required: true }),
       arg("sides", "integer", { required: true, min: 3 }),
       arg("radius", "integer", { required: true, min: 1 }),
       arg("color", "color"),
       arg("antialias", "boolean", { enumValues: booleanValues })
     ],
     allowedChildCapabilities: ["shape-appearance"],
+    allowedChildCommands: ["cut", "radius"],
     shorthandExpansions: [colorFillExpansion()],
     editorHints: {
       indentBehavior: "child"
@@ -337,9 +340,11 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
   {
     name: "polygon-star",
     kind: "geometry",
-    propertyArgs: ["points", "inner-radius", "outer-radius", "color", "antialias"],
-    shorthandSchema: ["points", "inner-radius", "outer-radius", "color"],
+    propertyArgs: ["x", "y", "points", "inner-radius", "outer-radius", "color", "antialias"],
+    shorthandSchema: ["x", "y", "points", "inner-radius", "outer-radius", "color"],
     arguments: [
+      arg("x", "integer", { required: true }),
+      arg("y", "integer", { required: true }),
       arg("points", "integer", { required: true, min: 3 }),
       arg("inner-radius", "integer", { required: true, min: 1 }),
       arg("outer-radius", "integer", { required: true, min: 1 }),
@@ -347,6 +352,7 @@ export const COMMAND_DEFINITIONS: CommandDefinition[] = [
       arg("antialias", "boolean", { enumValues: booleanValues })
     ],
     allowedChildCapabilities: ["shape-appearance"],
+    allowedChildCommands: ["cut", "radius"],
     shorthandExpansions: [colorFillExpansion()],
     editorHints: {
       indentBehavior: "child"

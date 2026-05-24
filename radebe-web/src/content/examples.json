@@ -90,7 +90,7 @@
       "  background transparent",
       "  antialias true",
       "",
-      "polygon-star 5 16 38",
+      "polygon-star 48 48 5 16 38",
       "  shadow 0 4 #9f5a16 alpha=0.35 blur=3",
       "  fill gradient-radial #fff8d8 #ffb02e",
       "  stroke 3 #9f5a16 alpha=0.7",

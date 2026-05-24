@@ -5,13 +5,11 @@ export const polygonStarDoc: ExampleDoc = {
     title: "Star Polygon",
     navGroup: "Drawable Commands",
     summary:
-      "Generates a centered star polygon by alternating outer and inner radii. It behaves like a polygon shape drawable for fills, strokes, shadows, glow, and antialiasing.",
-    args: ["points", "inner-radius", "outer-radius", "optional color shorthand", "antialias"],
+      "Generates a star polygon around an explicit center point by alternating outer and inner radii. It behaves like a polygon shape drawable for fills, strokes, shadows, glow, antialiasing, and uniform vertex `cut` or `radius` modifiers.",
+    args: ["x", "y", "points", "inner-radius", "outer-radius", "optional color shorthand", "antialias"],
     childCommands: [
-      "points",
-      "inner-radius",
-      "outer-radius",
-      "color",
+      "cut",
+      "radius",
       "fill",
       "stroke",
       "shadow",
@@ -19,9 +17,11 @@ export const polygonStarDoc: ExampleDoc = {
       "antialias"
     ],
     notes: [
-      "`polygon-star <points> <inner-radius> <outer-radius>` creates a star around the sprite center.",
+      "`polygon-star <x> <y> <points> <inner-radius> <outer-radius>` creates a star around the provided center.",
       "`points` must be at least `3`; both radii must be at least `1`.",
       "`outer-radius` must be greater than `inner-radius`.",
+      "`cut` and `radius` modify every star vertex uniformly, including the inner corners.",
+      'A star currently cannot use both `cut` and `radius` at the same time.',
       "The first outer point is placed at the top, then inner and outer points alternate clockwise.",
       "A trailing color shorthand lowers into an implicit solid fill."
     ],
@@ -36,7 +36,7 @@ export const polygonStarDoc: ExampleDoc = {
           "  background transparent",
           "  antialias true",
           "",
-          "polygon-star 5 16 38",
+          "polygon-star 48 48 5 16 38",
           "  shadow 0 4 #9f5a16 alpha=0.35 blur=3",
           "  fill gradient-radial #fff8d8 #ffb02e",
           "  stroke 3 #9f5a16 alpha=0.7",
@@ -53,9 +53,25 @@ export const polygonStarDoc: ExampleDoc = {
           "  background transparent",
           "  antialias true",
           "",
-          "polygon-star 8 10 36 #d8f8ff",
+          "polygon-star 48 48 8 10 36 #d8f8ff",
           "  stroke 2 #70c8e8",
           "  glow #70c8e8 blur=5 alpha=0.55"
+        ].join("\n")
+      },
+      {
+        id: "polygon-star-radius",
+        title: "Rounded Star",
+        summary: "A uniform `radius` softens both the outer tips and inner star notches.",
+        source: [
+          "sprite star-rounded-demo",
+          "  size 96 96",
+          "  background transparent",
+          "  antialias true",
+          "",
+          "polygon-star 48 48 5 14 34",
+          "  radius 4",
+          "  fill gradient-radial #fff8d8 #ffb02e",
+          "  stroke 2 #9f5a16 alpha=0.7"
         ].join("\n")
       }
     ]
