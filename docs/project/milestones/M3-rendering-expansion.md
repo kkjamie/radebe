@@ -10,14 +10,14 @@ Status: `Planned`
 - Expand the language beyond the first usable loop with higher-value rendering, authoring, and composition features that make Radebe meaningfully more expressive.
 
 ## Scope
-- Add the next layer of authoring ergonomics such as expressions, built-in sprite variables, relative units, sprite output scaling, inline comments, and clearer ordering diagnostics.
+- Add the next layer of authoring ergonomics such as expressions, built-in sprite variables, relative units, coordinate-space semantics, sprite output scaling, inline comments, and clearer ordering diagnostics.
 - Add richer rendering/composition capabilities such as procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean regions, and mask composition modes.
 - Keep CLI, web docs/examples, and editor assistance aligned with each new language feature as it lands.
 
 ## Gate Definitions
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Gate A | Authoring Ergonomics | Expression-like values, sprite-relative helpers, sprite output scaling, comments, and ordering guidance are implemented with diagnostics, docs, and editor support | Not Started | Seed tasks: T-068, T-075, T-087, T-088, T-091, T-127 |
+| Gate A | Authoring Ergonomics | Expression-like values, sprite-relative helpers, coordinate-space semantics, sprite output scaling, comments, and ordering guidance are implemented with diagnostics, docs, and editor support | Not Started | Seed tasks: T-068, T-075, T-087, T-088, T-091, T-127, T-131 |
 | Gate B | Rendering Expansion | At least one substantial new rendering/composition family is implemented and verified across core, CLI, and web | Not Started | Seed tasks: T-063, T-064, T-065, T-066, T-067, T-069, T-070, T-071, T-073, T-077, T-079 |
 | Gate C | Milestone Consolidation | Remaining M3 backlog is triaged into finished work, explicit deferments, or follow-on milestones with docs/examples refreshed | Not Started | Seed task: T-099 |
 
