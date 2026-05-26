@@ -5,14 +5,20 @@ export const rectInsetDoc: ExampleDoc = {
     title: "Rect Inset",
     navGroup: "Drawable Commands",
     summary:
-      "Defines a rectangle from the current sprite bounds using a uniform inset amount, four-side top/right/bottom/left shorthand, or expanded side-specific insets.",
-    args: ["inset", "top right bottom left", "color shorthand", "fill", "antialias"],
-    childCommands: ["fill", "stroke", "shadow", "glow", "antialias"],
+      "Defines a rectangle from the current sprite bounds using a uniform inset amount, four-side top/right/bottom/left constructor, or expanded side-specific insets.",
+    properties: [
+      "inset: uniform distance from every sprite edge",
+      "top/right/bottom/left: four-side constructor order",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: [
+      "Appearance commands",
+      "Effect commands",
+      "Geometry modifier commands",
+      "Property commands"
+    ],
     notes: [
-      "The uniform `inset` value applies to every side by default.",
-      "`rect-inset 4 4 8 8` and child `inset 4 4 8 8` use top, right, bottom, left order.",
       "Any of `top`, `right`, `bottom`, or `left` can override the uniform inset per side.",
-      "Like `rect`, direct color shorthand lowers into an implicit solid fill.",
       "The computed rectangle must still fit inside the sprite bounds."
     ],
     examples: [

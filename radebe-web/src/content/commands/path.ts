@@ -6,14 +6,16 @@ export const pathDoc: ExampleDoc = {
     navGroup: "Drawable Commands",
     summary:
       "Defines an open polyline path from child points. A path is visible through `stroke`, making it the multi-segment counterpart to `line`.",
-    args: ["optional name", "antialias"],
-    childCommands: ["point", "stroke", "antialias"],
+    properties: [
+      "name: optional path label",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: ["Point commands", "Stroke commands", "Property commands"],
     notes: [
       "Use child `point` commands to define the path in order.",
       "A path requires at least one `stroke` child because open paths do not produce fill coverage.",
       "Path strokes accept only `align center`.",
-      "`antialias` smooths diagonal segment coverage.",
-      "Closed or fillable path contours are not supported."
+      "`antialias` smooths diagonal segment coverage."
     ],
     examples: [
       {

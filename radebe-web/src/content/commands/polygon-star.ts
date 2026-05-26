@@ -31,20 +31,23 @@ export const polygonStarDoc: ExampleDoc = {
     navGroup: "Drawable Commands",
     summary:
       "Generates a star polygon around an explicit center point by alternating outer and inner radii.",
-    args: ["x", "y", "points", "inner-radius", "outer-radius", "optional color shorthand", "antialias"],
+    properties: [
+      "x/y: center point",
+      "points: number of outer star tips",
+      "inner-radius: distance to inner vertices",
+      "outer-radius: distance to outer vertices",
+      "antialias: optional geometry smoothing"
+    ],
     childCommands: [
-      "fill",
-      "stroke",
-      "shadow",
-      "glow",
-      "antialias"
+      "Appearance commands",
+      "Effect commands",
+      "Geometry modifier commands",
+      "Property commands"
     ],
     notes: [
-      "`polygon-star <x> <y> <points> <inner-radius> <outer-radius>` creates a star around the provided center.",
       "`points` must be at least `3`; both radii must be at least `1`.",
       "`outer-radius` must be greater than `inner-radius`.",
-      "The first outer point is placed at the top, then inner and outer points alternate clockwise.",
-      "A trailing color shorthand lowers into an implicit solid fill."
+      "The first outer point is placed at the top, then inner and outer points alternate clockwise."
     ],
     examples: [
       {

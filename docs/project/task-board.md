@@ -8,7 +8,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-125 | Run final public website QA and polish pass | M2 | Gate D | P1 | Review | `codex` | Awaiting visual/browser review of the updated command-reference pages | Review the preview toolbar placement plus the revised regular-polygon, fixed nested polygon stroke, cut/radius, and mask examples in the browser |
+| T-125 | Run final public website QA and polish pass | M2 | Gate D | P1 | Review | `codex` | Awaiting visual/browser review of the updated command-reference pages | Review the three-box Properties/Children/Notes API summary with constructor forms, preview toolbar placement, revised regular-polygon, fixed nested polygon stroke, cut/radius, and mask examples in the browser |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

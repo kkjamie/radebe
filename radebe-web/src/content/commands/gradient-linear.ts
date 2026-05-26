@@ -6,8 +6,12 @@ export const gradientLinearDoc: ExampleDoc = {
     navGroup: "Appearance Commands",
     summary:
       "Supplies a linear color ramp to a `fill` appearance pass.",
-    args: ["from", "to", "direction", "angle"],
-    childCommands: ["stop"],
+    properties: [
+      "from/to: compact two-color gradient endpoints",
+      "direction: horizontal or vertical axis",
+      "angle: custom gradient angle"
+    ],
+    childCommands: ["Stop commands", "Property commands"],
     notes: [
       "`gradient` remains a linear-gradient alias for compatibility, while `gradient-linear` is the explicit name.",
       "Use either `direction` or `angle`, not both.",

@@ -6,12 +6,10 @@ export const solidDoc: ExampleDoc = {
     navGroup: "Appearance Commands",
     summary:
       "Supplies one color to a `fill` appearance pass.",
-    args: ["color"],
-    childCommands: [],
+    properties: ["color: fill color"],
+    childCommands: ["Property commands"],
     notes: [
       "`fill` on its own is only a container; it does not render without a variant such as `solid`, `gradient-linear`, or `gradient-radial`.",
-      "`fill solid red` is the compact form.",
-      "Expanded form is `fill` then `solid` then `color`.",
       "Shape drawables can all use the same solid fill variant."
     ],
     examples: [

@@ -6,15 +6,22 @@ export const maskDoc: ExampleDoc = {
     navGroup: "Structural Containers",
     summary:
       "Clips arbitrary child drawing using an explicit mask shape rather than implicit shape coverage.",
-    args: ["optional name", "invert=true|false", "show=masked-content|shape-only|content-only"],
-    childCommands: ["shape", "contents", "name", "invert", "show"],
+    properties: [
+      "name: optional mask label",
+      "invert: keep content outside the shape",
+      "show: masked-content, shape-only, or content-only"
+    ],
+    childCommands: [
+      "Mask shape container",
+      "Masked contents container",
+      "Property commands"
+    ],
     notes: [
       "`shape` defines the clipping coverage and must come before `contents`.",
-      "Shape drawables inside `shape` get implicit coverage, so a mask shape can use `rect`, `circle`, `polygon`, `polygon-regular`, or `polygon-star` without adding a visible fill color.",
+      "Shape drawables inside `shape` contribute coverage without needing visible fills.",
       "`contents` contains the drawables clipped by the mask shape.",
       "`invert=true` keeps content outside the mask shape instead of inside it.",
-      "`show` defaults to `masked-content`; use `show=shape-only` or `show=content-only` to debug either side of the mask without changing child source.",
-      "Mask composition modes such as add, intersect, subtract, and replace are not supported."
+      "`show=shape-only` and `show=content-only` help inspect either side while tuning a mask."
     ],
     examples: [
       {

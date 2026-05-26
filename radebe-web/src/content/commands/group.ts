@@ -6,33 +6,20 @@ export const groupDoc: ExampleDoc = {
     navGroup: "Structural Containers",
     summary:
       "Collects drawing commands into an ordered structure that can stay transparent or receive composited appearance passes.",
-    args: ["optional name"],
+    properties: ["name: optional group label"],
     childCommands: [
-      "plot",
-      "line",
-      "rect",
-      "rect-absolute",
-      "rect-inset",
-      "circle",
-      "polygon",
-      "polygon-regular",
-      "polygon-star",
-      "path",
-      "group",
-      "mask",
-      "name",
-      "fill",
-      "shadow",
-      "glow",
-      "stroke"
+      "Drawable commands",
+      "Structural containers",
+      "Appearance commands",
+      "Effect commands",
+      "Property commands"
     ],
     notes: [
       "`group` is transparent until it has a group-level `fill`, `shadow`, `glow`, or `stroke` child.",
-      "With group-level passes, children render into an offscreen layer first; the combined alpha becomes the group drawable.",
+      "With group-level passes, the combined child alpha becomes the group drawable.",
       "Group-level `shadow` and outer `glow` draw behind the composited children, `fill` overlays the combined child alpha, inner `glow` clips inside it, and `stroke` follows the combined child contour.",
       "Child draw commands and nested groups must come before group-level appearance or effect passes.",
-      "An optional group name is accepted for authoring clarity and diagnostics.",
-      "Group alpha, blend, filters, and transforms are not supported."
+      "Use a group name when it makes larger sources easier to scan."
     ],
     examples: [
       {

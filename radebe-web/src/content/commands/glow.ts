@@ -6,14 +6,18 @@ export const glowDoc: ExampleDoc = {
     navGroup: "Effect Commands",
     summary:
       "Defines a colored contour effect on supported shapes and composited groups, with outer and inner modes.",
-    args: ["color", "mode", "spread", "blur", "alpha"],
-    childCommands: ["mode", "spread", "blur", "fill"],
+    properties: [
+      "mode: outer or inner",
+      "spread: glow thickness before blur",
+      "blur: softening radius",
+      "alpha: pass opacity"
+    ],
+    childCommands: ["Fill commands", "Property commands"],
     notes: [
-      "`glow #70c8e8` creates an outer glow using the color shorthand and a default `blur` of `1`.",
-      "`mode` defaults to `outer`; use `mode=inner` or a child `mode inner` command to clip the glow inside the source region.",
-      "Outer glow uses the same deterministic box-blur alpha sampling as soft shadows, but clips the source interior out of the glow coverage.",
+      "`mode` defaults to `outer`; `blur` defaults to `1`.",
+      "Use `mode=inner` or a child `mode inner` command to clip the glow inside the source region.",
       "Positive `spread` widens an outer glow or pushes an inner glow farther inward before blur is applied.",
-      "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry including generated regular/star polygons, and composited groups."
+      "Supported hosts include shapes and composited groups."
     ],
     examples: [
       {

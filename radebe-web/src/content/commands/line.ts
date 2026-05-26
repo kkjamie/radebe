@@ -4,13 +4,17 @@ export const lineDoc: ExampleDoc = {
     id: "line",
     title: "Line",
     navGroup: "Drawable Commands",
-    summary: "Draws a line from one integer point to another using the shared raster line path.",
-    args: ["x1", "y1", "x2", "y2", "color", "antialias"],
-    childCommands: ["antialias"],
+    summary: "Draws a line between two integer points.",
+    properties: [
+      "x1/y1: start point",
+      "x2/y2: end point",
+      "color: line color",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: ["Property commands"],
     notes: [
-      "Line coordinates are integer pixel coordinates.",
-      "`antialias` can override the sprite default for this line.",
-      "Child-property form is equivalent to inline positional or named args."
+      "Coordinates use integer pixel locations.",
+      "`antialias` can override the sprite default for one line."
     ],
     examples: [
       {

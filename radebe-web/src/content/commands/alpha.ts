@@ -6,12 +6,12 @@ export const alphaDoc: ExampleDoc = {
     navGroup: "Property Commands",
     summary:
       "Defines explicit opacity on `fill` and `stroke` appearance passes without introducing implicit child inheritance.",
-    args: ["value 0..1"],
+    properties: ["value: opacity from 0 to 1"],
     childCommands: [],
     notes: [
       "`alpha` applies to `fill` and `stroke` appearance passes.",
       "`alpha` defaults to `1` when omitted.",
-      "Nested child strokes do not inherit parent stroke alpha automatically.",
+      "Nested strokes set their own alpha explicitly.",
       "Pass alpha multiplies with any alpha already present in solid colors or gradient stop colors."
     ],
     examples: [

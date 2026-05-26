@@ -31,13 +31,21 @@ export const polygonRegularDoc: ExampleDoc = {
     navGroup: "Drawable Commands",
     summary:
       "Generates an equal-sided polygon shape drawable around an explicit center point.",
-    args: ["x", "y", "sides", "radius", "optional color shorthand", "antialias"],
-    childCommands: ["fill", "stroke", "shadow", "glow", "antialias"],
+    properties: [
+      "x/y: center point",
+      "sides: number of polygon sides",
+      "radius: distance from center to each vertex",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: [
+      "Appearance commands",
+      "Effect commands",
+      "Geometry modifier commands",
+      "Property commands"
+    ],
     notes: [
-      "`polygon-regular <x> <y> <sides> <radius>` creates points around the provided center.",
       "`sides` must be at least `3`; `radius` must be at least `1`.",
       "The first point is placed at the top, then the remaining points proceed clockwise.",
-      "A trailing color shorthand lowers into an implicit solid fill.",
       "Use explicit `polygon` when individual point positions need manual control."
     ],
     examples: [

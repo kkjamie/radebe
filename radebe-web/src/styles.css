@@ -532,6 +532,36 @@ body {
   margin-bottom: 8px;
 }
 
+.command-api-grid {
+  align-items: start;
+}
+
+.command-api-card {
+  min-width: 0;
+}
+
+.command-api-property-list code {
+  color: #d8f8ff;
+  white-space: nowrap;
+}
+
+.command-api-subtitle {
+  margin: 16px 0 8px;
+  color: #fff3e1;
+  font-size: 0.92rem;
+}
+
+.command-api-form-list code,
+.command-api-form-note code {
+  color: #d8f8ff;
+}
+
+.command-api-form-note {
+  margin: 10px 0 0;
+  color: #cbbda7;
+  line-height: 1.45;
+}
+
 .plain-list-items li {
   margin-bottom: 6px;
 }

@@ -6,26 +6,29 @@ export const circleDoc: ExampleDoc = {
     navGroup: "Drawable Commands",
     summary:
       "Defines a circular shape drawable from a center point and radius. Circles accept the shared shape fill, stroke, shadow, glow, and antialias controls.",
-    args: ["x", "y", "radius", "color shorthand", "fill", "antialias"],
-    childCommands: ["fill", "stroke", "antialias"],
+    properties: [
+      "x/y: center point",
+      "radius: circle radius in pixels",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: ["Appearance commands", "Effect commands", "Property commands"],
     notes: [
       "The center uses integer pixel coordinates.",
-      "Direct color shorthand lowers into an implicit solid fill.",
       "Circle fill variants reuse the same solid, linear-gradient, and radial-gradient model as rectangles.",
-      "`antialias` can smooth circle fill, stroke, and shadow coverage while preserving pixel-perfect defaults.",
-      "Circle strokes use the shared `stroke` command model, including shorthand, align, style, and nested stroke support."
+      "`antialias` can smooth circle fill, stroke, shadow, and glow coverage.",
+      "Circle strokes use the shared `stroke` command model."
     ],
     examples: [
       {
         id: "circle-basic",
         title: "Solid Circles",
-        summary: "A direct shorthand circle next to an expanded form with an explicit fill child.",
+        summary: "A direct constructor next to an expanded form with an explicit fill child.",
         source: [
           "sprite circle-demo",
           "  size 384 192",
           "  background transparent",
           "",
-          "# Shorthand solid circle",
+          "# Constructor solid circle",
           "circle 80 96 40 #d8f8ff",
           "",
           "# Expanded property form with explicit fill",

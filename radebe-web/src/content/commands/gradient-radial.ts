@@ -6,8 +6,12 @@ export const gradientRadialDoc: ExampleDoc = {
     navGroup: "Appearance Commands",
     summary:
       "Supplies a radial color ramp to a `fill` appearance pass.",
-    args: ["from", "to", "center-x", "center-y", "radius"],
-    childCommands: ["stop"],
+    properties: [
+      "from/to: compact two-color gradient endpoints",
+      "center-x/center-y: normalized gradient center",
+      "radius: normalized gradient reach"
+    ],
+    childCommands: ["Stop commands", "Property commands"],
     notes: [
       "`center-x` and `center-y` are normalized from 0 to 1 within the rectangle bounds.",
       "A radius of `1` reaches the farthest rectangle corner from the chosen center.",

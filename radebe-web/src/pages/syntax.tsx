@@ -38,21 +38,21 @@ const syntaxGuideSections: SyntaxGuideSection[] = [
     ].join("\n")
   },
   {
-    title: "Arguments",
+    title: "Properties",
     body: [
-      "Arguments can be defined in 3 ways: As children, inline as positional ordered args, or inline as named arguments."
+      "Properties can be defined in 3 ways: as child property commands, inline named properties, or constructor values."
     ],
     example: [
-      "# Args as children:",
+      "# Property commands:",
       "plot",
       "  x 4",
       "  y 4",
       "  color white",
       "",
-      "# Auto args: positional shorthand (plot <x> <y> <color>)",
+      "# Constructor values: plot <x> <y> <color>",
       "plot 4 4 white",
       "",
-      "# Named args: explicit inline fields, good for out of order or optional/defaulted args",
+      "# Named inline properties",
       "plot x=4 y=4 color=white",
       "",
       "# Combined...",
@@ -61,14 +61,16 @@ const syntaxGuideSections: SyntaxGuideSection[] = [
     ].join("\n")
   },
   {
-    title: "Shorthand",
+    title: "Constructors",
     body: [
-      "Some commands accept convenience values that expand into child commands. A rectangle color is shorthand for an explicit solid fill: ",
+      "Some constructors include ",
+      { code: "<fillcolor>" },
+      ", which expands into an explicit solid fill: ",
       { code: "rect" },
-      " does not actually have a color argument, even though the trailing color looks like one."
+      " still exposes geometry properties, while the constructor color becomes a child appearance command."
     ],
     example: [
-      "# Shorthand form: white expands into a fill",
+      "# Constructor form: white expands into a fill",
       "rect 8 8 32 16 white",
       "",
       "# Equivalent expanded form: fill owns the color",
@@ -224,7 +226,7 @@ export function SyntaxPage() {
     <>
       <Hero
         title="Syntax"
-        summary="Radebe source is a command tree. Lines create commands, indentation creates children, and arguments configure the current command either compactly or explicitly."
+        summary="Radebe source is a command tree. Lines create commands, indentation creates children, and properties configure the current command either compactly or explicitly."
       />
       <section className="syntax-guide">
         {syntaxGuideSections.map((section) => (

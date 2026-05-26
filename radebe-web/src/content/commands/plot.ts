@@ -5,26 +5,29 @@ export const plotDoc: ExampleDoc = {
     title: "Plot",
     navGroup: "Drawable Commands",
     summary: "Draws one pixel at the given coordinates using the provided color.",
-    args: ["x", "y", "color"],
+    properties: [
+      "x: horizontal pixel coordinate",
+      "y: vertical pixel coordinate",
+      "color: pixel color"
+    ],
     childCommands: [],
     notes: [
-      "Supports positional, named, and child-property forms.",
-      "Coordinates are integer pixel locations with origin at the top-left."
+      "Coordinates use the top-left of the sprite as the origin."
     ],
     examples: [
       {
         id: "plot-forms",
         title: "Equivalent Syntax Forms",
-        summary: "The same command expressed with positional, named, and child-property arguments.",
+        summary: "The same command expressed with constructor, named, and child-property arguments.",
         source: [
           "sprite plot-demo",
           "  size 24 10",
           "  background transparent",
           "",
-          "# Positional shorthand",
+          "# Constructor form",
           "plot 4 2 #d8f8ff",
           "",
-          "# Named inline args",
+          "# Named inline properties",
           "plot x=10 y=2 color=#70c8e8",
           "",
           "# Child-property form",

@@ -6,20 +6,27 @@ export const rectDoc: ExampleDoc = {
     navGroup: "Drawable Commands",
     summary:
       "Defines an explicit rectangle from x, y, width, and height. `rect` is the short form of `rect-absolute`.",
-    args: ["x", "y", "width", "height", "optional color shorthand", "antialias"],
-    childCommands: ["fill", "stroke", "shadow", "glow", "antialias"],
+    properties: [
+      "x/y: top-left corner",
+      "width/height: rectangle size",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: [
+      "Appearance commands",
+      "Effect commands",
+      "Geometry modifier commands",
+      "Property commands"
+    ],
     notes: [
-      "`rect` and `rect-absolute` compile to the same rectangle draw command.",
+      "`rect` and `rect-absolute` are equivalent.",
       "Width and height must be positive integers.",
-      "Direct color shorthand lowers into an implicit solid fill.",
-      "Use child property commands when named fields read better than inline arguments.",
       "Plain integer-aligned rectangles remain crisp with or without antialiasing."
     ],
     examples: [
       {
         id: "rect-inline-and-expanded",
         title: "Inline And Property Forms",
-        summary: "The same rectangle geometry can be written with inline arguments or named child properties.",
+        summary: "The same rectangle geometry can be written with constructor values or named child properties.",
         source: [
           "sprite rect-demo",
           "  size 256 96",

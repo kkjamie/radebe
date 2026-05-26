@@ -6,13 +6,17 @@ export const varsDoc: ExampleDoc = {
     navGroup: "Declarations",
     summary:
       "Defines reusable file-scoped values for later commands. Use root `var` declarations for small files or a `vars` block when grouping makes the source easier to scan.",
-    args: ["var name value", "$name usage"],
-    childCommands: ["vars", "var"],
+    properties: [
+      "name: variable identifier",
+      "value: stored token",
+      "$name: reference to a defined variable"
+    ],
+    childCommands: ["Variable declaration commands"],
     notes: [
-      "`var` is the semantic declaration command and can appear at the file root after the sprite header.",
-      "`vars` is an optional grouping command that accepts `var` children.",
+      "`var` declarations can appear at the file root after the sprite header.",
+      "`vars` is an optional grouping block for related declarations.",
       "Variables must be defined before they are used.",
-      "A variable reference must occupy a whole value token such as `$accent`; embedded expressions are not supported."
+      "A reference must occupy a whole value token, such as `$accent`."
     ],
     examples: [
       {

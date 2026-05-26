@@ -5,7 +5,7 @@ export function createComingSoonDoc(definition: {
   title: string;
   navGroup: string;
   summary: string;
-  args: string[];
+  properties: string[];
   childCommands: string[];
   notes?: string[];
 }): ExampleDoc {

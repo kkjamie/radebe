@@ -6,13 +6,13 @@ export const antialiasDoc: ExampleDoc = {
     navGroup: "Property Commands",
     summary:
       "Controls real renderer coverage smoothing for geometry while keeping pixel-perfect output as the default.",
-    args: ["true", "false"],
+    properties: ["value: true or false"],
     childCommands: [],
     notes: [
       "`antialias` defaults to `false` when omitted.",
       "A sprite-level value becomes the document render default.",
-      "Geometry commands can override the sprite default with inline `antialias=true|false` or a child `antialias` property.",
-      "The renderer writes partial alpha into the output artifact; this is not a preview-only smoothing mode."
+      "Geometry commands can override the sprite default inline or with a child property.",
+      "Smoothing is part of the rendered artifact, not just the browser preview."
     ],
     examples: [
       {

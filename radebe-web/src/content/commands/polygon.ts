@@ -6,19 +6,27 @@ export const polygonDoc: ExampleDoc = {
     navGroup: "Drawable Commands",
     summary:
       "Defines a polygon shape drawable from at least three points.",
-    args: ["x y point pairs", "optional color shorthand", "antialias"],
-    childCommands: ["point", "fill", "stroke", "shadow", "glow", "antialias"],
+    properties: [
+      "points: inline x/y point pairs",
+      "antialias: optional geometry smoothing"
+    ],
+    childCommands: [
+      "Point commands",
+      "Appearance commands",
+      "Effect commands",
+      "Geometry modifier commands",
+      "Property commands"
+    ],
     notes: [
-      "Inline shorthand uses whitespace-separated `x y` pairs, not comma-separated tuples.",
-      "The canonical readable form is repeated `point` children under `polygon`.",
-      "A trailing color shorthand lowers into an implicit solid fill.",
+      "Constructor form uses whitespace-separated `x y` pairs, not comma-separated tuples.",
+      "Use `point` children when the polygon has several vertices.",
       "`antialias` can smooth polygon fill, stroke, shadow, and glow coverage."
     ],
     examples: [
       {
         id: "polygon-basic",
         title: "Inline Point Pairs",
-        summary: "Flat whitespace-separated point pairs are the compact form.",
+        summary: "Flat whitespace-separated point pairs are the constructor form.",
         source: [
           "sprite polygon-demo",
           "  size 256 160",

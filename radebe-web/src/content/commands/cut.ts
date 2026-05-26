@@ -6,8 +6,11 @@ export const cutDoc: ExampleDoc = {
   navGroup: "Geometry Modifiers",
   summary:
     "Chamfers corners on rectangle-backed shapes or vertices on polygon-family shapes.",
-  args: ["amount", "top-left top-right bottom-right bottom-left"],
-  childCommands: ["top-left", "top-right", "bottom-right", "bottom-left"],
+  properties: [
+    "amount: uniform chamfer size",
+    "corners: rectangle top-left/top-right/bottom-right/bottom-left sizes"
+  ],
+  childCommands: ["Corner property commands"],
   notes: [
     "Place `cut` under `rect`, `rect-inset`, `polygon`, `polygon-regular`, or `polygon-star`.",
     "Rectangles accept one value, four clockwise values, or named corner children.",
@@ -38,7 +41,7 @@ export const cutDoc: ExampleDoc = {
     {
       id: "cut-rect-forms",
       title: "Rectangle Corner Forms",
-      summary: "Rectangle cuts can use clockwise shorthand or expanded named corner children.",
+      summary: "Rectangle cuts can use a clockwise constructor or expanded named corner children.",
       source: [
         "sprite cut-rect-forms-demo",
         "  size 416 176",

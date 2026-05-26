@@ -15,7 +15,7 @@ export type ExampleDoc = {
   title: string;
   navGroup: string;
   summary: string;
-  args: string[];
+  properties: string[];
   childCommands: string[];
   notes: string[];
   examples?: ExamplePlayground[];

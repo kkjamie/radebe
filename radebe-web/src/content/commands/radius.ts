@@ -6,13 +6,13 @@ export const radiusDoc: ExampleDoc = {
   navGroup: "Geometry Modifiers",
   summary:
     "Rounds corners on rectangle-backed shapes or vertices on polygon-family shapes.",
-  args: ["amount"],
+  properties: ["amount: uniform rounding size"],
   childCommands: [],
   notes: [
     "Place `radius` under `rect`, `rect-inset`, `polygon`, `polygon-regular`, or `polygon-star`.",
     "The value is uniform across every corner or vertex on the host shape.",
     "A shape cannot use `radius` and `cut` together.",
-    "Corner-specific radius values are not supported yet.",
+    "Use `cut` when you need per-corner rectangle variation.",
     "`antialias true` makes rounded edges render with partial alpha instead of stair-step pixels."
   ],
   examples: [

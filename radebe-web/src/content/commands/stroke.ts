@@ -6,14 +6,18 @@ export const strokeDoc: ExampleDoc = {
   navGroup: "Appearance Commands",
   summary:
     "Defines a generated stroked region around a supported shape, path, group layer, or nested stroke envelope. Strokes can be solid, dashed, or dotted and are painted through the fill model.",
-  args: ["width", "color", "align", "style", "dash-length", "gap-length", "dot-spacing"],
-  childCommands: ["fill"],
+  properties: [
+    "width: stroke thickness",
+    "align: inside, center, or outside",
+    "style: solid, dashed, or dotted",
+    "dash/gap/dot: style spacing controls"
+  ],
+  childCommands: ["Fill commands", "Nested stroke commands", "Property commands"],
   notes: [
-    "`stroke 2 white` is shorthand for width plus an implicit solid fill color.",
-    "Supported hosts include rectangle-backed shapes, circle geometry, polygon geometry including generated regular/star polygons, paths, composited groups, and nested stroke envelopes.",
+    "Supported hosts include shapes, paths, composited groups, and nested stroke envelopes.",
     "Supported align values are `inside`, `center`, and `outside`.",
     "Supported style values are `solid`, `dashed`, and `dotted`.",
-    "Nested `stroke` attaches another outline to the generated stroke envelope."
+    "Nested outside strokes can build separate rings around the previous stroke envelope."
   ],
   examples: [
     {
@@ -45,7 +49,7 @@ export const strokeDoc: ExampleDoc = {
     {
       id: "stroke-solid-basic",
       title: "Solid Stroke",
-      summary: "The compact common case using width and color shorthand.",
+      summary: "The compact common case using the stroke constructor.",
       source: [
         "sprite stroke-solid-demo",
         "  size 96 48",
