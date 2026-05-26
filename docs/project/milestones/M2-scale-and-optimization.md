@@ -1,25 +1,26 @@
-# M2 First Usable Language Loop
+# M2 Website And Release Closeout
 
 Milestone ID: `M2`
-Title: `First Usable Language Loop`
+Title: `Website And Release Closeout`
 Owner: `Main Thread`
-Last updated: `2026-05-23`
+Last updated: `2026-05-26`
 Status: `In Progress`
 
 ## Outcome
-- Establish basic language operation with one or two rendering commands that are usable through the shared runtime and visible in the web preview.
+- Close out the first usable authoring loop with final public website polish, release-process validation, and consistent author-facing documentation after the core language loop and Unity-return baseline have already been proven.
 
 ## Scope
-- Extend `radebe-core` with one or two minimal rendering commands in the language.
-- Keep `radebe-cli` aligned with the updated language behavior through the existing shared pipeline.
-- Keep `radebe-web` as the fastest feedback surface for previewing the new commands and their rendered artifact output.
-- Preserve the Unity bridge baseline without making full Unity vertical integration the current priority.
+- Keep the already-passed language-loop and Unity-return evidence intact while focusing remaining effort on website/reference polish and release-path closeout.
+- Finish final public-site QA passes across the homepage, syntax/reference pages, examples, navigation, and visible copy.
+- Finish the release path by proving the Azure/Cloudflare flow, moving oversized binaries to external hosting, and restoring public download pages.
+- Keep author-facing vocabulary aligned across docs, the web editor, and the VS Code extension.
 
 ## Gate Definitions
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Passed | T-012 replaced the speculative `@text` / `@repeat` slice with a schema-backed indentation-based parser/compiler path, a small `sprite` header block, and root-level `plot`, `line`, and now filled rectangle commands with real `fill` / `solid` / `gradient` appearance support verified through workspace build and tests. |
-| Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Passed | The CLI now prints the shared sprite-grid rows with compiler diagnostics, the web shell paints the artifact into a real sprite stage at 1x by default with zoom controls and per-command example pages, those example pages now support multiple editable scenarios per feature, the compiler normalizes command properties across positional inline, named inline, and child property forms, root `var` declarations and optional `vars` blocks provide file-scoped whole-token variable references, transparent `group` containers can organize nested draw commands while preserving source-order rendering semantics, `rect-absolute`, `rect`, `rect-inset`, `circle`, `polygon`, generated `polygon-regular` / `polygon-star`, and now a stroke-first open `path` slice render through the shared artifact with explicit `fill` / `solid` / `gradient-linear` / `gradient-radial` support while `gradient` remains the linear alias, polygon authoring stays on the existing whitespace token model through flat `x y` point pairs, canonical `point` children, or generated regular/star point sets with explicit `x y` centers, polygon-family shapes now also support uniform per-vertex `cut` and `radius` contour modifiers, path authoring uses canonical `point` children plus required `stroke`, geometry commands can now opt into shared `fill` / `stroke` children through the `shape-appearance` capability path where appropriate, `fill` and `stroke` support explicit per-pass `alpha` that multiplies with color and gradient-stop transparency, optional real output antialiasing is available through a sprite-level default and per-geometry overrides while still defaulting to `false`, circle and polygon geometry now participate in the shared stroke model, path participates in the shared stroke syntax with center alignment in its first slice, rectangle shapes support child `cut` modifiers for clipped fill silhouettes with corner-based control, rectangle-backed stroke now also follows `cut` and `radius` silhouettes instead of the plain rectangle envelope, and the SEA smoke path exercises the same spec-aligned sample. |
-| Gate C | Unity Return | The packaged CLI path is exercised again from Unity after the basic command loop is stable | Passed | T-011 added a real `.rdb` ScriptedImporter baseline, a `compile <file> --format unity-json` CLI artifact, an environment-driven deploy script, and a configured-project smoke deployment. Local `.env` targeting Eddie redeployed successfully, and manual Unity verification in Eddie confirmed the deployed `.rdb` importer produces a generated Sprite main asset despite the separate batchmode package-resolution issue. |
+| Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Passed | Historical gate retained as passed evidence from the first usable language loop. |
+| Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Passed | Historical gate retained as passed evidence from the web/docs/examples/editor-feedback work completed during M2. |
+| Gate C | Unity Return | The packaged CLI path is exercised again from Unity after the basic command loop is stable | Passed | Historical gate retained as passed evidence from the Unity importer and packaged CLI validation baseline. |
+| Gate D | Closeout Pass | Final website QA, release-path validation, and cross-surface vocabulary polish are complete | Not Started | Seed tasks: T-074, T-125, T-126 |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.

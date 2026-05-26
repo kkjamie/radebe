@@ -459,7 +459,7 @@ Use for significant decisions only. Keep entries short and explicit.
 
 ### DEC-040: Distinguish Omitted Corner Treatments From Zero Values
 - Date: `2026-05-21`
-- Status: Accepted
+- Status: Superseded
 - Context: Existing rectangle corner modifiers support uniform and four-corner `cut` or `radius` values, but authors also need to mix cut and rounded corners on the same rectangle.
 - Decision: Future mixed-corner rectangle work should support targeted single-corner commands such as `cut top-left 8` and `radius top-right 12`. A corner with no targeted treatment is semantically different from a corner with an explicit zero-valued cut or radius.
 - Consequences: T-077 must use a corner-treatment model that can represent absence, cut, and radius independently per corner rather than lowering targeted syntax into four numeric values where `0` means "not modified."
@@ -740,3 +740,25 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Command-reference and examples pages can paint quickly while still bringing editors/previews online in a predictable order, and perf reports now separate queue wait, editor setup, and preview startup cost so future optimization can focus on the real bottleneck instead of total page frame time.
 - Related tasks: T-124, T-123
 - Supersedes: N/A
+
+---
+
+### DEC-066: Split Remaining Work Into M2 Closeout, M3 Rendering, And M4 Unity/Editor
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: After the first usable authoring loop, the remaining backlog mixed final website/release polish with longer-horizon rendering features and postponed Unity/editor work, which made milestone priority unclear.
+- Decision: Keep M2 as a short closeout milestone for final website/release passes, move the deferred rendering/language backlog into M3, and reserve M4 for Unity integration plus reusable editor surfaces.
+- Consequences: The near-term execution queue becomes smaller and more release-oriented, future rendering work gets a dedicated milestone instead of extending M2 indefinitely, and Unity/editor work stays intentionally later unless priorities change again.
+- Related tasks: T-074, T-125, T-126, T-063, T-068, T-072, T-054, T-055
+- Supersedes: N/A
+
+---
+
+### DEC-067: Unify Corner Targeting Across Rect And Polygon-Family Shapes
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: The backlog already included mixed per-corner rectangle treatment work, but the same authoring need now exists across `rect`, `polygon`, `polygon-regular`, and `polygon-star`, where authors should be able to target subsets of corners or vertices without inventing separate modifier systems per shape.
+- Decision: Expand T-077 from rectangle-only mixed-corner work into a unified corner-targeting system for `cut` and `radius` on cornerable shapes. The future model should support selectors by index and by semantic tag. Tags may overlap, such as a rectangle corner participating in `top-left`, `top`, and `left`, while star vertices can participate in tags such as `inner` and `outer`. `path` remains excluded from this decision until richer path-corner semantics are designed.
+- Consequences: Corner modifiers can become more expressive without fragmenting the language surface across shape families, existing uniform and shorthand corner forms can remain as convenience syntax, and compiler/runtime work must define a stable selector model plus conflict/precedence behavior when multiple selectors target the same corner.
+- Related tasks: T-077, T-122, T-071
+- Supersedes: DEC-040

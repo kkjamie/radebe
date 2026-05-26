@@ -1,21 +1,25 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-24`
+Last updated: `2026-05-26`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
-- Gate: `Gate C`
-- Status: `Passed`
+- Gate: `Gate D`
+- Status: `In Progress`
 
 ## Current Focus
+- Milestone planning is now intentionally split: M2 is a short closeout milestone for final website/release passes, M3 owns the deferred rendering/language backlog, and M4 owns the Unity/editor follow-on work.
+- The remaining M2 closeout queue is T-125 final public website QA, T-126 release-path completion with external artifact hosting, and T-074 cross-surface vocabulary cleanup.
+- M3 now contains the next rendering/language expansion tasks such as expressions, relative units, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean regions, mask composition, and mixed-corner follow-up work.
+- M4 now contains the Unity/editor work that should only resume deliberately: source-authored import metadata, reusable editor packaging, and Unity live-authoring parity.
 - The recovered source product spec is now reflected in code through an indentation-aware command tree, a schema-backed compiler registry, a small `sprite` header block with nested `size` and `background` properties, root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands, generic property normalization across positional inline args, named inline args, and child property commands, plus actual `fill` / `solid` / explicit `gradient-linear` / explicit `gradient-radial` appearance commands while `gradient` remains the compatibility alias for the linear form.
 - `rect-inset` now accepts four-side shorthand in `top right bottom left` order on both the command form, such as `rect-inset 4 4 8 8`, and the child property form, such as `inset 4 4 8 8`; existing uniform `rect-inset 6`, optional trailing color shorthand, and expanded `top` / `right` / `bottom` / `left` properties remain supported.
 - `overlay` has been intentionally removed from the near-term language surface and web docs for now; ordered multi-`fill` passes are the current supported layering model until a future compositing need justifies a distinct overlay command again.
 - `shadow` is now a real effect pass on `rect`, `circle`, `polygon` including generated regular/star polygons, and composited groups, with `x`, `y`, `spread`, non-negative integer `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; it renders behind the source shape or group layer, and `blur 0` preserves the original hard-edged behavior.
 - `glow` is now a real effect pass on `rect`, `circle`, `polygon` including generated regular/star polygons, and composited groups, with `mode` values `outer` and `inner`, non-negative `spread`, non-negative integer `blur`, explicit per-pass `alpha`, and either color shorthand or nested `fill`; outer glow draws outside the source contour using the soft-shadow blur sampler, while inner glow is clipped inside the source region.
 - `fill` and `stroke` now also support explicit `alpha` properties as per-pass opacity multipliers; they default to `1`, multiply with any alpha already present in solid colors or gradient stop colors, and do not implicitly flow into nested child strokes.
-- Rectangle geometry now also supports `cut` and `radius` as child geometry modifiers on rectangle-backed shapes, with `cut` covering chamfered corners, `radius` covering rounded corners, and the current compiler intentionally rejecting both on the same rectangle until a richer mixed-corner model exists. T-077 now tracks that future model, including targeted single-corner forms where an omitted corner treatment is distinct from an explicit zero-valued treatment.
+- Rectangle geometry now also supports `cut` and `radius` as child geometry modifiers on rectangle-backed shapes, with `cut` covering chamfered corners, `radius` covering rounded corners, and the current compiler intentionally rejecting both on the same rectangle until a richer mixed-corner model exists. T-077 now tracks the expanded follow-up model across `rect` and the polygon family, including targeted selectors by index or semantic tag, while preserving the rule that an omitted corner treatment is distinct from an explicit zero-valued treatment.
 - Geometry commands can now opt into shared shape appearance children through a `shape-appearance` capability path in the schema, and the compiler collects those `fill` / `stroke` children through a shared appearance pass instead of per-shape child wiring.
 - Rectangle-backed `stroke` is now available as the first generated-region appearance slice, including `stroke <width> <color>` shorthand, optional `align`, optional `style`, rectangle rendering for `solid`, `dashed`, and `dotted` styles, nested child `stroke` support on the generated stroke envelope, and modifier-aware contour following for `cut` and `radius`.
 - `circle` is now available as the first non-rectangular shape primitive using integer `x`, `y`, and `radius` geometry plus color shorthand or explicit `fill`, and it now also participates in the shared `stroke` model.
@@ -123,12 +127,12 @@ Last updated: `2026-05-24`
 - T-079 tracks the deferred mask composition modes (`add`, `intersect`, `subtract`, `replace`) that need a real mask-stack or region-composition model rather than single-mask clipping.
 - T-074 is a backlog task for remaining vocabulary consistency across autocomplete detail text and VS Code/web editor help after the initial web reference copy sweep in T-084.
 - T-075 is a backlog task to add compiler ordering restrictions for command child phases, with tuning expected around property/argument forms, geometry modifiers, appearance passes, and effects. The group-specific content-before-passes rule landed with T-076.
-- T-077 is a backlog task to allow mixed per-corner rectangle treatments, such as `cut top-left 8` plus `radius top-right 12`, without treating omitted corners as explicit zero-valued cuts or radii.
+- T-077 is a backlog task to add unified targeted corner controls for `rect` and the polygon family, such as `cut top-left 8`, `cut top 6`, `radius outer 4`, or index-based targeting, without treating omitted corners as explicit zero-valued cuts or radii. `path` remains outside that task for now.
 
 ## Best Next Tasks
-1. Consider the remaining T-074 editor/help vocabulary standardization or T-075 compiler ordering restrictions if the next goal is group/language coherence.
-2. Consider T-068 symbolic expressions, T-087 built-in sprite variables, T-088 relative dimension units, T-091 inline comments, T-077 mixed rectangle corners, or T-079 mask composition modes if the next goal is visible language/effects capability.
-3. Re-run the hosted Azure DevOps pipeline with the temporary Pages-safe web output, confirm the site deploy succeeds, then move the large public downloads to external hosting such as Cloudflare R2.
+1. Run T-125 and do a final public website QA/polish pass across the homepage, syntax/reference pages, examples, navigation, and visible copy.
+2. Run T-126 and finish the release path by proving the staged Azure pipeline, moving large downloads to external hosting such as Cloudflare R2, and restoring the public integration/download pages.
+3. Use T-074 as the final M2 documentation/editor-assistance cleanup so author-facing vocabulary matches across the site, editor help, and VS Code metadata.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

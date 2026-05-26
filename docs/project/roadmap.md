@@ -1,18 +1,20 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-05-24`
+Last updated: `2026-05-26`
 
 ## Planning Horizon
-- Current: `2026-05-17` to `2026-05-24`
-- Next: `2026-05-24` to `2026-06-14`
+- Current: `2026-05-24` to `2026-06-07`
+- Next: `2026-06-07` to `2026-07-26`
 
 ## Milestones
 | Milestone | Outcome | Priority | Status | Target | Dependencies | Spec File | Current Gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | M0 | Planning baseline for the Radebe monorepo and package model | P0 | Done | 2026-05-24 | Initial setup | `docs/project/milestones/M0-planning-phase.md` | Passed |
 | M1 | Workspace scaffold for `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` | P0 | Done | 2026-06-07 | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Passed |
-| M2 | First usable language loop with basic rendering commands across core, CLI, and web before returning to Unity integration | P1 | In Progress | 2026-06-28 | M1 completed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate C |
+| M2 | Final website and release closeout for the first usable authoring loop | P1 | In Progress | 2026-06-07 | M1 completed; historical M2 gates A-C passed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate D |
+| M3 | Advanced rendering and authoring feature expansion after M2 closeout | P1 | Planned | 2026-07-05 | M2 closeout | `docs/project/milestones/M3-rendering-expansion.md` | Gate A |
+| M4 | Unity integration and reusable editor surfaces | P1 | Planned | 2026-07-26 | M2 closeout; M3 feature contracts where needed | `docs/project/milestones/M4-unity-and-editor-integration.md` | Gate A |
 
 ## Priority Rules
 - P0: blocks core progress or release path.
@@ -20,6 +22,10 @@ Last updated: `2026-05-24`
 - P2: useful improvements, schedule as capacity allows.
 
 ## Current Focus
+- Milestone planning is now split explicitly: M2 is the closeout milestone for final website/release passes, M3 owns the deferred rendering/language expansion backlog, and M4 owns Unity/editor follow-on work.
+- Remaining M2 closeout work is intentionally small and concrete: T-125 final public website QA, T-126 release-path completion with external artifact hosting, and T-074 cross-surface vocabulary cleanup.
+- M3 now owns the rendering/language backlog such as expressions, sprite-relative units, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean composition, mask composition, and mixed-corner follow-up work.
+- M4 now owns Unity/editor follow-ons such as source-authored import metadata, reusable editor packaging, and eventual Unity live-authoring parity.
 - M1 Gate C remains passed with the shared core/web render contract, SEA packaging pipeline, and Unity payload install/update plus smoke helper baseline in place.
 - The recovered source product spec has now been realigned in code through a schema-backed `sprite` header block, root-level `plot` and `line` commands, rectangle geometry spanning `rect`, `rect-absolute`, `rect-inset`, and child `cut` plus child `radius` modifiers, the first `circle` geometry primitive, a `polygon` geometry slice using whitespace-separated `x y` point pairs or canonical child `point` nodes plus uniform per-vertex `cut` and `radius` modifiers, generated `polygon-regular` and `polygon-star` shapes with explicit `x y` centers and those same uniform polygon-corner modifiers, a first open `path` geometry slice using child `point` nodes plus required `stroke`, filled shapes with `solid`, `gradient-linear`, and `gradient-radial` appearance variants, explicit per-pass `alpha` on `fill` and `stroke`, a `shape-appearance` capability path that lets geometry commands opt into shared `fill` / `stroke` children where appropriate, circle stroke support, polygon stroke support, path stroke support, rectangle stroke contours that now follow `cut` and `radius` silhouettes, and a shared sprite-grid render artifact consumed by `radebe-core`, `radebe-cli`, `radebe-web`, and the SEA smoke path.
 - The shared shape appearance/effect model now includes `shadow` for `rect`, `circle`, `polygon` including generated regular/star polygons, and composited groups, with `x`, `y`, `spread`, non-negative integer `blur`, explicit `alpha`, and either color shorthand or nested `fill`; `blur 0` preserves the original hard-edged behavior. It also includes `glow` for those same shape/group surfaces, with `mode` values `outer` and `inner`, non-negative `spread`, non-negative `blur`, explicit `alpha`, and either color shorthand or nested `fill`.
@@ -29,7 +35,7 @@ Last updated: `2026-05-24`
 - The product spec now defines author-facing language vocabulary for drawable commands, pixel primitives, shape drawables, path drawables, geometry modifiers, property commands, appearance passes, effect passes, structural containers, mask shape, and masked content. Web reference docs, autocomplete details, VS Code help, and compiler diagnostics still need to adopt that vocabulary consistently.
 - The accepted ordering direction is to reject confusing child ordering instead of silently moving commands across phases. Group content must now come before group-level appearance/effect passes; follow-up compiler work should tune broader restrictions such as properties/modifiers before appearance/effects on shape drawables.
 - The renderer now supports optional real output antialiasing through a sprite-level `antialias` default and per-geometry overrides, defaulting to pixel-perfect `false` so existing artifacts remain stable unless authors opt in.
-- The web example surface now treats rounded and cut corners as part of the main `rect` story instead of separate geometry pages, which keeps the current authoring model aligned with the implemented modifier-based shape semantics. T-077 now tracks the next corner-treatment refinement: mixing cut and rounded corners on the same rectangle while distinguishing omitted corners from explicit zero-valued corner treatments.
+- The web example surface now treats rounded and cut corners as part of the main `rect` story instead of separate geometry pages, which keeps the current authoring model aligned with the implemented modifier-based shape semantics. T-077 now tracks the next corner-treatment refinement as a unified system across `rect` and the polygon family: targeted `cut` / `radius` selectors by index or semantic tag while still distinguishing omitted corners from explicit zero-valued treatments.
 - The placeholder example audit now keeps only substantive future-feature stubs in the web nav; low-value property/container placeholders that are better covered by their parent pages have been removed.
 - M2 Gate A, Gate B, and Gate C now all have working evidence. T-011 established the first real Unity plugin import baseline: `.rdb` files are Unity source assets handled by a ScriptedImporter, the packaged CLI can emit a Unity JSON sprite artifact, local deployment into a configured Unity project is driven by `.env` / environment variables rather than hard-coding Eddie into repo state, and manual verification in Eddie confirmed the deployed importer produces a generated Sprite main asset.
 - Unity importer-options work is closed by user request. The next Unity slice should be chosen only if Unity work is explicitly resumed.
@@ -49,7 +55,7 @@ Last updated: `2026-05-24`
 - After merging to `master`, Cloudflare showed the project-update audit but no real deployment event. To reduce environment drift against the known-good legacy path, the pipeline now splits into a Windows build stage and a Linux deploy stage. Windows still builds the website-linked `.exe`, VSIX, and Unity package, but the actual `wrangler pages deploy` now runs on `ubuntu-latest` with the same shell style as `radebe-legacy`.
 - The next hosted run exposed the real website deploy blocker: Cloudflare Pages rejects files over `25 MiB`, and the built site was trying to ship the Windows CLI payload (`66.9 MiB`) and large Unity package inside `dist/downloads/`. The current temporary mitigation is to hide the public integration pages and stop copying oversized binaries into the site output so Pages deployment can be proven while the project prepares external artifact hosting, likely through Cloudflare R2.
 - T-082 split the web site implementation into maintainable TypeScript modules, and T-085 later superseded the no-framework direction by converting `radebe-web` to a Vite + TypeScript + Preact component app with CodeMirror retained as an editor island.
-- Future language/effects backlog still includes mask composition modes, procedural fills such as noise, clouds, Voronoi, and patterns, plus follow-ons for blend modes, expressions, built-in sprite dimension variables, relative dimension units, inline comments, transforms, reusable symbols, richer paths, source-authored import metadata, boolean region operations, vocabulary/reference-doc polish, compiler ordering restrictions, and mixed per-corner rectangle treatments. T-059 `group` landed the transparent structural slice, T-076 extended groups with composited `fill`, `stroke`, and `shadow` passes, T-061 added soft shadow blur on the existing `shadow` command, T-062 added inner/outer `glow`, T-060 added explicit mask clipping with inversion, and T-122 added uniform polygon-family `cut` and `radius` modifiers while still deferring richer path corner semantics to T-071.
+- The remaining backlog is now milestone-owned rather than treated as one long M2 tail. Rendering/language expansion tasks sit under M3, while Unity/editor follow-ons sit under M4. T-059 `group` landed the transparent structural slice, T-076 extended groups with composited `fill`, `stroke`, and `shadow` passes, T-061 added soft shadow blur on the existing `shadow` command, T-062 added inner/outer `glow`, T-060 added explicit mask clipping with inversion, and T-122 added uniform polygon-family `cut` and `radius` modifiers while still deferring richer path corner semantics to T-071.
 
 ## Gate Policy
 - All milestones must define gates in `docs/project/milestones/Mx-*.md`.
