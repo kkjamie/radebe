@@ -8,12 +8,11 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-126 | Finish the release path with external artifact hosting | M2 | Gate D | P1 | In Progress | `codex` | Cloudflare Pages still cannot host the large CLI and Unity downloads; external artifact hosting plus final release-flow validation still need to land | Use `docs/project/release-process.md` as the canonical checklist, including `product/*` and `site/*` tag rules, while wiring the hosted artifact path, then restore public download pages and verify the `master` release flow end to end |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-126 | Finish the release path with external artifact hosting | M2 | Gate D | P1 | Backlog | Unassigned | Cloudflare Pages still cannot host the large CLI and Unity downloads; needs hosted artifact destination plus pipeline wiring | Prove the staged Azure pipeline end to end, move large downloads to external hosting such as Cloudflare R2, then restore the public integration/download pages |
-| T-074 | Standardize author-facing language vocabulary across docs and editor assistance | M2 | Gate D | P1 | Backlog | Unassigned | Needs shared terminology to avoid drift between product spec, web reference docs, autocomplete details, and VS Code/web editor help; T-084 completed an initial web reference copy sweep | Continue remaining editor/completion/VS Code help metadata polish if deeper API-doc vocabulary consistency is needed |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
@@ -144,7 +143,8 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | T-128 | Sync public roadmap page with planned user-facing backlog | M2 | Gate D | P2 | Done | `codex-main` | None | Public roadmap now covers the planned player-facing language/tooling backlog, including output scaling, ordering diagnostics, split procedural fill families, and updated targeted corner controls while leaving internal release, optimization, and polish work off the page |
 | T-129 | Move playground preview rendering to a background queue | M2 | Gate D | P1 | Done | `codex-main` | None | `Playground` now renders previews through a single coalescing module-worker queue with an edit cooldown, ignores stale render results, keeps cached previews visible while edited rows refresh, and shows preview states for queued, dirty, refreshing, cached, rendered, and error outcomes |
 | T-130 | Optimize core preview render hot paths | M2 | Gate D | P1 | Done | `codex-main` | None | `radebe-core` now caches parsed colors, prepares gradient stops once per fill object, samples fills as RGBA values, and resolves soft shadow/glow box blur through summed-area alpha sampling; representative web examples dropped from roughly `33-64ms` to `5-22ms`, and the worker preview cooldown is now `120ms` |
-| T-125 | Run final public website QA and polish pass | M2 | Gate D | P1 | Done | `codex` | None | Closed by user approval after the command-reference polish pass; the remaining M2 Gate D work is now T-126 release hosting and T-074 vocabulary cleanup |
+| T-074 | Standardize author-facing language vocabulary across docs and editor assistance | M2 | Gate D | P1 | Done | `codex` | None | Closed after confirming the public docs, web Syntax/Reference vocabulary, and shared `@radebe/core` language-service metadata already align the web editor and VS Code assistance; future wording tweaks should ship with their feature tasks instead of reopening a standalone M2 cleanup |
+| T-125 | Run final public website QA and polish pass | M2 | Gate D | P1 | Done | `codex` | None | Closed by user approval after the command-reference polish pass; the remaining M2 Gate D work is now T-126 release hosting |
 
 ## Status Vocabulary
 - `Ready`: scoped and unblocked, can start now.

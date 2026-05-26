@@ -1,4 +1,4 @@
-import { appVersion } from "../content/version.js";
+import { productVersion } from "../content/version.js";
 import type { PageDefinition } from "../types.js";
 import { Hero, PlainList } from "../ui.js";
 
@@ -10,7 +10,7 @@ export const releaseNotesPage: Extract<PageDefinition, { kind: "releases" }> = {
 
 const releases = [
   {
-    version: appVersion,
+    version: productVersion,
     date: "2026-05-21",
     title: "Current development build",
     notes: [

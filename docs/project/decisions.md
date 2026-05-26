@@ -773,3 +773,25 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Typing stays responsive even on multi-example pages, at the cost of previews catching up asynchronously. The preview toolbar now exposes queued, dirty, refreshing, cached, rendered, and error states so users can see when the displayed preview is still catching up.
 - Related tasks: T-129, T-100, T-124
 - Supersedes: N/A
+
+---
+
+### DEC-069: Treat Shared Schema Metadata As The Vocabulary Source For Editor Assistance
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: T-074 remained open as a catch-all cleanup task for cross-surface wording drift after the public web reference copy sweep, but the repo now routes both web-editor assistance and VS Code assistance through the same `@radebe/core` schema and language-service metadata.
+- Decision: Treat the shared `@radebe/core` schema plus language-service metadata as the canonical vocabulary source for completions and argument help across editor surfaces, and close T-074 as a standalone M2 task now that the public docs are also aligned.
+- Consequences: Future wording tweaks should ship with the feature work that changes the schema or docs rather than reopening a separate milestone-wide vocabulary pass. Drift risk is reduced because the web editor and VS Code extension no longer maintain separate help taxonomies.
+- Related tasks: T-074, T-084, T-081
+- Supersedes: N/A
+
+---
+
+### DEC-070: Split Product Version From Site Version While Keeping One Main Public Label
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: M2 closeout needed a formal release process, and the user confirmed that publishing website-only work without a product version bump is likely to be a normal flow. The repo therefore needs a traceable site/build version without overloading the main Radebe product version.
+- Decision: Split the website version source into a public `productVersion` and a secondary `siteVersion`. Keep the website top bar and release notes on the product version, use the site version for deploy/build tracking, continue keeping one aligned product version across the workspace rather than creating separate public version streams for `web`, `core`, `cli`, `unity`, and `vscode`, and use separate git tag namespaces: `product/vX.Y.Z` for product releases and `site/YYYY-MM-DD.N` for website-only deploys.
+- Consequences: Website-only deploys can now advance the site/build version without forcing a user-facing product version bump, while product releases still keep one easy-to-understand public version across the toolchain. Separate tag namespaces remove ambiguity that bare `vX.Y.Z` tags would create after the split. The repo now needs release discipline around which version field and tag namespace changes on each deploy, but it avoids the heavier coordination cost of fully independent package-level public versioning.
+- Related tasks: T-126
+- Supersedes: N/A

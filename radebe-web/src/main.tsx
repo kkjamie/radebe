@@ -2,7 +2,7 @@ import { render } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { BrandIcon } from "./brand-icon.js";
-import { appVersion, exampleDocs, integrationPages, pages } from "./data.js";
+import { exampleDocs, integrationPages, pages, productVersion } from "./data.js";
 import {
   getPerfSnapshot,
   isPerfDebugEnabled,
@@ -409,7 +409,7 @@ function App() {
             Procedural image authoring language
           </span>
         </div>
-        <span className="version-pill">v{appVersion}</span>
+        <span className="version-pill">v{productVersion}</span>
       </header>
       <aside className="site-sidebar">
         <div className="site-sidebar-inner">

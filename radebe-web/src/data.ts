@@ -1,6 +1,6 @@
 import type { ExampleDoc, PageDefinition } from "./types.js";
 import { commandDocs } from "./content/commands/index.js";
-import { appVersion } from "./content/version.js";
+import { productVersion, siteVersion } from "./content/version.js";
 import {
   examplesPage,
   homePage,
@@ -11,7 +11,7 @@ import {
   tryItPage
 } from "./pages/index.js";
 
-export { appVersion, integrationPages };
+export { integrationPages, productVersion, siteVersion };
 
 export const exampleDocs: ExampleDoc[] = commandDocs;
 

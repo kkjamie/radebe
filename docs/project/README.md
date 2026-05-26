@@ -21,6 +21,7 @@ Purpose: fast startup context for new agent threads with minimal token load.
 - `inconsistency-register.md`: ambiguity and conflict register.
 - `codebase-map.md`: intended repo layout, architecture, and key system locations.
 - `roadmap.md`: milestones, priorities, dependency order.
+- `release-process.md`: canonical release checklist, version policy, and CI/deploy expectations.
 - `milestones/Mx-*.md`: milestone scope, gates, acceptance criteria.
 - `task-board.md`: active queue, status, immediate next action.
 - `decisions.md`: significant decisions and rationale.
