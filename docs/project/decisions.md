@@ -806,3 +806,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Site builds now have a predictable operational identifier that reads differently from the public product semver, release docs can describe one durable rule instead of examples only, and the first prepared formal release candidate uses `2026-05-26.1` as the initial site/build marker.
 - Related tasks: T-126
 - Supersedes: N/A
+
+---
+
+### DEC-072: Keep One Canonical Product Release-Notes Source Rendered By The Site
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: Release prep now depends on the site-facing release notes being accurate, but page-local copy and process docs could otherwise drift into separate versions of the release story.
+- Decision: Treat the site-rendered product release notes as the canonical product release-notes source, keep that content in one dedicated module, and reserve it for product releases only rather than website-only deploy history.
+- Consequences: Preparing a release now explicitly includes finalizing the product release-note entry, website-only deploys should not add release-note entries, and the release-notes page becomes a pure renderer of the canonical content instead of a second source of truth.
+- Related tasks: T-126
+- Supersedes: N/A

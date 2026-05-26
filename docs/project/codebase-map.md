@@ -35,7 +35,8 @@ Last updated: `2026-05-23`
 - `radebe-web/src/pages/home.tsx`: homepage component with its page definition and highlighted mini-preview source co-located at the top.
 - `radebe-web/src/pages/try-it.tsx`: full-page Try it component with its page definition and default editor example data co-located at the top.
 - `radebe-web/src/pages/syntax.tsx`: syntax guide component with feature cards, notes, and example snippets co-located at the top.
-- `radebe-web/src/pages/release-notes.tsx`: release notes component with release-note history data co-located at the top.
+- `radebe-web/src/content/release-notes.ts`: canonical product release-note content rendered by the public site.
+- `radebe-web/src/pages/release-notes.tsx`: release notes page component that renders the canonical product release-note content.
 - `radebe-web/src/pages/roadmap.tsx`: public roadmap component with feature cards and planned syntax examples co-located at the top.
 - `radebe-web/src/pages/integrations.tsx`: integration page component with VS Code extension and Unity plugin page data plus local download links co-located at the top.
 - `radebe-web/src/pages/command-reference.tsx`: generic command reference page component that renders command docs and examples.
