@@ -1,4 +1,29 @@
-import type { ExampleDoc } from "../../types.js";
+import type { ExampleDoc, ExamplePlayground } from "../../types.js";
+import commandPreviews from "../command-previews.json" with { type: "json" };
+
+type CommandPreviewEntry = {
+  id: string;
+  preview: string;
+  source: string[];
+};
+
+function getPreview(id: string): ExamplePlayground["cachedPreview"] {
+  const preview = (commandPreviews as CommandPreviewEntry[]).find((entry) => entry.id === id);
+
+  if (!preview) {
+    return undefined;
+  }
+
+  const sizeMatch = preview.source.join("\n").match(/^\s+size\s+(\d+)\s+(\d+)$/m);
+  const width = sizeMatch ? Number.parseInt(sizeMatch[1]!, 10) : 1;
+  const height = sizeMatch ? Number.parseInt(sizeMatch[2]!, 10) : 1;
+
+  return {
+    height,
+    src: preview.preview,
+    width
+  };
+}
 
 export const polygonRegularDoc: ExampleDoc = {
     id: "polygon-regular",
@@ -22,6 +47,7 @@ export const polygonRegularDoc: ExampleDoc = {
         id: "polygon-regular-basic",
         title: "Offset Hexagon",
         summary: "A compact regular hexagon positioned from an explicit center point.",
+        cachedPreview: getPreview("polygon-regular-basic"),
         source: [
           "sprite regular-hexagon-demo",
           "  size 96 96",
@@ -36,6 +62,7 @@ export const polygonRegularDoc: ExampleDoc = {
         id: "polygon-regular-fill",
         title: "Expanded Fill",
         summary: "Regular polygons use the same appearance children as other shape drawables.",
+        cachedPreview: getPreview("polygon-regular-fill"),
         source: [
           "sprite regular-polygon-fill-demo",
           "  size 96 96",
@@ -52,6 +79,7 @@ export const polygonRegularDoc: ExampleDoc = {
         id: "polygon-regular-cut",
         title: "Chamfered Hexagon",
         summary: "Uniform `cut` bevels each regular-polygon vertex for a more mechanical panel feel.",
+        cachedPreview: getPreview("polygon-regular-cut"),
         source: [
           "sprite regular-polygon-cut-demo",
           "  size 96 96",

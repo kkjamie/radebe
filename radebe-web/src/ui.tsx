@@ -44,11 +44,22 @@ export function HighlightedCodeBlock(props: {
   source: string;
   options?: HighlightSourceOptions;
 }) {
+  const optionsKey = JSON.stringify(props.options ?? {});
+  const highlightedSource = useMemo(
+    () =>
+      timePerfSync(
+        "highlighted-code-block-render",
+        () => highlightSource(props.source, props.options ?? {}),
+        `${props.source.split("\n").length} lines`
+      ),
+    [optionsKey, props.source]
+  );
+
   return (
     <pre className="code-block">
       <code
         dangerouslySetInnerHTML={{
-          __html: highlightSource(props.source, props.options ?? {})
+          __html: highlightedSource
         }}
       />
     </pre>

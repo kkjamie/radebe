@@ -12,8 +12,10 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(scriptDir, "..");
 const publicRoot = path.join(webRoot, "public");
 const generatedBrandRoot = path.join(publicRoot, "generated", "brand");
+const generatedCommandPreviewRoot = path.join(publicRoot, "generated", "command-previews");
 const generatedRoot = path.join(publicRoot, "generated", "examples");
 const brandIconPath = path.join(webRoot, "src", "content", "brand-icon.json");
+const commandPreviewsPath = path.join(webRoot, "src", "content", "command-previews.json");
 const examplesPath = path.join(webRoot, "src", "content", "examples.json");
 
 const pngSignature = Buffer.from([
@@ -141,14 +143,17 @@ async function readJsonFile(filePath) {
 }
 
 const brandIcon = await readJsonFile(brandIconPath);
+const commandPreviews = await readJsonFile(commandPreviewsPath);
 const examples = await readJsonFile(examplesPath);
 
 await rm(generatedBrandRoot, { recursive: true, force: true });
+await rm(generatedCommandPreviewRoot, { recursive: true, force: true });
 await rm(generatedRoot, { recursive: true, force: true });
 await mkdir(generatedBrandRoot, { recursive: true });
+await mkdir(generatedCommandPreviewRoot, { recursive: true });
 await mkdir(generatedRoot, { recursive: true });
 
-const previewSources = [brandIcon, ...examples];
+const previewSources = [brandIcon, ...examples, ...commandPreviews];
 
 for (const previewSource of previewSources) {
   const source = previewSource.source.join("\n");
@@ -169,5 +174,5 @@ for (const previewSource of previewSources) {
 }
 
 console.log(
-  `Generated ${examples.length} example preview image(s) and 1 brand icon.`
+  `Generated ${examples.length} example preview image(s), ${commandPreviews.length} command preview image(s), and 1 brand icon.`
 );

@@ -4,8 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { BrandIcon } from "./brand-icon.js";
 import { appVersion, exampleDocs, integrationPages, pages } from "./data.js";
 import {
+  getPerfSnapshot,
   isPerfDebugEnabled,
   markPerfPoint,
+  resetPerfSamples,
   usePerfSamples
 } from "./perf.js";
 import {
@@ -33,6 +35,9 @@ if ("scrollRestoration" in window.history) {
 
 function PerfPanel() {
   const samples = usePerfSamples();
+  const snapshotJson = useMemo(() => {
+    return JSON.stringify(getPerfSnapshot()).replace(/</g, "\\u003c");
+  }, [samples]);
 
   if (!isPerfDebugEnabled()) {
     return null;
@@ -40,6 +45,11 @@ function PerfPanel() {
 
   return (
     <aside className="perf-panel">
+      <script
+        dangerouslySetInnerHTML={{ __html: snapshotJson }}
+        id="radebe-perf-snapshot"
+        type="application/json"
+      />
       <h2 className="perf-panel-title">Perf</h2>
       <p className="perf-panel-summary">
         {samples.length === 0 ? "Waiting for samples..." : `${samples.length} sample(s)`}
@@ -212,6 +222,25 @@ function Page(props: {
 
 function App() {
   const hasMarkedRenderStartRef = useRef(false);
+  const perfSuiteEnabled = useMemo(
+    () => new URLSearchParams(window.location.search).get("perf-suite") === "1",
+    []
+  );
+  const perfSuiteToken = useMemo(
+    () => new URLSearchParams(window.location.search).get("perf-suite-token") ?? "",
+    []
+  );
+  const perfSuitePageIds = useMemo(() => pages.map((page) => page.id), []);
+  const perfSuiteIndexRef = useRef(0);
+  const perfSuitePostedRef = useRef(false);
+  const perfSuiteResultsRef = useRef<
+    Array<{
+      pageId: string;
+      pageKind: PageDefinition["kind"];
+      snapshot: ReturnType<typeof getPerfSnapshot>;
+      title: string;
+    }>
+  >([]);
 
   if (!hasMarkedRenderStartRef.current) {
     markPerfPoint("app-render-start");
@@ -222,19 +251,7 @@ function App() {
     () => new Map(pages.map((page) => [page.id, page])),
     []
   );
-  const sourceState = useMemo(() => {
-    const allPlaygrounds = pages.flatMap((page) =>
-      page.kind === "playground"
-        ? page.examples
-        : page.kind === "example"
-          ? (page.doc.examples ?? [])
-          : []
-    );
-
-    return new Map(
-      allPlaygrounds.map((playground) => [playground.id, playground.source])
-    );
-  }, []);
+  const sourceState = useMemo(() => new Map<string, string>(), []);
   const contentRef = useRef<HTMLElement>(null);
   const isNarrowViewport = useNarrowViewport();
   const pageId = useCurrentPageId(pageById);
@@ -247,6 +264,89 @@ function App() {
       markPerfPoint("app-first-frame", page.kind);
     });
   }, []);
+
+  useEffect(() => {
+    markPerfPoint("page-mounted", `${page.id}:${page.kind}`);
+    window.requestAnimationFrame(() => {
+      markPerfPoint("page-first-frame", `${page.id}:${page.kind}`);
+    });
+  }, [page.id, page.kind]);
+
+  useEffect(() => {
+    if (!perfSuiteEnabled || perfSuitePostedRef.current) {
+      return;
+    }
+
+    const expectedPageId = perfSuitePageIds[perfSuiteIndexRef.current];
+
+    if (!expectedPageId) {
+      return;
+    }
+
+    if (page.id !== expectedPageId) {
+      if (window.location.hash !== `#/${expectedPageId}`) {
+        resetPerfSamples();
+        window.location.hash = `#/${expectedPageId}`;
+      }
+
+      return;
+    }
+
+    const captureTimer = window.setTimeout(() => {
+      const pageTitle = page.kind === "example" ? page.doc.title : page.title;
+      const pageResult = {
+        pageId: page.id,
+        pageKind: page.kind,
+        snapshot: getPerfSnapshot(),
+        title: pageTitle
+      };
+
+      perfSuiteResultsRef.current.push(pageResult);
+
+      perfSuiteIndexRef.current += 1;
+      const nextPageId = perfSuitePageIds[perfSuiteIndexRef.current];
+
+      void fetch(`/__perf-progress?token=${encodeURIComponent(perfSuiteToken)}`, {
+        body: JSON.stringify({
+          capturedAt: new Date().toISOString(),
+          nextPageId,
+          page: pageResult,
+          pageIndex: perfSuiteIndexRef.current - 1,
+          totalPages: perfSuitePageIds.length
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        },
+        method: "POST"
+      }).then(() => {
+        markPerfPoint("perf-suite-progress-posted", page.id);
+
+        if (nextPageId) {
+          resetPerfSamples();
+          window.location.hash = `#/${nextPageId}`;
+          return;
+        }
+
+        perfSuitePostedRef.current = true;
+        void fetch(`/__perf-report?token=${encodeURIComponent(perfSuiteToken)}`, {
+          body: JSON.stringify({
+            generatedAt: new Date().toISOString(),
+            pages: perfSuiteResultsRef.current
+          }),
+          headers: {
+            "Content-Type": "application/json"
+          },
+          method: "POST"
+        }).then(() => {
+          markPerfPoint("perf-suite-posted");
+        });
+      });
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(captureTimer);
+    };
+  }, [page, perfSuiteEnabled, perfSuitePageIds, perfSuiteToken]);
 
   useEffect(() => {
     setSidebarCollapsed(isNarrowViewport);

@@ -38,6 +38,7 @@ export function ExamplePage(props: {
       ) : (
         (doc.examples ?? []).map((example) => (
           <Playground
+            cachedPreview={example.cachedPreview}
             key={example.id}
             playground={example}
             sourceState={props.sourceState}

@@ -3,6 +3,11 @@ export type ExamplePlayground = {
   title: string;
   summary: string;
   source: string;
+  cachedPreview?: {
+    height: number;
+    src: string;
+    width: number;
+  };
 };
 
 export type ExampleDoc = {

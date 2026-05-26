@@ -1,4 +1,29 @@
-import type { ExampleDoc } from "../../types.js";
+import type { ExampleDoc, ExamplePlayground } from "../../types.js";
+import commandPreviews from "../command-previews.json" with { type: "json" };
+
+type CommandPreviewEntry = {
+  id: string;
+  preview: string;
+  source: string[];
+};
+
+function getPreview(id: string): ExamplePlayground["cachedPreview"] {
+  const preview = (commandPreviews as CommandPreviewEntry[]).find((entry) => entry.id === id);
+
+  if (!preview) {
+    return undefined;
+  }
+
+  const sizeMatch = preview.source.join("\n").match(/^\s+size\s+(\d+)\s+(\d+)$/m);
+  const width = sizeMatch ? Number.parseInt(sizeMatch[1]!, 10) : 1;
+  const height = sizeMatch ? Number.parseInt(sizeMatch[2]!, 10) : 1;
+
+  return {
+    height,
+    src: preview.preview,
+    width
+  };
+}
 
 export const polygonStarDoc: ExampleDoc = {
     id: "polygon-star",
@@ -30,6 +55,7 @@ export const polygonStarDoc: ExampleDoc = {
         id: "polygon-star-basic",
         title: "Prize Star",
         summary: "A five-point star with a warm fill, stroke, shadow, and glow.",
+        cachedPreview: getPreview("polygon-star-basic"),
         source: [
           "sprite star-polygon-demo",
           "  size 96 96",
@@ -47,6 +73,7 @@ export const polygonStarDoc: ExampleDoc = {
         id: "polygon-star-many-points",
         title: "Spark",
         summary: "More points and tighter radii produce a bright sparkle-style shape.",
+        cachedPreview: getPreview("polygon-star-many-points"),
         source: [
           "sprite star-spark-demo",
           "  size 96 96",
@@ -62,6 +89,7 @@ export const polygonStarDoc: ExampleDoc = {
         id: "polygon-star-radius",
         title: "Rounded Star",
         summary: "A uniform `radius` softens both the outer tips and inner star notches.",
+        cachedPreview: getPreview("polygon-star-radius"),
         source: [
           "sprite star-rounded-demo",
           "  size 96 96",

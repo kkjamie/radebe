@@ -9,11 +9,39 @@ export type PerfSample = {
   detail?: string;
 };
 
+export type PerfResourceTimingSummary = {
+  name: string;
+  initiatorType: string;
+  durationMs: number;
+  transferSize?: number;
+  encodedBodySize?: number;
+  decodedBodySize?: number;
+};
+
+export type PerfNavigationTimingSummary = {
+  url: string;
+  type: string;
+  responseEndMs: number;
+  domContentLoadedMs: number;
+  loadEventEndMs: number;
+  transferSize?: number;
+  encodedBodySize?: number;
+  decodedBodySize?: number;
+};
+
+export type PerfSnapshot = {
+  capturedAt: number;
+  enabled: boolean;
+  navigation: PerfNavigationTimingSummary | null;
+  resources: PerfResourceTimingSummary[];
+  samples: PerfSample[];
+};
+
 const perfEnabled =
   typeof window !== "undefined" &&
   new URLSearchParams(window.location.search).get("perf") === "1";
 
-const perfStartTime =
+let perfStartTime =
   typeof performance !== "undefined" ? performance.now() : Date.now();
 
 const perfSamples: PerfSample[] = [];
@@ -85,6 +113,21 @@ export function timePerfSync<T>(name: string, work: () => T, detail?: string): T
   return result;
 }
 
+export function markPerfDuration(
+  name: string,
+  durationMs: number,
+  detail?: string
+): void {
+  emitPerfSample({
+    detail,
+    durationMs,
+    kind: "duration",
+    name,
+    timestamp:
+      typeof performance !== "undefined" ? performance.now() : Date.now()
+  });
+}
+
 export function subscribePerfSamples(listener: () => void): () => void {
   perfListeners.add(listener);
 
@@ -95,6 +138,78 @@ export function subscribePerfSamples(listener: () => void): () => void {
 
 export function getPerfSamples(): PerfSample[] {
   return perfSamples;
+}
+
+export function resetPerfSamples(): void {
+  perfSamples.length = 0;
+  perfSampleId = 0;
+  perfStartTime =
+    typeof performance !== "undefined" ? performance.now() : Date.now();
+  perfListeners.forEach((listener) => {
+    listener();
+  });
+}
+
+function getNavigationTimingSummary(): PerfNavigationTimingSummary | null {
+  if (typeof performance === "undefined") {
+    return null;
+  }
+
+  const entry = performance
+    .getEntriesByType("navigation")
+    .find(
+      (candidate): candidate is PerformanceNavigationTiming =>
+        candidate instanceof PerformanceNavigationTiming
+    );
+
+  if (!entry) {
+    return null;
+  }
+
+  return {
+    decodedBodySize: entry.decodedBodySize,
+    domContentLoadedMs: entry.domContentLoadedEventEnd,
+    encodedBodySize: entry.encodedBodySize,
+    loadEventEndMs: entry.loadEventEnd,
+    responseEndMs: entry.responseEnd,
+    transferSize: entry.transferSize,
+    type: entry.type,
+    url: entry.name
+  };
+}
+
+function getResourceTimingSummaries(): PerfResourceTimingSummary[] {
+  if (typeof performance === "undefined") {
+    return [];
+  }
+
+  return performance
+    .getEntriesByType("resource")
+    .map((entry): PerfResourceTimingSummary => {
+      const resourceEntry = entry as PerformanceResourceTiming;
+
+      return {
+        decodedBodySize: resourceEntry.decodedBodySize,
+        durationMs: resourceEntry.duration,
+        encodedBodySize: resourceEntry.encodedBodySize,
+        initiatorType: resourceEntry.initiatorType,
+        name: resourceEntry.name,
+        transferSize: resourceEntry.transferSize
+      };
+    })
+    .sort((left, right) => right.durationMs - left.durationMs)
+    .slice(0, 12);
+}
+
+export function getPerfSnapshot(): PerfSnapshot {
+  return {
+    capturedAt:
+      typeof performance !== "undefined" ? performance.now() : Date.now(),
+    enabled: perfEnabled,
+    navigation: getNavigationTimingSummary(),
+    resources: getResourceTimingSummaries(),
+    samples: [...perfSamples]
+  };
 }
 
 export function usePerfSamples(): PerfSample[] {

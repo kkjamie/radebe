@@ -36,9 +36,9 @@ import {
   type RadebeDiagnostic,
   type RadebeRgbaColor
 } from "@radebe/core";
-import { useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 
-import { markPerfPoint, timePerfSync } from "./perf.js";
+import { markPerfDuration, markPerfPoint, timePerfSync } from "./perf.js";
 import { isVariableUsageToken } from "./syntax-highlight.js";
 import type { ExamplePlayground } from "./types.js";
 
@@ -50,12 +50,122 @@ type SourceTokenSpan = {
 
 const ASSIST_UPDATE_DELAY_MS = 35;
 const PREVIEW_RENDER_DELAY_MS = 90;
+const MAX_CONCURRENT_STANDARD_PLAYGROUND_STARTS = 1;
 
 type CachedPreview = {
   src: string;
   width: number;
   height: number;
 };
+
+type PlaygroundActivationLease = {
+  release: () => void;
+};
+
+type PlaygroundActivationPriority = {
+  distanceFromViewportPx: number;
+  topPx: number;
+  visible: boolean;
+};
+
+type PlaygroundActivationRequest = {
+  token: number;
+  getPriority: () => PlaygroundActivationPriority;
+  grant: (lease: PlaygroundActivationLease) => void;
+};
+
+const pendingPlaygroundActivations = new Map<number, PlaygroundActivationRequest>();
+let activeStandardPlaygroundStarts = 0;
+let nextPlaygroundActivationToken = 0;
+
+function getNowMs(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+function compareActivationRequests(
+  left: PlaygroundActivationRequest,
+  right: PlaygroundActivationRequest
+): number {
+  const leftPriority = left.getPriority();
+  const rightPriority = right.getPriority();
+
+  if (leftPriority.visible !== rightPriority.visible) {
+    return leftPriority.visible ? -1 : 1;
+  }
+
+  if (leftPriority.visible && rightPriority.visible) {
+    if (leftPriority.topPx !== rightPriority.topPx) {
+      return leftPriority.topPx - rightPriority.topPx;
+    }
+  } else if (
+    leftPriority.distanceFromViewportPx !== rightPriority.distanceFromViewportPx
+  ) {
+    return leftPriority.distanceFromViewportPx - rightPriority.distanceFromViewportPx;
+  }
+
+  return left.token - right.token;
+}
+
+function pumpPlaygroundActivationQueue(): void {
+  while (
+    activeStandardPlaygroundStarts < MAX_CONCURRENT_STANDARD_PLAYGROUND_STARTS &&
+    pendingPlaygroundActivations.size > 0
+  ) {
+    const nextRequest = [...pendingPlaygroundActivations.values()].sort(
+      compareActivationRequests
+    )[0];
+
+    if (!nextRequest) {
+      return;
+    }
+
+    pendingPlaygroundActivations.delete(nextRequest.token);
+    activeStandardPlaygroundStarts += 1;
+
+    let released = false;
+    const lease: PlaygroundActivationLease = {
+      release: () => {
+        if (released) {
+          return;
+        }
+
+        released = true;
+        activeStandardPlaygroundStarts = Math.max(
+          activeStandardPlaygroundStarts - 1,
+          0
+        );
+        pumpPlaygroundActivationQueue();
+      }
+    };
+
+    nextRequest.grant(lease);
+  }
+}
+
+function requestPlaygroundActivation(request: Omit<PlaygroundActivationRequest, "token">): {
+  cancel: () => void;
+  reprioritize: () => void;
+} {
+  const token = nextPlaygroundActivationToken;
+
+  nextPlaygroundActivationToken += 1;
+  pendingPlaygroundActivations.set(token, {
+    ...request,
+    token
+  });
+  pumpPlaygroundActivationQueue();
+
+  return {
+    cancel: () => {
+      if (pendingPlaygroundActivations.delete(token)) {
+        pumpPlaygroundActivationQueue();
+      }
+    },
+    reprioritize: () => {
+      pumpPlaygroundActivationQueue();
+    }
+  };
+}
 
 function getLanguagePosition(source: string, offset: number): LanguageServiceRequest["position"] {
   const beforeCursor = source.slice(0, offset).replace(/\r\n/g, "\n");
@@ -619,6 +729,7 @@ export function Playground(props: {
   cachedPreview?: CachedPreview;
   immersive?: boolean;
 }) {
+  const rootRef = useRef<HTMLElement>(null);
   const sourceEditorRef = useRef<HTMLDivElement>(null);
   const sourceAssistRef = useRef<HTMLDivElement>(null);
   const completionListRef = useRef<HTMLDivElement>(null);
@@ -632,8 +743,91 @@ export function Playground(props: {
   const cachedPreviewImageRef = useRef<HTMLImageElement>(null);
   const spriteCanvasRef = useRef<HTMLCanvasElement>(null);
   const immersive = props.immersive === true;
+  const activationLeaseRef = useRef<PlaygroundActivationLease | null>(null);
+  const activationQueuedAtRef = useRef(getNowMs());
+  const activationStartedAtRef = useRef<number | null>(immersive ? getNowMs() : null);
+  const [isActivated, setIsActivated] = useState(immersive);
 
   useEffect(() => {
+    const root = rootRef.current;
+
+    if (!root) {
+      return;
+    }
+
+    const clearLease = (): void => {
+      activationLeaseRef.current?.release();
+      activationLeaseRef.current = null;
+    };
+
+    activationQueuedAtRef.current = getNowMs();
+
+    if (immersive) {
+      activationStartedAtRef.current = activationQueuedAtRef.current;
+      markPerfDuration("playground-activation-wait", 0, props.playground.id);
+      markPerfPoint("playground-activation-start", props.playground.id);
+      setIsActivated(true);
+
+      return () => {
+        clearLease();
+      };
+    }
+
+    setIsActivated(false);
+    activationStartedAtRef.current = null;
+    markPerfPoint("playground-activation-queued", props.playground.id);
+
+    const activationRequest = requestPlaygroundActivation({
+      getPriority: () => {
+        const rect = root.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const visible = rect.bottom > 0 && rect.top < viewportHeight;
+        const distanceFromViewportPx = visible
+          ? 0
+          : rect.top >= viewportHeight
+            ? rect.top - viewportHeight
+            : Math.abs(rect.bottom);
+
+        return {
+          distanceFromViewportPx,
+          topPx: rect.top,
+          visible
+        };
+      },
+      grant: (lease) => {
+        activationLeaseRef.current = lease;
+        activationStartedAtRef.current = getNowMs();
+        markPerfDuration(
+          "playground-activation-wait",
+          activationStartedAtRef.current - activationQueuedAtRef.current,
+          props.playground.id
+        );
+        markPerfPoint("playground-activation-start", props.playground.id);
+        setIsActivated(true);
+      }
+    });
+
+    const handlePriorityChange = (): void => {
+      activationRequest.reprioritize();
+    };
+
+    window.addEventListener("scroll", handlePriorityChange, { passive: true });
+    window.addEventListener("resize", handlePriorityChange);
+    handlePriorityChange();
+
+    return () => {
+      window.removeEventListener("scroll", handlePriorityChange);
+      window.removeEventListener("resize", handlePriorityChange);
+      activationRequest.cancel();
+      clearLease();
+    };
+  }, [immersive, props.playground.id]);
+
+  useEffect(() => {
+    if (!isActivated) {
+      return;
+    }
+
     markPerfPoint("playground-effect-start", props.playground.id);
     const sourceEditor = sourceEditorRef.current!;
     const sourceAssist = sourceAssistRef.current!;
@@ -684,6 +878,33 @@ export function Playground(props: {
     let assistUpdateTimer: number | null = null;
     let fitScaleFrame: number | null = null;
     let disposed = false;
+    let startupReleased = false;
+
+    function releaseStartup(reason: string): void {
+      if (startupReleased) {
+        return;
+      }
+
+      startupReleased = true;
+      markPerfDuration(
+        "playground-startup-total",
+        getNowMs() - activationQueuedAtRef.current,
+        props.playground.id
+      );
+
+      const startedAt = activationStartedAtRef.current;
+      if (startedAt !== null) {
+        markPerfDuration(
+          "playground-startup-active",
+          getNowMs() - startedAt,
+          props.playground.id
+        );
+      }
+
+      markPerfPoint("playground-initial-ready", `${props.playground.id} ${reason}`);
+      activationLeaseRef.current?.release();
+      activationLeaseRef.current = null;
+    }
 
     function getViewportContentSize(): { width: number; height: number } {
       const viewportRect = spriteViewport.getBoundingClientRect();
@@ -933,6 +1154,7 @@ export function Playground(props: {
         window.requestAnimationFrame(() => {
           markPerfPoint("playground-first-preview-frame", props.playground.id);
         });
+        releaseStartup("live-preview");
       }
     }
 
@@ -1427,6 +1649,11 @@ export function Playground(props: {
         ]
       })
     });
+    markPerfDuration(
+      "playground-editor-setup",
+      performance.now() - setupStart,
+      props.playground.id
+    );
     markPerfPoint(
       "playground-editor-ready",
       `${props.playground.id} ${(performance.now() - setupStart).toFixed(1)}ms`
@@ -1447,6 +1674,7 @@ export function Playground(props: {
     } else {
       showCachedPreview();
       markPerfPoint("playground-cached-preview-shown", props.playground.id);
+      releaseStartup("cached-preview");
     }
     scheduleFitScaleUpdate();
 
@@ -1458,8 +1686,11 @@ export function Playground(props: {
       zoomSelect.removeEventListener("change", handleZoomChange);
       resizeObserver.disconnect();
       editorView.destroy();
+      activationLeaseRef.current?.release();
+      activationLeaseRef.current = null;
     };
   }, [
+    isActivated,
     props.cachedPreview?.height,
     props.cachedPreview?.src,
     props.cachedPreview?.width,
@@ -1469,7 +1700,12 @@ export function Playground(props: {
   ]);
 
   return (
-    <section className={`playground${immersive ? " playground--immersive" : ""}`}>
+    <section
+      className={`playground${immersive ? " playground--immersive" : ""}${
+        !isActivated ? " playground--queued" : ""
+      }`}
+      ref={rootRef}
+    >
       <h3 className="playground-title">{props.playground.title}</h3>
       <p className="playground-summary">{props.playground.summary}</p>
       <section className="playground-layout">
@@ -1477,6 +1713,11 @@ export function Playground(props: {
           <div className="source-label">
             Source
             <div className="source-editor" ref={sourceEditorRef}>
+              {!isActivated ? (
+                <div className="playground-deferred-note">
+                  Queued editor startup so the nearest row can initialize first.
+                </div>
+              ) : null}
               <div className="editor-assist" hidden ref={sourceAssistRef}>
                 <div className="completion-list" hidden ref={completionListRef} />
                 <div className="argument-help" hidden ref={argumentHelpRef} />
@@ -1500,6 +1741,11 @@ export function Playground(props: {
               </select>
             </label>
           </div>
+          {!isActivated ? (
+            <p className="playground-status">
+              Queued preview startup. Higher rows activate first.
+            </p>
+          ) : null}
           <div className="sprite-viewport" ref={spriteViewportRef}>
             <div className="sprite-surface canvas-checkerboard" ref={spriteSurfaceRef}>
               {props.cachedPreview ? (

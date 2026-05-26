@@ -898,12 +898,27 @@ body {
   overflow: hidden;
 }
 
+.playground--queued .source-editor,
+.playground--queued .sprite-viewport {
+  background: rgba(18,17,15,0.72);
+}
+
 .source-editor[data-focused="true"] {
   border-color: rgba(125,211,252,0.48);
 }
 
 .playground--immersive .source-editor {
   height: 100%;
+}
+
+.playground-deferred-note {
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  padding: 24px;
+  color: #cbbda7;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .playground-status,

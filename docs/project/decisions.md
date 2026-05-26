@@ -729,3 +729,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The site itself can now deploy through Pages without being blocked by large binaries, but public download links for the VS Code extension, Unity package, and Windows CLI are intentionally unavailable until the external artifact host is in place.
 - Related tasks: T-119
 - Supersedes: N/A
+
+---
+
+### DEC-065: Queue Non-Immersive Playground Startup By Viewport Priority
+- Date: `2026-05-24`
+- Status: Accepted
+- Context: After page-level route timing was improved, the remaining perceived slowness came from many command-reference and examples rows creating CodeMirror editors and first previews at once, which made the editor/preview surface feel heavy even when the page frame itself was fast.
+- Decision: Instrument `Playground` startup explicitly and queue non-immersive playground activation so only one row performs its initial editor/preview startup at a time, preferring the nearest visible row first. Keep the immersive `Try it` editor immediate.
+- Consequences: Command-reference and examples pages can paint quickly while still bringing editors/previews online in a predictable order, and perf reports now separate queue wait, editor setup, and preview startup cost so future optimization can focus on the real bottleneck instead of total page frame time.
+- Related tasks: T-124, T-123
+- Supersedes: N/A
