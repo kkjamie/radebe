@@ -8,7 +8,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-126 | Finish the release path with external artifact hosting | M2 | Gate D | P1 | In Progress | `codex` | Cloudflare Pages still cannot host the large CLI and Unity downloads; external artifact hosting plus final release-flow validation still need to land | Use `docs/project/release-process.md` as the canonical checklist, including `product/*` and `site/*` tag rules, while wiring the hosted artifact path, then restore public download pages and verify the `master` release flow end to end |
+| T-126 | Finish the release path with external artifact hosting | M2 | Gate D | P1 | In Progress | `codex` | Cloudflare Pages still cannot host the large CLI and Unity downloads; external artifact hosting plus final push/tag validation still need to land | Smoke test the prepared `v0.1.0` / `site 2026-05-26.1` release candidate locally, then wire the hosted artifact path, restore public download pages, and verify the `master` release flow end to end |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

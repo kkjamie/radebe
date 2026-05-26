@@ -13,6 +13,9 @@ Last updated: `2026-05-26`
 - T-125 is complete after user approval of the command-reference polish pass: the API summary at the top of command pages keeps three separate boxes for Properties, Children, and Notes, with one documented property or note per bullet, child role/category labels, and a Constructors subsection inside Properties for positional forms; fill-color constructor values are shown as `<fillcolor>` with an explicit `fill solid <value>` expansion note instead of being treated as a normal property; the preview metadata/zoom row now sits below the rendered preview; `cut` and `radius` have their own Geometry Modifiers pages; polygon/path/fill/effect/alpha/group examples were simplified and scaled up; regular polygon now shows separated side-count variants; stroke owns the path-style example plus clearer alignment and nested-star demos; polygon/star nested strokes now advance from the previous outer stroke envelope; mask has larger antialiased and multi-shape examples; and command examples render without diagnostics.
 - The remaining M2 closeout queue is T-126 release-path completion with external artifact hosting. `docs/project/release-process.md` now formalizes the non-CI parts of a release, including product-version bumps, site-version bumps, release notes, download/public-copy review, and post-deploy verification.
 - DEC-070 now records the split versioning policy: the website has separate `productVersion` and `siteVersion` values, the top bar and release notes stay on the product version, website-only deploys can advance the site version without forcing a product version bump, and git tags are split between `product/vX.Y.Z` and `site/YYYY-MM-DD.N`.
+- DEC-071 now fixes the concrete site-version format as `YYYY-MM-DD.N`, and the first prepared formal release candidate uses `siteVersion` `2026-05-26.1`.
+- The first formal release candidate is now prepared locally as product `v0.1.0`. The public release notes page now describes it as the first formal release instead of a generic development build, and the native Unity package filename now derives from the canonical workspace version.
+- Local validation for the release candidate is in a good state: `npm run typecheck` and `npm test` passed, direct VSIX packaging passed, direct SEA build and smoke passed, direct Unity package generation passed, and the web production build passed. In this Codex shell, `npm run build:release:web` itself still fails before script execution because the local npm wrapper hits a Windows short-path `EPERM` on `C:\Users\JamieH~1`, so the equivalent direct release-build steps were used to verify the candidate instead.
 - M3 now contains the next rendering/language expansion tasks such as expressions, relative units, sprite output scaling, coordinate-space semantics, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean regions, mask composition, and mixed-corner follow-up work.
 - T-132 is now queued in M3 as renderer maintainability debt: `radebe-core/src/renderer.ts` should be split into clearer seams before too many more rendering features stack onto the current branch-heavy module.
 - M4 now contains the Unity/editor work that should only resume deliberately: source-authored import metadata, reusable editor packaging, and Unity live-authoring parity.
@@ -139,9 +142,9 @@ Last updated: `2026-05-26`
 - T-131 is a backlog task to resolve author-facing coordinate-space semantics before or alongside `outputscale`, including sprite bounds, point-like commands, filled extents, open paths, stroke alignment, antialiasing, tests, and docs.
 
 ## Best Next Tasks
-1. Finish T-126 by wiring the external artifact host into the staged release flow and restoring the public integration/download pages.
-2. Validate the documented release checklist against the real `master` pipeline so version bumps, release notes, and hosted downloads all move together.
-3. Re-check M2 Gate D for closure once T-126 is complete so the milestone can move from closeout work to done.
+1. Smoke test the prepared `v0.1.0` release candidate locally before push.
+2. Finish T-126 by wiring the external artifact host into the staged release flow and restoring the public integration/download pages.
+3. Validate the documented release checklist against the real `master` pipeline so version bumps, release notes, hosted downloads, and tags all move together.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

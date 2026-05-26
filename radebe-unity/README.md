@@ -61,4 +61,4 @@ Unity-facing integration assets will live here.
 - Required local config: copy `.env.example` to `.env` and set `RADEBE_UNITY_PROJECT_PATH`.
 - Default deploy target: `Assets/Plugins/Radebe` in the configured Unity project.
 - The deploy script also copies the current platform SEA payload into the configured Unity project's `Assets/Plugins/Radebe/Tools/radebe-cli/<platform>-<arch>/`.
-- The package script is now the default non-Unity path. It builds the latest SEA payload, assembles the `.unitypackage` directly from the repo's canonical plugin layout, uses the checked-in Unity-authored `.meta` files where available, and emits `Temp/radebe-unity-plugin-0.1.0.unitypackage`.
+- The package script is now the default non-Unity path. It builds the latest SEA payload, assembles the `.unitypackage` directly from the repo's canonical plugin layout, uses the checked-in Unity-authored `.meta` files where available, and emits `Temp/radebe-unity-plugin-<productVersion>.unitypackage`.

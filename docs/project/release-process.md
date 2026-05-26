@@ -47,7 +47,8 @@ Purpose: define the release checklist for Radebe so "push to `master` deploys" d
 - That site/build version stays secondary and should not replace the product version in the top bar.
 - Site-only tweaks should normally update the site/build version without forcing a public product version bump.
 - The site/build version is suitable for a subtle footer or diagnostics surface when the UI chooses to expose it.
-- Prefer a date-based or build-oriented format that reads as a deploy marker rather than a second product semver stream, such as `2026-05-26.1`.
+- Use the format `YYYY-MM-DD.N`, where `N` increments for additional deploys on the same date.
+- Example: `2026-05-26.1`
 
 ### Per-Package Versions
 - Do not split `unity`, `vscode`, `web`, and `core` into separate public version streams yet.

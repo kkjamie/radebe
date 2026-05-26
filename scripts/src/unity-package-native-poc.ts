@@ -24,12 +24,24 @@ type CliArgs = {
   outputPath: string;
 };
 
-const DEFAULT_OUTPUT_PATH = "Temp/radebe-unity-plugin-0.1.0.unitypackage";
 const FolderMetaPrefix = "folder";
 const FileMetaPrefix = "file";
+const WorkspacePackageJsonPath = join(REPO_ROOT, "package.json");
 const UnitySourceRoot = join(REPO_ROOT, "radebe-unity");
 const UnityAssetsSourceRoot = join(UnitySourceRoot, "Assets");
 const UnityPackageRootMetaSource = join(UnitySourceRoot, "PackageRoot");
+const DEFAULT_OUTPUT_PATH = `Temp/radebe-unity-plugin-${readWorkspaceVersion()}.unitypackage`;
+function readWorkspaceVersion(): string {
+  const packageJson = JSON.parse(readFileSync(WorkspacePackageJsonPath, "utf8")) as {
+    version?: unknown;
+  };
+
+  if (typeof packageJson.version !== "string" || packageJson.version.trim() === "") {
+    throw new Error("Workspace package.json is missing a valid version string.");
+  }
+
+  return packageJson.version;
+}
 
 function parseArgs(args: string[]): CliArgs {
   let outputPath = DEFAULT_OUTPUT_PATH;

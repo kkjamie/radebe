@@ -51,7 +51,7 @@ Build a local Unity plugin package with:
 npm run package:unity
 ```
 
-This is now the default zero-Unity packaging path. It builds the latest SEA payload, assembles the canonical `Assets/Plugins/Radebe` package contents directly from the repo, uses the checked-in Unity `.meta` files where available, and writes `Temp/radebe-unity-plugin-0.1.0.unitypackage`.
+This is now the default zero-Unity packaging path. It builds the latest SEA payload, assembles the canonical `Assets/Plugins/Radebe` package contents directly from the repo, uses the checked-in Unity `.meta` files where available, and writes `Temp/radebe-unity-plugin-<productVersion>.unitypackage`.
 
 Build the website with its downloadable release artifacts with:
 

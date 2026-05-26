@@ -23,6 +23,7 @@ Last updated: `2026-05-26`
 
 ## Current Focus
 - Milestone planning is now split explicitly: M2 is the closeout milestone for final website/release passes, M3 owns the deferred rendering/language expansion backlog, and M4 owns Unity/editor follow-on work.
+- The first formal product release candidate is now prepared locally as `v0.1.0`, with the website deploy marker split to `siteVersion` `2026-05-26.1`, formal release notes replacing the old development-build wording, and release artifact naming wired to the canonical workspace version instead of a hardcoded Unity package filename.
 - Remaining M2 closeout work is intentionally small and concrete: T-126 release-path completion with external artifact hosting plus the newly documented release checklist and versioning policy in `docs/project/release-process.md`. T-125 final public website QA/polish and T-074 cross-surface vocabulary cleanup are complete.
 - M3 now owns the rendering/language backlog such as expressions, sprite-relative units, sprite output scaling, coordinate-space semantics, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean composition, mask composition, mixed-corner follow-up work, and the planned renderer maintainability refactor that should make future rendering slices safer to ship.
 - M4 now owns Unity/editor follow-ons such as source-authored import metadata, reusable editor packaging, and eventual Unity live-authoring parity.

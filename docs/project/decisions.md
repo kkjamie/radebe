@@ -795,3 +795,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Website-only deploys can now advance the site/build version without forcing a user-facing product version bump, while product releases still keep one easy-to-understand public version across the toolchain. Separate tag namespaces remove ambiguity that bare `vX.Y.Z` tags would create after the split. The repo now needs release discipline around which version field and tag namespace changes on each deploy, but it avoids the heavier coordination cost of fully independent package-level public versioning.
 - Related tasks: T-126
 - Supersedes: N/A
+
+---
+
+### DEC-071: Use `YYYY-MM-DD.N` As The Site-Version Format
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: DEC-070 introduced a separate `siteVersion`, but the project still needed one concrete format so deploy markers, website-only release prep, and `site/*` tags would stay aligned instead of drifting into ad hoc strings.
+- Decision: Format `siteVersion` as `YYYY-MM-DD.N`, where `N` increments for additional deploys on the same date, and keep `site/YYYY-MM-DD.N` as the matching git tag shape for website-only deploy history.
+- Consequences: Site builds now have a predictable operational identifier that reads differently from the public product semver, release docs can describe one durable rule instead of examples only, and the first prepared formal release candidate uses `2026-05-26.1` as the initial site/build marker.
+- Related tasks: T-126
+- Supersedes: N/A
