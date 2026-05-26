@@ -20,25 +20,30 @@ import {
 } from "@codemirror/view";
 import {
   formatRadebeColor,
+  getRadebeColorTokens,
+  parseRadebeColorToken,
+  type RadebeRgbaColor
+} from "@radebe/core/colors";
+import {
   getArgumentHelp,
-  getCommandDefinition,
   getEnterIndentation,
   getLanguageCompletions,
   getLanguageSmartEdits,
-  getRadebeColorTokens,
-  parseRadebeColorToken,
-  renderSource,
   type LanguageArgumentHelp,
   type LanguageCompletionItem,
   type LanguageCompletionResult,
   type LanguageServiceRequest,
-  type LanguageTextEdit,
-  type RadebeDiagnostic,
-  type RadebeRgbaColor
-} from "@radebe/core";
+  type LanguageTextEdit
+} from "@radebe/core/language-service";
+import { getCommandDefinition } from "@radebe/core/schema";
+import type { PipelineResult, RadebeDiagnostic } from "@radebe/core/types";
 import { useEffect, useRef, useState } from "preact/hooks";
 
-import { markPerfDuration, markPerfPoint, timePerfSync } from "./perf.js";
+import { markPerfDuration, markPerfPoint } from "./perf.js";
+import {
+  enqueuePreviewRender,
+  type PreviewRenderTicket
+} from "./playground-preview-queue.js";
 import { isVariableUsageToken } from "./syntax-highlight.js";
 import type { ExamplePlayground } from "./types.js";
 
@@ -49,7 +54,7 @@ type SourceTokenSpan = {
 };
 
 const ASSIST_UPDATE_DELAY_MS = 35;
-const PREVIEW_RENDER_DELAY_MS = 90;
+const PREVIEW_RENDER_DELAY_MS = 120;
 const MAX_CONCURRENT_STANDARD_PLAYGROUND_STARTS = 1;
 
 type CachedPreview = {
@@ -736,6 +741,7 @@ export function Playground(props: {
   const argumentHelpRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const previewMetaRef = useRef<HTMLParagraphElement>(null);
+  const previewStateRef = useRef<HTMLSpanElement>(null);
   const zoomSelectRef = useRef<HTMLSelectElement>(null);
   const diagnosticsOutputRef = useRef<HTMLPreElement>(null);
   const spriteViewportRef = useRef<HTMLDivElement>(null);
@@ -835,6 +841,7 @@ export function Playground(props: {
     const argumentHelp = argumentHelpRef.current!;
     const status = statusRef.current!;
     const previewMeta = previewMetaRef.current!;
+    const previewState = previewStateRef.current!;
     const zoomSelect = zoomSelectRef.current!;
     const diagnosticsOutput = diagnosticsOutputRef.current!;
     const spriteViewport = spriteViewportRef.current!;
@@ -849,6 +856,7 @@ export function Playground(props: {
       !argumentHelp ||
       !status ||
       !previewMeta ||
+      !previewState ||
       !zoomSelect ||
       !diagnosticsOutput ||
       !spriteViewport ||
@@ -875,6 +883,8 @@ export function Playground(props: {
     let suppressAssistForNextChange = false;
     let argumentHelpOpen = false;
     let previewUpdateTimer: number | null = null;
+    let previewRenderTicket: PreviewRenderTicket | null = null;
+    let previewSourceVersion = 0;
     let assistUpdateTimer: number | null = null;
     let fitScaleFrame: number | null = null;
     let disposed = false;
@@ -904,6 +914,14 @@ export function Playground(props: {
       markPerfPoint("playground-initial-ready", `${props.playground.id} ${reason}`);
       activationLeaseRef.current?.release();
       activationLeaseRef.current = null;
+    }
+
+    function setPreviewState(
+      state: "cached" | "dirty" | "error" | "queued" | "refreshing" | "rendered",
+      label: string
+    ): void {
+      previewState.dataset.state = state;
+      previewState.textContent = label;
     }
 
     function getViewportContentSize(): { width: number; height: number } {
@@ -971,6 +989,7 @@ export function Playground(props: {
       }
       applyCanvasScale(cachedPreview.width, cachedPreview.height);
       status.textContent = "Cached preview.";
+      setPreviewState("cached", "Cached");
       previewMeta.textContent =
         `Artifact: sprite-grid ${cachedPreview.width}x${cachedPreview.height}`;
       diagnosticsOutput.textContent = "(cached preview)";
@@ -1047,15 +1066,24 @@ export function Playground(props: {
       previewUpdateTimer = null;
     }
 
-    function schedulePreviewUpdate(): void {
+    function cancelPreviewRender(): void {
+      previewRenderTicket?.cancel();
+      previewRenderTicket = null;
+    }
+
+    function schedulePreviewUpdate(delayMs = PREVIEW_RENDER_DELAY_MS): void {
       clearPreviewUpdate();
+      setPreviewState(
+        previewRenderTicket === null ? "queued" : "dirty",
+        previewRenderTicket === null ? "Queued" : "Dirty"
+      );
       previewUpdateTimer = window.setTimeout(() => {
         previewUpdateTimer = null;
 
         if (!disposed) {
-          updatePreview(getEditorSource());
+          queuePreviewRender(getEditorSource(), previewSourceVersion);
         }
-      }, PREVIEW_RENDER_DELAY_MS);
+      }, delayMs);
     }
 
     function cancelAssistUpdate(): void {
@@ -1105,14 +1133,70 @@ export function Playground(props: {
 
     let hasReportedFirstPreview = false;
 
-    function updatePreview(source: string): void {
-      const result = timePerfSync(
-        "playground-render-source",
-        () => {
-          return renderSource({ source });
+    function isCurrentPreviewSource(source: string, version: number): boolean {
+      return version === previewSourceVersion && source === getEditorSource();
+    }
+
+    function queuePreviewRender(source: string, version: number): void {
+      cancelPreviewRender();
+      let renderTicket: PreviewRenderTicket | null = null;
+
+      renderTicket = enqueuePreviewRender(props.playground.id, source, {
+        onCancel: () => {
+          if (previewRenderTicket === renderTicket) {
+            previewRenderTicket = null;
+          }
         },
-        props.playground.id
-      );
+        onComplete: (rendered) => {
+          if (disposed || previewRenderTicket !== renderTicket) {
+            return;
+          }
+
+          previewRenderTicket = null;
+
+          if (!isCurrentPreviewSource(rendered.source, version)) {
+            if (previewUpdateTimer === null) {
+              schedulePreviewUpdate(0);
+            }
+            return;
+          }
+
+          applyPreviewResult(rendered.result);
+        },
+        onError: (error) => {
+          if (disposed || previewRenderTicket !== renderTicket) {
+            return;
+          }
+
+          previewRenderTicket = null;
+
+          if (!isCurrentPreviewSource(error.source, version)) {
+            if (previewUpdateTimer === null) {
+              schedulePreviewUpdate(0);
+            }
+            return;
+          }
+
+          setPreviewState("error", "Error");
+          status.textContent = "Preview render failed.";
+          previewMeta.textContent = "Artifact: unavailable";
+          diagnosticsOutput.textContent = error.message;
+
+          if (!hasReportedFirstPreview) {
+            hasReportedFirstPreview = true;
+            releaseStartup("preview-error");
+          }
+        },
+        onStart: () => {
+          if (!disposed) {
+            setPreviewState("refreshing", "Refreshing");
+          }
+        }
+      });
+      previewRenderTicket = renderTicket;
+    }
+
+    function applyPreviewResult(result: PipelineResult): void {
       const diagnosticsText = result.diagnostics
         .map((diagnostic) => {
           const location =
@@ -1125,6 +1209,7 @@ export function Playground(props: {
         .join("\n");
 
       showLiveCanvas();
+      setPreviewState("rendered", "Rendered");
       status.textContent = `Parsed ${result.parsed.commands.length} root command(s), compiled ${result.compiled.commands.length} draw command(s).`;
       previewMeta.textContent = `Artifact: ${result.artifact.kind} ${result.artifact.width}x${result.artifact.height} background=${result.artifact.background}`;
       diagnosticsOutput.textContent =
@@ -1353,14 +1438,12 @@ export function Playground(props: {
 
     function handleSourceChange(): void {
       const source = getEditorSource();
+      previewSourceVersion += 1;
       props.sourceState.set(props.playground.id, source);
-      if (livePreviewActive) {
-        schedulePreviewUpdate();
-      } else {
+      if (!livePreviewActive) {
         livePreviewActive = true;
-        clearPreviewUpdate();
-        updatePreview(source);
       }
+      schedulePreviewUpdate();
       scheduleAssistUpdate();
     }
 
@@ -1670,7 +1753,7 @@ export function Playground(props: {
     zoomSelect.addEventListener("change", handleZoomChange);
     resizeObserver.observe(spriteViewport);
     if (livePreviewActive) {
-      updatePreview(initialSource);
+      schedulePreviewUpdate(0);
     } else {
       showCachedPreview();
       markPerfPoint("playground-cached-preview-shown", props.playground.id);
@@ -1681,6 +1764,7 @@ export function Playground(props: {
     return () => {
       disposed = true;
       clearPreviewUpdate();
+      cancelPreviewRender();
       cancelAssistUpdate();
       cancelFitScaleUpdate();
       zoomSelect.removeEventListener("change", handleZoomChange);
@@ -1730,6 +1814,13 @@ export function Playground(props: {
           <h4 className="preview-heading">Preview</h4>
           <div className="preview-toolbar">
             <p className="preview-meta" ref={previewMetaRef} />
+            <span
+              className="preview-state"
+              data-state="queued"
+              ref={previewStateRef}
+            >
+              Queued
+            </span>
             <label className="zoom-label">
               Zoom
               <select className="zoom-select" defaultValue="fit" ref={zoomSelectRef}>

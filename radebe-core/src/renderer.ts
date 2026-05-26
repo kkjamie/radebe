@@ -44,6 +44,11 @@ type Layer = {
 type AlphaMask = number[][];
 
 type CoveragePredicate = (pointX: number, pointY: number) => boolean;
+type PreparedGradientStop = {
+  color: string;
+  parsed: RgbaColor | null;
+  position: number;
+};
 
 const ANTIALIAS_SAMPLE_GRID_SIZE = 4;
 const ANTIALIAS_SAMPLE_COUNT =
@@ -59,13 +64,22 @@ const ANTIALIAS_SAMPLE_OFFSETS = Array.from(
       ANTIALIAS_SAMPLE_GRID_SIZE
   })
 );
+const parsedColorCache = new Map<string, RgbaColor | null>();
+const gradientStopCache = new WeakMap<
+  { color: string; position: number }[],
+  PreparedGradientStop[]
+>();
 
 function clampUnit(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
 function parseColor(color: string): RgbaColor | null {
-  return parseRadebeColorToken(color);
+  if (!parsedColorCache.has(color)) {
+    parsedColorCache.set(color, parseRadebeColorToken(color));
+  }
+
+  return parsedColorCache.get(color) ?? null;
 }
 
 function blendColors(
@@ -138,7 +152,7 @@ function setPixel(
   drawnPixels: DrawnGrid,
   x: number,
   y: number,
-  color: string,
+  color: string | RgbaColor,
   opacity = 1
 ): void {
   if (y < 0 || y >= pixels.length) {
@@ -149,7 +163,7 @@ function setPixel(
     return;
   }
 
-  const parsed = parseColor(color);
+  const parsed = typeof color === "string" ? parseColor(color) : color;
 
   if (parsed === null) {
     return;
@@ -263,27 +277,53 @@ function getGlowBlurRadius(glow: GlowAppearance): number {
   return Math.max(Math.round(glow.blur ?? 0), 0);
 }
 
-function sampleBoxBlurredAlpha(
-  x: number,
-  y: number,
+function createBoxBlurredAlphaSampler(
+  drawBounds: RectBounds,
   radius: number,
   sampleAlpha: (sampleX: number, sampleY: number) => number
-): number {
+): (x: number, y: number) => number {
   if (radius <= 0) {
-    return sampleAlpha(x, y);
+    return sampleAlpha;
   }
 
-  let alpha = 0;
-  let sampleCount = 0;
+  const kernelSize = radius * 2 + 1;
+  const kernelArea = kernelSize * kernelSize;
+  const sampleBounds = expandBounds(drawBounds, radius);
+  const integralStride = sampleBounds.width + 1;
+  const integral = Array.from(
+    { length: (sampleBounds.height + 1) * integralStride },
+    () => 0
+  );
 
-  for (let sampleY = y - radius; sampleY <= y + radius; sampleY += 1) {
-    for (let sampleX = x - radius; sampleX <= x + radius; sampleX += 1) {
-      alpha += sampleAlpha(sampleX, sampleY);
-      sampleCount += 1;
+  for (let sampleY = 0; sampleY < sampleBounds.height; sampleY += 1) {
+    let rowAlpha = 0;
+    const integralY = sampleY + 1;
+
+    for (let sampleX = 0; sampleX < sampleBounds.width; sampleX += 1) {
+      const integralX = sampleX + 1;
+
+      rowAlpha += sampleAlpha(
+        sampleBounds.x + sampleX,
+        sampleBounds.y + sampleY
+      );
+      integral[integralY * integralStride + integralX] =
+        integral[(integralY - 1) * integralStride + integralX]! + rowAlpha;
     }
   }
 
-  return sampleCount === 0 ? 0 : alpha / sampleCount;
+  return (x, y) => {
+    const left = x - radius - sampleBounds.x;
+    const top = y - radius - sampleBounds.y;
+    const right = left + kernelSize;
+    const bottom = top + kernelSize;
+    const alpha =
+      integral[bottom * integralStride + right]! -
+      integral[top * integralStride + right]! -
+      integral[bottom * integralStride + left]! +
+      integral[top * integralStride + left]!;
+
+    return alpha / kernelArea;
+  };
 }
 
 function drawGlowFromAlpha(
@@ -300,16 +340,16 @@ function drawGlowFromAlpha(
   }
 
   const blurRadius = getGlowBlurRadius(glow);
+  const sampleSoftenedAlpha = createBoxBlurredAlphaSampler(
+    drawBounds,
+    blurRadius,
+    sampleGlowBaseAlpha
+  );
 
   for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
     for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
       const sourceAlpha = sampleSourceAlpha(x, y);
-      const softenedAlpha = sampleBoxBlurredAlpha(
-        x,
-        y,
-        blurRadius,
-        sampleGlowBaseAlpha
-      );
+      const softenedAlpha = sampleSoftenedAlpha(x, y);
       const coverage =
         glow.mode === "outer"
           ? Math.max(softenedAlpha - sourceAlpha, 0)
@@ -405,9 +445,9 @@ function sampleFillColor(
   bounds: RectBounds,
   x: number,
   y: number
-): string | null {
+): RgbaColor | null {
   if (fill.kind === "solid") {
-    return fill.color;
+    return parseColor(fill.color);
   }
 
   if (fill.kind === "gradient-linear") {
@@ -657,19 +697,39 @@ function getRectContourPatternPosition(
   return rect.width * 2 + rect.height + (rect.y + rect.height - 1 - y);
 }
 
+function getPreparedGradientStops(
+  stops: { color: string; position: number }[]
+): PreparedGradientStop[] {
+  const cachedStops = gradientStopCache.get(stops);
+
+  if (cachedStops) {
+    return cachedStops;
+  }
+
+  const preparedStops = [...stops]
+    .sort((left, right) => left.position - right.position)
+    .map((stop) => ({
+      ...stop,
+      parsed: parseColor(stop.color)
+    }));
+
+  gradientStopCache.set(stops, preparedStops);
+  return preparedStops;
+}
+
 function sampleGradientStops(
   stops: { color: string; position: number }[],
   position: number
-): string | null {
-  const sortedStops = [...stops].sort((left, right) => left.position - right.position);
+): RgbaColor | null {
+  const sortedStops = getPreparedGradientStops(stops);
   const clampedPosition = clampUnit(position);
 
   if (clampedPosition <= sortedStops[0]!.position) {
-    return sortedStops[0]!.color;
+    return sortedStops[0]!.parsed;
   }
 
   if (clampedPosition >= sortedStops[sortedStops.length - 1]!.position) {
-    return sortedStops[sortedStops.length - 1]!.color;
+    return sortedStops[sortedStops.length - 1]!.parsed;
   }
 
   for (let index = 0; index < sortedStops.length - 1; index += 1) {
@@ -680,11 +740,8 @@ function sampleGradientStops(
       clampedPosition >= current.position &&
       clampedPosition <= next.position
     ) {
-      const currentColor = parseColor(current.color);
-      const nextColor = parseColor(next.color);
-
-      if (currentColor === null || nextColor === null) {
-        return current.color;
+      if (current.parsed === null || next.parsed === null) {
+        return current.parsed;
       }
 
       const interval =
@@ -692,18 +749,16 @@ function sampleGradientStops(
           ? 0
           : (clampedPosition - current.position) /
             (next.position - current.position);
-      const mixed: RgbaColor = {
-        r: lerp(currentColor.r, nextColor.r, interval),
-        g: lerp(currentColor.g, nextColor.g, interval),
-        b: lerp(currentColor.b, nextColor.b, interval),
-        a: lerp(currentColor.a, nextColor.a, interval)
+      return {
+        r: lerp(current.parsed.r, next.parsed.r, interval),
+        g: lerp(current.parsed.g, next.parsed.g, interval),
+        b: lerp(current.parsed.b, next.parsed.b, interval),
+        a: lerp(current.parsed.a, next.parsed.a, interval)
       };
-
-      return formatColor(mixed);
     }
   }
 
-  return sortedStops[sortedStops.length - 1]!.color;
+  return sortedStops[sortedStops.length - 1]!.parsed;
 }
 
 function resolveLinearGradientPosition(
@@ -1064,10 +1119,15 @@ function drawPolygonShadow(
 
       return inside && closestEdge.distance > -shadow.spread;
     });
+  const sampleShadowCoverage = createBoxBlurredAlphaSampler(
+    drawBounds,
+    blurRadius,
+    sampleShadowAlpha
+  );
 
   for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
     for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
-      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
+      const coverage = sampleShadowCoverage(x, y);
 
       if (coverage <= 0) {
         continue;
@@ -1308,10 +1368,15 @@ function drawCircleShadow(
     getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
       Math.hypot(pointX - sampleCenterX, pointY - sampleCenterY) <= radius
     );
+  const sampleShadowCoverage = createBoxBlurredAlphaSampler(
+    drawBounds,
+    blurRadius,
+    sampleShadowAlpha
+  );
 
   for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
     for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
-      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
+      const coverage = sampleShadowCoverage(x, y);
 
       if (coverage <= 0) {
         continue;
@@ -1634,10 +1699,15 @@ function drawRectShadow(
     getPixelCoverage(sampleX, sampleY, antialias, (pointX, pointY) =>
       isPointInsideRectContour(pointX, pointY, shadowContour)
     );
+  const sampleShadowCoverage = createBoxBlurredAlphaSampler(
+    drawBounds,
+    blurRadius,
+    sampleShadowAlpha
+  );
 
   for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
     for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
-      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
+      const coverage = sampleShadowCoverage(x, y);
 
       if (coverage <= 0) {
         continue;
@@ -1952,10 +2022,15 @@ function drawMaskShadow(
 
     return sampleMaskAlpha(mask, sourceX, sourceY, shadow.spread);
   };
+  const sampleShadowCoverage = createBoxBlurredAlphaSampler(
+    drawBounds,
+    blurRadius,
+    sampleShadowAlpha
+  );
 
   for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
     for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
-      const coverage = sampleBoxBlurredAlpha(x, y, blurRadius, sampleShadowAlpha);
+      const coverage = sampleShadowCoverage(x, y);
 
       if (coverage <= 0) {
         continue;

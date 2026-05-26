@@ -939,6 +939,41 @@ body {
   margin: 0 0 16px;
 }
 
+.preview-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 82px;
+  min-height: 28px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: #d2c7b4;
+  padding: 4px 8px;
+  font-size: 0.86rem;
+}
+
+.preview-state[data-state="cached"],
+.preview-state[data-state="rendered"] {
+  border-color: rgba(132,230,167,0.32);
+  background: rgba(132,230,167,0.08);
+  color: #c4f5b1;
+}
+
+.preview-state[data-state="dirty"],
+.preview-state[data-state="queued"],
+.preview-state[data-state="refreshing"] {
+  border-color: rgba(125,211,252,0.3);
+  background: rgba(125,211,252,0.08);
+  color: #bdefff;
+}
+
+.preview-state[data-state="error"] {
+  border-color: rgba(255,98,98,0.38);
+  background: rgba(255,98,98,0.1);
+  color: #ffb8b8;
+}
+
 .zoom-label {
   display: inline-flex;
   align-items: center;

@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-24`
+Last updated: `2026-05-26`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -762,3 +762,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Corner modifiers can become more expressive without fragmenting the language surface across shape families, existing uniform and shorthand corner forms can remain as convenience syntax, and compiler/runtime work must define a stable selector model plus conflict/precedence behavior when multiple selectors target the same corner.
 - Related tasks: T-077, T-122, T-071
 - Supersedes: DEC-040
+
+---
+
+### DEC-068: Run Web Playground Preview Rendering Through A Coalescing Worker Queue
+- Date: `2026-05-26`
+- Status: Accepted
+- Context: The CodeMirror editor already debounced preview rendering, but pages with several editable examples still felt slow because the first edit of a cached-preview row synchronously rendered on the keystroke path and later preview renders could still compete with typing on the main thread.
+- Decision: Move web playground preview `renderSource` work into a module worker behind one shared queue. Queue entries are coalesced per playground so repeated edits keep only the latest pending source, stale render results are ignored, and a short edit cooldown delays preview refresh until typing pauses.
+- Consequences: Typing stays responsive even on multi-example pages, at the cost of previews catching up asynchronously. The preview toolbar now exposes queued, dirty, refreshing, cached, rendered, and error states so users can see when the displayed preview is still catching up.
+- Related tasks: T-129, T-100, T-124
+- Supersedes: N/A

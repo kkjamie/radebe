@@ -1,4 +1,4 @@
-import { getCommandDefinition } from "@radebe/core";
+import { getCommandDefinition } from "@radebe/core/schema";
 
 import { timePerfSync } from "./perf.js";
 

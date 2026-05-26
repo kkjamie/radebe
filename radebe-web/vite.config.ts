@@ -108,7 +108,7 @@ export default defineConfig({
         replacement: `${coreSourceRoot}/index.ts`
       },
       {
-        find: /^@radebe\/core\/(parser|compiler|renderer|types)$/,
+        find: /^@radebe\/core\/(colors|compiler|language-service|parser|renderer|schema|types)$/,
         replacement: `${coreSourceRoot}/$1.ts`
       }
     ]

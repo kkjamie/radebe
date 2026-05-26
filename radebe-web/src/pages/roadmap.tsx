@@ -14,13 +14,44 @@ const roadmapSections = [
       "Features that expand how drawables are painted, layered, and combined into richer sprite surfaces.",
     features: [
       {
-        title: "Procedural fills",
+        title: "Noise fills",
         body:
-          "Noise, cloudy gradients, Voronoi cells, scanlines, hatches, and tileable patterns for richer UI surfaces.",
+          "Seeded texture fills with scale controls, color ramps, and stable output for sci-fi panels and surface detail.",
         syntax: [
           "rect-inset 8",
           "  fill noise seed=17 scale=6",
-          "  fill pattern stripes angle=45 spacing=4 alpha=0.35"
+          "  stroke 2 #70c8e8"
+        ].join("\n")
+      },
+      {
+        title: "Cloud and fractal fills",
+        body:
+          "Smooth procedural fill families for cloudy, plasma, and layered fractal looks with deterministic seeds.",
+        syntax: [
+          "circle 32 32 24",
+          "  fill cloud seed=42 scale=9",
+          "  stop 0 #101820",
+          "  stop 1 #70c8e8"
+        ].join("\n")
+      },
+      {
+        title: "Voronoi and cell fills",
+        body:
+          "Cell-based fills for cracked panels, alien technology surfaces, shields, and map-like UI backgrounds.",
+        syntax: [
+          "rect 0 0 96 48",
+          "  fill voronoi seed=11 cells=18",
+          "  stroke 1 #d8f8ff alpha=0.45"
+        ].join("\n")
+      },
+      {
+        title: "Tileable patterns",
+        body:
+          "Pattern fills such as stripes, hatches, dots, grids, scanlines, and circuit-like repeats.",
+        syntax: [
+          "rect-inset 6",
+          "  fill pattern stripes angle=45 spacing=4 alpha=0.35",
+          "  fill pattern scanlines spacing=3 alpha=0.18"
         ].join("\n")
       },
       {
@@ -61,6 +92,19 @@ const roadmapSections = [
       "Features that make source files more reusable, responsive to sprite bounds, and expressive for complex shapes.",
     features: [
       {
+        title: "Output scale",
+        body:
+          "A sprite-level `outputscale` property for exporting larger rasters while scaling every authored pixel metric together.",
+        syntax: [
+          "sprite badge",
+          "  size 32 32",
+          "  outputscale 4",
+          "",
+          "rect 4 4 24 24 #70c8e8",
+          "  stroke 1 #101820"
+        ].join("\n")
+      },
+      {
         title: "Symbolic bounds and expressions",
         body: "Readable values such as `left+8`, `right-8`, `center-x`, and reusable arithmetic.",
         syntax: [
@@ -97,6 +141,17 @@ const roadmapSections = [
         ].join("\n")
       },
       {
+        title: "Command ordering diagnostics",
+        body:
+          "Clear compiler and editor guidance for where properties, geometry modifiers, appearance passes, and effects belong.",
+        syntax: [
+          "rect 8 8 96 40",
+          "  cut 4",
+          "  fill solid #101820",
+          "  shadow 2 2 #000000 alpha=0.35"
+        ].join("\n")
+      },
+      {
         title: "Transforms",
         body:
           "Translate, rotate, scale, and mirror for shapes or groups while keeping pixel output predictable.",
@@ -128,14 +183,16 @@ const roadmapSections = [
         ].join("\n")
       },
       {
-        title: "Mixed per-corner treatments",
+        title: "Targeted corner controls",
         body:
-          "Cut and rounded corners on the same rectangle without confusing omitted corners with explicit zero values.",
+          "Selector-based `cut` and `radius` controls for rectangle corners and polygon-family vertices.",
         syntax: [
           "rect 0 0 96 40 #101820",
-          "  cut top-left 8",
-          "  radius top-right 12",
-          "  cut bottom-right 4"
+          "  cut top 8",
+          "  radius bottom-right 12",
+          "",
+          "polygon-star 48 24 5 12 22 #70c8e8",
+          "  radius outer 3"
         ].join("\n")
       }
     ]
