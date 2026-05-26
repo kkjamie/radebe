@@ -23,7 +23,7 @@ Last updated: `2026-05-26`
 
 ## Current Focus
 - Milestone planning is now split explicitly: M2 is the closeout milestone for final website/release passes, M3 owns the deferred rendering/language expansion backlog, and M4 owns Unity/editor follow-on work.
-- Remaining M2 closeout work is intentionally small and concrete: T-125 final public website QA, T-126 release-path completion with external artifact hosting, and T-074 cross-surface vocabulary cleanup.
+- Remaining M2 closeout work is intentionally small and concrete: T-126 release-path completion with external artifact hosting and T-074 cross-surface vocabulary cleanup. T-125 final public website QA/polish is complete.
 - M3 now owns the rendering/language backlog such as expressions, sprite-relative units, sprite output scaling, coordinate-space semantics, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean composition, mask composition, and mixed-corner follow-up work.
 - M4 now owns Unity/editor follow-ons such as source-authored import metadata, reusable editor packaging, and eventual Unity live-authoring parity.
 - M1 Gate C remains passed with the shared core/web render contract, SEA packaging pipeline, and Unity payload install/update plus smoke helper baseline in place.

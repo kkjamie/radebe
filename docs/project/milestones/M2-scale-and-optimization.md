@@ -21,6 +21,6 @@ Status: `In Progress`
 | Gate A | Basic Operation | One or two rendering commands are implemented and verified through `radebe-core`, `radebe-cli`, and `radebe-web` | Passed | Historical gate retained as passed evidence from the first usable language loop. |
 | Gate B | Feedback Loop | The first language commands have usable diagnostics and artifact presentation for iteration in the web and CLI surfaces | Passed | Historical gate retained as passed evidence from the web/docs/examples/editor-feedback work completed during M2. |
 | Gate C | Unity Return | The packaged CLI path is exercised again from Unity after the basic command loop is stable | Passed | Historical gate retained as passed evidence from the Unity importer and packaged CLI validation baseline. |
-| Gate D | Closeout Pass | Final website QA, release-path validation, and cross-surface vocabulary polish are complete | In Progress | T-125 command-reference polish is in review; remaining seed tasks: T-074, T-126 |
+| Gate D | Closeout Pass | Final website QA, release-path validation, and cross-surface vocabulary polish are complete | In Progress | T-125 website QA/polish is complete; remaining seed tasks: T-074, T-126 |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.
