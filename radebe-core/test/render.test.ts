@@ -2360,6 +2360,18 @@ test("renderDocument rasterizes nested rectangle strokes", () => {
   ]);
 });
 
+test("renderDocument advances nested polygon strokes from the outer envelope", () => {
+  const result = renderSource({
+    source:
+      "sprite panel\n  size 12 12\n  background transparent\n\npolygon 4 4 8 4 8 8 4 8 #18242c\n  stroke 2 #70c8e8\n    stroke width=2 color=white align=outside"
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.artifact.pixels[1]![4], "#ffffff");
+  assert.equal(result.artifact.pixels[4]![4], "#70c8e8");
+  assert.equal(result.artifact.pixels[5]![5], "#18242c");
+});
+
 test("renderSource runs the parser, compiler, and renderer pipeline", () => {
   const result = renderSource({
     source:

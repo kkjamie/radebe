@@ -5,34 +5,47 @@ export const solidDoc: ExampleDoc = {
     title: "Solid Fill",
     navGroup: "Appearance Commands",
     summary:
-      "Uses `fill` as an appearance container and `solid` as the actual fill variant that supplies one color.",
+      "Supplies one color to a `fill` appearance pass.",
     args: ["color"],
     childCommands: [],
     notes: [
       "`fill` on its own is only a container; it does not render without a variant such as `solid`, `gradient-linear`, or `gradient-radial`.",
-      "Canonical expanded form is `fill -> solid -> color`.",
-      "Shorthand `fill solid red` is supported.",
-      "Multiple fills are preserved as ordered passes."
+      "`fill solid red` is the compact form.",
+      "Expanded form is `fill` then `solid` then `color`.",
+      "Shape drawables can all use the same solid fill variant."
     ],
     examples: [
       {
-        id: "solid-basic",
-        title: "Two Solid Rectangles",
-        summary: "One rectangle uses shorthand, the other uses the expanded canonical form.",
+        id: "solid-shape-hosts",
+        title: "Shape Hosts",
+        summary: "`fill solid` works on the supported filled shape drawables.",
         source: [
-          "sprite solid-fill-demo",
-          "  size 96 40",
+          "sprite solid-shape-hosts",
+          "  size 560 176",
           "  background transparent",
+          "  antialias true",
           "",
-          "# Shorthand solid fill",
-          "rect 8 10 30 18",
+          "rect 24 44 80 72",
           "  fill solid #18242c",
           "",
-          "# Expanded canonical solid fill",
-          "rect 58 11 30 16",
+          "circle 154 80 38",
+          "  fill solid #70c8e8",
+          "",
+          "polygon",
+          "  point 242 38",
+          "  point 328 50",
+          "  point 312 124",
+          "  point 226 116",
+          "  fill solid #ffcc88",
+          "",
+          "polygon-regular 406 82 6 44",
           "  fill",
           "    solid",
-          "      color #70c8e8"
+          "      color #d8f8ff",
+          "",
+          "polygon-star 508 82 5 22 48",
+          "  fill",
+          "    solid #ff8f70"
         ].join("\n")
       }
     ]

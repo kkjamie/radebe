@@ -17,59 +17,23 @@ export const glowDoc: ExampleDoc = {
     ],
     examples: [
       {
-        id: "glow-panel",
-        title: "Outer And Inner",
+        id: "glow-modes",
+        title: "Outer And Inner Modes",
         summary:
-          "Outer glow radiates around the panel while inner glow is clipped to the panel silhouette.",
+          "Outer glow expands around the source; inner glow is clipped inside a separate source shape.",
         source: [
-          "sprite glow-panel-demo",
-          "  size 180 96",
+          "sprite glow-modes-demo",
+          "  size 416 224",
           "  background transparent",
+          "  antialias true",
           "",
-          "rect 28 22 124 48",
-          "  radius 10",
-          "  glow #70c8e8 spread=2 blur=5 alpha=0.7",
-          "  fill gradient-linear #18242c #243643",
-          "  glow #d8f8ff mode=inner spread=1 blur=4 alpha=0.5",
-          "  stroke 1 #d8f8ff"
-        ].join("\n")
-      },
-      {
-        id: "glow-circle-inner",
-        title: "Inner Indicator",
-        summary:
-          "A compact inner glow can make circular indicators read as lit without adding extra geometry.",
-        source: [
-          "sprite glow-indicator-demo",
-          "  size 112 72",
-          "  background transparent",
+          "circle 112 112 58",
+          "  glow #70c8e8 spread=6 blur=12 alpha=0.65",
+          "  fill solid #18242c",
           "",
-          "circle 36 36 22 #101820",
-          "  glow #ffcc88 mode=inner spread=2 blur=5 alpha=0.8",
-          "  stroke 1 #ffcc88",
-          "",
-          "circle 76 36 16 #18242c",
-          "  glow #70c8e8 blur=4 alpha=0.7",
-          "  fill gradient-radial #d8f8ff #70c8e8"
-        ].join("\n")
-      },
-      {
-        id: "glow-group",
-        title: "Composited Group Glow",
-        summary:
-          "Group glow follows the combined child alpha instead of applying separately to each child.",
-        source: [
-          "sprite glow-group-demo",
-          "  size 136 80",
-          "  background transparent",
-          "",
-          "group badge",
-          "  rect 26 22 52 32 #101820",
-          "    radius 7",
-          "  circle 78 38 16 #d8f8ff",
-          "  glow #70c8e8 spread=1 blur=5 alpha=0.7",
-          "  fill solid #70c8e8 alpha=0.24",
-          "  stroke 2 white alpha=0.85"
+          "polygon-regular 300 112 6 62",
+          "  glow #ffcc88 mode=inner spread=8 blur=10 alpha=0.75",
+          "  fill solid #243643"
         ].join("\n")
       }
     ]

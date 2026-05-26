@@ -9,6 +9,8 @@ import { polygonRegularDoc } from "./polygon-regular.js";
 import { polygonStarDoc } from "./polygon-star.js";
 import { pathDoc } from "./path.js";
 import { rectDoc } from "./rect.js";
+import { cutDoc } from "./cut.js";
+import { radiusDoc } from "./radius.js";
 import { solidDoc } from "./solid.js";
 import { gradientLinearDoc } from "./gradient-linear.js";
 import { gradientRadialDoc } from "./gradient-radial.js";
@@ -32,6 +34,8 @@ export const commandDocs: ExampleDoc[] = [
   polygonStarDoc,
   pathDoc,
   rectDoc,
+  cutDoc,
+  radiusDoc,
   solidDoc,
   gradientLinearDoc,
   gradientRadialDoc,

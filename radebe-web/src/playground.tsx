@@ -1812,26 +1812,6 @@ export function Playground(props: {
         </article>
         <article className="playground-panel preview-panel">
           <h4 className="preview-heading">Preview</h4>
-          <div className="preview-toolbar">
-            <p className="preview-meta" ref={previewMetaRef} />
-            <span
-              className="preview-state"
-              data-state="queued"
-              ref={previewStateRef}
-            >
-              Queued
-            </span>
-            <label className="zoom-label">
-              Zoom
-              <select className="zoom-select" defaultValue="fit" ref={zoomSelectRef}>
-                <option value="fit">Fit</option>
-                <option value="1">1x</option>
-                <option value="2">2x</option>
-                <option value="4">4x</option>
-                <option value="8">8x</option>
-              </select>
-            </label>
-          </div>
           {!isActivated ? (
             <p className="playground-status">
               Queued preview startup. Higher rows activate first.
@@ -1857,6 +1837,26 @@ export function Playground(props: {
                 ref={spriteCanvasRef}
               />
             </div>
+          </div>
+          <div className="preview-toolbar">
+            <p className="preview-meta" ref={previewMetaRef} />
+            <span
+              className="preview-state"
+              data-state="queued"
+              ref={previewStateRef}
+            >
+              Queued
+            </span>
+            <label className="zoom-label">
+              Zoom
+              <select className="zoom-select" defaultValue="fit" ref={zoomSelectRef}>
+                <option value="fit">Fit</option>
+                <option value="1">1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+                <option value="8">8x</option>
+              </select>
+            </label>
           </div>
           <h4 className="diagnostics-heading">Diagnostics</h4>
           <pre className="diagnostics-output" ref={diagnosticsOutputRef} />

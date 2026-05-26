@@ -16,35 +16,43 @@ export const alphaDoc: ExampleDoc = {
     ],
     examples: [
       {
-        id: "alpha-fill-gradient",
-        title: "Fill Alpha With Gradient Stops",
+        id: "alpha-solid-fills",
+        title: "Fill Alpha",
         summary:
-          "A fill-level alpha scales the whole gradient while still preserving per-stop transparency differences.",
+          "Separate solid fills can use different pass-level alpha values.",
         source: [
           "sprite alpha-fill-demo",
-          "  size 128 48",
+          "  size 360 144",
           "  background transparent",
+          "  antialias true",
           "",
-          "rect 12 10 104 28 #ff0044",
-          "  fill alpha=0.5",
-          "    gradient-linear",
-          "      stop #00ff0000 0",
-          "      stop #0000ff80 1"
+          "rect 32 36 76 72",
+          "  fill solid white alpha=0.25",
+          "",
+          "circle 180 72 40",
+          "  fill solid white alpha=0.55",
+          "",
+          "polygon-regular 296 72 6 44",
+          "  fill solid white alpha=0.85"
         ].join("\n")
       },
       {
-        id: "alpha-stroke-explicit",
-        title: "Explicit Stroke Alpha",
+        id: "alpha-gradient-stops",
+        title: "Hex Alpha Stops",
         summary:
-          "Stroke alpha affects only that stroke pass, so nested strokes stay fully explicit.",
+          "Alpha-capable hex colors can fade a gradient without a separate backing fill.",
         source: [
-          "sprite alpha-stroke-demo",
-          "  size 128 64",
+          "sprite alpha-gradient-demo",
+          "  size 360 144",
           "  background transparent",
+          "  antialias true",
           "",
-          "rect-inset 18 #18242c",
-          "  stroke 3 #d8f8ff alpha=0.4",
-          "    stroke 1 white"
+          "rect 32 32 296 80",
+          "  fill",
+          "    gradient-linear",
+          "      stop #ffffff 0",
+          "      stop #ffffff80 0.45",
+          "      stop #ffffff00 1"
         ].join("\n")
       }
     ]

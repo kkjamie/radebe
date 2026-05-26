@@ -8,11 +8,11 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-125 | Run final public website QA and polish pass | M2 | Gate D | P1 | Review | `codex` | Awaiting visual/browser review of the updated command-reference pages | Review the preview toolbar placement plus the revised regular-polygon, fixed nested polygon stroke, cut/radius, and mask examples in the browser |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-125 | Run final public website QA and polish pass | M2 | Gate D | P1 | Backlog | Unassigned | Needs a deliberate closeout sweep now that the main public site, examples, and perf queue are in place | Review homepage, syntax/reference pages, examples, nav, and visible copy for final M2 polish and capture any targeted follow-up fixes |
 | T-126 | Finish the release path with external artifact hosting | M2 | Gate D | P1 | Backlog | Unassigned | Cloudflare Pages still cannot host the large CLI and Unity downloads; needs hosted artifact destination plus pipeline wiring | Prove the staged Azure pipeline end to end, move large downloads to external hosting such as Cloudflare R2, then restore the public integration/download pages |
 | T-074 | Standardize author-facing language vocabulary across docs and editor assistance | M2 | Gate D | P1 | Backlog | Unassigned | Needs shared terminology to avoid drift between product spec, web reference docs, autocomplete details, and VS Code/web editor help; T-084 completed an initial web reference copy sweep | Continue remaining editor/completion/VS Code help metadata polish if deeper API-doc vocabulary consistency is needed |
 

@@ -5,66 +5,52 @@ export const gradientLinearDoc: ExampleDoc = {
     title: "Linear Gradient",
     navGroup: "Appearance Commands",
     summary:
-      "Defines a linear gradient fill. Use `gradient` as the compact alias or `gradient-linear` when the source should name the variant explicitly.",
+      "Supplies a linear color ramp to a `fill` appearance pass.",
     args: ["from", "to", "direction", "angle"],
     childCommands: ["stop"],
     notes: [
       "`gradient` remains a linear-gradient alias for compatibility, while `gradient-linear` is the explicit name.",
       "Use either `direction` or `angle`, not both.",
       "Supported directions are `horizontal` and `vertical`.",
-      "Expanded stop form supports multiple colors and alpha-capable hex values like `#0000ff80`."
+      "Expanded stop form supports multiple colors and alpha-capable hex values."
     ],
     examples: [
       {
-        id: "gradient-linear-horizontal",
-        title: "Horizontal Shorthand",
-        summary: "The compact two-color form maps left-to-right across the rectangle.",
+        id: "gradient-linear-shape-hosts",
+        title: "Shape Hosts",
+        summary: "The same linear gradient fill variant works across filled shape drawables.",
         source: [
-          "sprite linear-horizontal-demo",
-          "  size 256 56",
+          "sprite linear-gradient-shape-hosts",
+          "  size 640 192",
           "  background transparent",
+          "  antialias true",
           "",
-          "# Default horizontal gradient alias",
-          "rect 8 8 240 40",
-          "  fill gradient #ff0055 #70c8e8"
-        ].join("\n")
-      },
-      {
-        id: "gradient-linear-vertical",
-        title: "Vertical Stops",
-        summary: "Uses explicit stops and a vertical axis to produce a top-to-bottom blend.",
-        source: [
-          "sprite linear-vertical-demo",
-          "  size 256 80",
-          "  background transparent",
+          "rect 24 52 92 76",
+          "  fill gradient #101820 #70c8e8",
           "",
-          "# Vertical gradient with three stops",
-          "rect 20 8 216 64",
+          "circle 172 90 42",
           "  fill",
           "    gradient-linear",
           "      direction vertical",
           "      stop #101820 0",
-          "      stop #2f4c5c 0.45",
-          "      stop #d8f8ff 1"
-        ].join("\n")
-      },
-      {
-        id: "gradient-linear-angle",
-        title: "Angled Custom Gradient",
-        summary: "Shows the custom-angle form for diagonal lighting passes.",
-        source: [
-          "sprite linear-angle-demo",
-          "  size 256 96",
-          "  background transparent",
+          "      stop #70c8e8 1",
           "",
-          "# Diagonal sweep using an explicit angle",
-          "rect 16 12 224 72",
+          "polygon",
+          "  point 264 44",
+          "  point 352 58",
+          "  point 334 132",
+          "  point 250 120",
           "  fill",
           "    gradient-linear",
           "      angle 35",
-          "      stop #14191f 0",
-          "      stop #365266 0.55",
-          "      stop #d8f8ffcc 1"
+          "      stop #ffcc88 0",
+          "      stop #ff8f70 1",
+          "",
+          "polygon-regular 450 90 6 48",
+          "  fill gradient-linear #18242c #d8f8ff",
+          "",
+          "polygon-star 560 90 5 22 52",
+          "  fill gradient-linear #ffcc88 #70c8e8"
         ].join("\n")
       }
     ]

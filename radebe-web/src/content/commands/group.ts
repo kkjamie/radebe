@@ -36,65 +36,38 @@ export const groupDoc: ExampleDoc = {
     ],
     examples: [
       {
-        id: "group-panel-parts",
-        title: "Panel Parts",
+        id: "group-composited-stroke",
+        title: "Composited Stroke",
         summary:
-          "A named group keeps related panel geometry together while the renderer still draws each child normally.",
+          "A group-level stroke follows the combined alpha of overlapping child shapes.",
         source: [
-          "sprite group-panel-demo",
-          "  size 128 56",
+          "sprite group-stroke-demo",
+          "  size 416 176",
           "  background transparent",
-          "",
-          "group frame",
-          "  rect-inset 6 #101820",
-          "    cut 8",
-          "    stroke 2 #70c8e8",
-          "",
-          "group highlights",
-          "  line 20 14 108 14 #d8f8ff",
-          "  line 26 42 102 42 #70c8e8",
-          "  circle 64 28 4 #d8f8ff"
-        ].join("\n")
-      },
-      {
-        id: "group-nested-order",
-        title: "Nested Order",
-        summary:
-          "Nested transparent groups render at their source position, so later children can draw over earlier ones.",
-        source: [
-          "sprite group-order-demo",
-          "  size 96 48",
-          "  background transparent",
-          "",
-          "group base",
-          "  rect 12 10 72 28 #18242c",
-          "    radius 6",
-          "    stroke 2 #70c8e8",
-          "  group lights",
-          "    plot 24 20 white",
-          "    plot 72 20 white",
-          "",
-          "line 18 34 78 34 #ffcc88"
-        ].join("\n")
-      },
-      {
-        id: "group-composited-passes",
-        title: "Composited Passes",
-        summary:
-          "A group-level fill, shadow, glow, or stroke applies to the rasterized child layer rather than becoming a default for each child.",
-        source: [
-          "sprite group-pass-demo",
-          "  size 112 64",
-          "  background transparent",
+          "  antialias true",
           "",
           "group badge",
-          "  rect 18 16 44 28 #101820",
-          "    radius 6",
-          "  circle 62 30 14 #d8f8ff",
-          "  shadow 3 3 black alpha=0.35 spread=1",
-          "  glow #70c8e8 blur=4 alpha=0.5",
-          "  fill solid #70c8e8 alpha=0.32",
-          "  stroke 2 white alpha=0.85"
+          "  rect 84 52 124 72 #18242c",
+          "  circle 218 88 48 #70c8e8",
+          "  stroke 5 white"
+        ].join("\n")
+      },
+      {
+        id: "group-unified-fill",
+        title: "Unified Fill",
+        summary:
+          "A group-level fill paints the combined child silhouette as one surface.",
+        source: [
+          "sprite group-fill-demo",
+          "  size 416 176",
+          "  background transparent",
+          "  antialias true",
+          "",
+          "group badge",
+          "  rect 84 52 124 72 #101820",
+          "  circle 218 88 48 #243643",
+          "  fill solid #70c8e8 alpha=0.55",
+          "  stroke 4 #d8f8ff"
         ].join("\n")
       }
     ]

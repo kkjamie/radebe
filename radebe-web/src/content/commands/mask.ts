@@ -30,7 +30,6 @@ export const maskDoc: ExampleDoc = {
           "mask panel-window",
           "  shape",
           "    rect-inset 8",
-          "      cut 10",
           "  contents",
           "    rect-inset 0",
           "      fill gradient-linear #18242c #70c8e8"
@@ -43,15 +42,37 @@ export const maskDoc: ExampleDoc = {
           "An inverted mask excludes the circle area so the overlay surrounds the indicator instead of covering it.",
         source: [
           "sprite mask-invert-demo",
-          "  size 96 56",
+          "  size 256 144",
           "  background transparent",
+          "  antialias true",
           "",
           "mask ring-clear invert=true",
           "  shape",
-          "    circle 48 28 16",
+          "    circle 128 72 34",
           "  contents",
-          "    rect-inset 8",
-          "      fill solid #70c8e8 alpha=0.35"
+          "    rect-inset 20",
+          "      fill solid #70c8e8 alpha=0.48"
+        ].join("\n")
+      },
+      {
+        id: "mask-combined-shape",
+        title: "Combined Shape Coverage",
+        summary:
+          "Multiple drawables inside `shape` combine into one mask coverage layer.",
+        source: [
+          "sprite mask-combined-shape-demo",
+          "  size 320 168",
+          "  background transparent",
+          "  antialias true",
+          "",
+          "mask joined-shape",
+          "  shape",
+          "    circle 104 84 46",
+          "    rect 104 44 92 80",
+          "    circle 196 84 34",
+          "  contents",
+          "    rect-inset 0",
+          "      fill gradient-linear #ffcc88 #70c8e8"
         ].join("\n")
       },
       {
@@ -67,7 +88,6 @@ export const maskDoc: ExampleDoc = {
           "mask debug-shape show=shape-only",
           "  shape",
           "    rect 10 10 44 36",
-          "      cut 8",
           "  contents",
           "    rect 0 0 64 56 #70c8e8",
           "",

@@ -51,7 +51,6 @@ export const varsDoc: ExampleDoc = {
           "  var fill-color #18242c",
           "",
           "rect-inset $inset $fill-color",
-          "  cut 6",
           "  stroke $stroke-size $frame"
         ].join("\n")
       }

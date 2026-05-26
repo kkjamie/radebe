@@ -934,16 +934,18 @@ type ClosestPolygonEdgeSample = {
 
 function getPolygonStrokeBounds(
   points: PolygonPoint[],
-  stroke: StrokeAppearance
+  stroke: StrokeAppearance,
+  baseOuterOffset = 0
 ): PolygonStrokeBounds {
   const bounds = getPolygonBounds(points);
   const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
+  const outsideExtent = baseOuterOffset + outer;
 
   return {
-    x: bounds.x - outer,
-    y: bounds.y - outer,
-    width: bounds.width + outer * 2,
-    height: bounds.height + outer * 2,
+    x: bounds.x - outsideExtent,
+    y: bounds.y - outsideExtent,
+    width: bounds.width + outsideExtent * 2,
+    height: bounds.height + outsideExtent * 2,
     inner,
     outer
   };
@@ -1204,9 +1206,10 @@ function drawPolygonStroke(
   drawnPixels: boolean[][],
   command: Pick<Extract<CompiledDrawCommand, { kind: "polygon" }>, "points">,
   stroke: StrokeAppearance,
-  antialias: boolean
+  antialias: boolean,
+  baseOuterOffset = 0
 ): void {
-  const bounds = getPolygonStrokeBounds(command.points, stroke);
+  const bounds = getPolygonStrokeBounds(command.points, stroke, baseOuterOffset);
 
   if (stroke.fill !== null) {
     for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
@@ -1218,10 +1221,19 @@ function drawPolygonStroke(
             pointY,
             command.points
           );
+          const hostInside =
+            inside || closestEdge.distance <= baseOuterOffset;
+          const distanceToHostEdge = inside
+            ? baseOuterOffset + closestEdge.distance
+            : Math.abs(baseOuterOffset - closestEdge.distance);
           const inInnerBand =
-            inside && bounds.inner > 0 && closestEdge.distance <= bounds.inner;
+            hostInside &&
+            bounds.inner > 0 &&
+            distanceToHostEdge <= bounds.inner;
           const inOuterBand =
-            !inside && bounds.outer > 0 && closestEdge.distance <= bounds.outer;
+            !hostInside &&
+            bounds.outer > 0 &&
+            distanceToHostEdge <= bounds.outer;
 
           return (
             (inInnerBand || inOuterBand) &&
@@ -1257,7 +1269,14 @@ function drawPolygonStroke(
   }
 
   stroke.strokes.forEach((nestedStroke) => {
-    drawPolygonStroke(pixels, drawnPixels, command, nestedStroke, antialias);
+    drawPolygonStroke(
+      pixels,
+      drawnPixels,
+      command,
+      nestedStroke,
+      antialias,
+      baseOuterOffset + bounds.outer
+    );
   });
 }
 

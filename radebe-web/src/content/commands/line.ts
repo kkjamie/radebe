@@ -25,7 +25,7 @@ export const lineDoc: ExampleDoc = {
           "# Top edge",
           "line 4 4 58 4 #d8f8ff",
           "",
-          "# Diagonal cut",
+          "# Property-form diagonal",
           "line",
           "  x1 8",
           "  y1 26",

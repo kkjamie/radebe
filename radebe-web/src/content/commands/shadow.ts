@@ -19,36 +19,37 @@ export const shadowDoc: ExampleDoc = {
       {
         id: "shadow-rect-basic",
         title: "Hard Offset Shadow",
-        summary: "The common case: a darker offset silhouette sitting behind the base plate.",
+        summary: "A darker offset silhouette sits behind the source shape.",
         source: [
           "sprite shadow-basic-demo",
-          "  size 160 88",
+          "  size 256 144",
           "  background transparent",
+          "  antialias true",
           "",
-          "rect 20 16 104 48",
-          "  shadow 8 6 #000000 alpha=0.4",
+          "rect 38 34 144 72",
+          "  shadow 14 12 #000000 alpha=0.4",
           "  fill solid #18242c",
-          "  stroke 1 #70c8e8"
+          "  stroke 2 #70c8e8"
         ].join("\n")
       },
       {
         id: "shadow-spread-grow",
         title: "Positive Spread",
-        summary: "Spread can widen the silhouette before the offset is applied, which reads more like a heavier drop shadow.",
+        summary: "Positive spread widens the shadow silhouette before the offset is applied.",
         source: [
           "sprite shadow-spread-grow-demo",
-          "  size 180 96",
+          "  size 280 160",
           "  background transparent",
+          "  antialias true",
           "",
-          "rect 28 20 112 44",
-          "  radius 10",
+          "polygon-regular 136 76 6 54",
           "  shadow",
-          "    x 8",
-          "    y 8",
-          "    spread 3",
+          "    x 12",
+          "    y 12",
+          "    spread 6",
           "    alpha 0.35",
           "    fill solid black",
-          "  fill gradient-linear #18242c #243643"
+          "  fill solid #70c8e8"
         ].join("\n")
       },
       {
@@ -57,39 +58,42 @@ export const shadowDoc: ExampleDoc = {
         summary: "Blur softens the spread silhouette while preserving the same source shape and offset semantics.",
         source: [
           "sprite shadow-soft-blur-demo",
-          "  size 180 96",
+          "  size 280 160",
           "  background transparent",
+          "  antialias true",
           "",
-          "rect 30 20 112 44",
-          "  radius 8",
-          "  shadow 8 8 #000000 alpha=0.45 spread=2 blur=4",
+          "circle 128 72 50",
+          "  shadow 14 14 #000000 alpha=0.45 spread=4 blur=8",
           "  fill gradient-linear #203040 #2d4a5a",
-          "  stroke 1 #70c8e8"
+          "  stroke 2 #70c8e8"
         ].join("\n")
       },
       {
         id: "shadow-spread-shrink",
         title: "Negative Spread",
-        summary: "Negative spread tightens the silhouette, which is useful for restrained drop shadows with or without blur.",
+        summary: "Negative spread tightens the shadow silhouette before the offset is applied.",
         source: [
           "sprite shadow-spread-shrink-demo",
-          "  size 208 112",
+          "  size 416 224",
           "  background transparent",
+          "  antialias true",
           "",
-          "circle 54 46 22",
+          "circle 104 96 54",
           "  shadow",
-          "    x 5",
-          "    y 6",
-          "    spread -2",
+          "    x 12",
+          "    y 14",
+          "    spread -6",
+          "    blur 5",
           "    alpha 0.45",
           "    fill solid #000000",
           "  fill solid #70c8e8",
           "",
-          "polygon 112 20 176 20 188 48 154 78 108 60",
+          "polygon 224 56 352 48 376 104 306 164 216 128",
           "  shadow",
-          "    x 6",
-          "    y 7",
-          "    spread -1",
+          "    x 14",
+          "    y 16",
+          "    spread -5",
+          "    blur 5",
           "    fill solid #000000",
           "  fill solid #ffcc88"
         ].join("\n")

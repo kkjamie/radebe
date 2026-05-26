@@ -7,7 +7,7 @@ export const rectInsetDoc: ExampleDoc = {
     summary:
       "Defines a rectangle from the current sprite bounds using a uniform inset amount, four-side top/right/bottom/left shorthand, or expanded side-specific insets.",
     args: ["inset", "top right bottom left", "color shorthand", "fill", "antialias"],
-    childCommands: ["fill", "stroke", "cut", "radius", "antialias"],
+    childCommands: ["fill", "stroke", "shadow", "glow", "antialias"],
     notes: [
       "The uniform `inset` value applies to every side by default.",
       "`rect-inset 4 4 8 8` and child `inset 4 4 8 8` use top, right, bottom, left order.",
@@ -18,28 +18,26 @@ export const rectInsetDoc: ExampleDoc = {
     examples: [
       {
         id: "rect-inset-basic",
-        title: "Inset Panel",
+        title: "Uniform Inset",
         summary: "A centered panel defined purely from the sprite bounds and one inset value.",
         source: [
           "sprite inset-panel-demo",
-          "  size 96 48",
+          "  size 192 96",
           "  background transparent",
           "",
-          "# Simple inset panel using color shorthand",
-          "rect-inset 8 #18242c"
+          "rect-inset 16 #18242c"
         ].join("\n")
       },
       {
         id: "rect-inset-layered",
-        title: "Different Per Side",
-        summary: "Overrides individual sides when you want asymmetric padding or a shifted plate.",
+        title: "Four-Side Inset",
+        summary: "Four inline values use top, right, bottom, left order.",
         source: [
           "sprite inset-sides-demo",
-          "  size 160 72",
+          "  size 256 112",
           "  background transparent",
           "",
-          "# Four-side shorthand: top right bottom left",
-          "rect-inset 6 18 10 10",
+          "rect-inset 12 36 20 20",
           "  fill solid #18242c"
         ].join("\n")
       }
