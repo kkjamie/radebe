@@ -1,7 +1,7 @@
 # Release Process
 
 Owner: `Main Thread`
-Last updated: `2026-05-26`
+Last updated: `2026-05-27`
 
 Purpose: define the release checklist for Radebe so "push to `master` deploys" does not become the whole release process by accident.
 
@@ -9,8 +9,9 @@ When a user asks to "setup a release", "prepare a release", or similar, that req
 
 ## Release Model
 - Pushing to `master` triggers CI and website deploy.
-- A real release starts before that push. The release commit should already contain the intended version bump, release notes, download metadata, and any public copy changes.
-- CI should build, package, publish, and verify the prepared release; it should not be responsible for deciding what the release is called.
+- A real release starts before that push. The release commit should already contain the intended version bump, release notes, download metadata if downloads are in scope, and any public copy changes.
+- CI should build, package when needed, publish, and verify the prepared release; it should not be responsible for deciding what the release is called.
+- A web-only release does not package or publish CLI, VSIX, or Unity downloads.
 
 ## Release Checklist
 1. Confirm the scope of the release and which public surfaces changed: language/runtime, CLI, VS Code extension, Unity plugin, website, or docs-only.
@@ -20,15 +21,18 @@ When a user asks to "setup a release", "prepare a release", or similar, that req
 5. Update the website site/build version in `radebe-web/src/content/version.ts` for every website deploy that should remain traceable.
 6. Draft, review, and finalize the site-facing product release notes as part of release prep; do not treat that copy as optional polish after the version bump.
 7. Update `radebe-web/src/content/release-notes.ts` with a dated entry when the product release story changed in user terms.
-8. Update any download labels, integration copy, or artifact filenames if the release changes what users install.
+8. Update any download labels, integration copy, or artifact filenames if the release changes what users install; keep integration/download pages hidden when no public artifacts are being published.
 9. Run the validation commands required for the release:
    - `npm run typecheck`
    - `npm test`
    - `npm run build:release:web`
+10. For a full toolchain/download release, also validate the packaged artifact path:
    - `npm run smoke:cli:sea`
-10. Merge or push the prepared release commit to `master` so Azure DevOps can run the staged build/deploy flow.
-11. Verify the hosted pipeline result, website deployment, and release artifact availability after CI completes.
-12. If the release introduces a process or packaging change, update this file and the relevant project tracking docs in the same thread.
+   - `npm run package:vscode`
+   - `npm run package:unity`
+11. Merge or push the prepared release commit to `master` so Azure DevOps can run the staged build/deploy flow.
+12. Verify the hosted pipeline result, website deployment, and release artifact availability if artifacts were in scope after CI completes.
+13. If the release introduces a process or packaging change, update this file and the relevant project tracking docs in the same thread.
 
 ## Version Sources
 - Root workspace version: `package.json`
@@ -64,6 +68,7 @@ When a user asks to "setup a release", "prepare a release", or similar, that req
 
 ## Recommended Release Shapes
 - Toolchain release: bump the public product version, align package versions, update release notes, update the site/build version if the website deploy also changed, then push to `master`.
+- Web-only product release: bump or keep the public product version as appropriate, update product release notes for the public web experience, bump the site/build version, keep integration/download pages hidden, and do not package CLI, VSIX, or Unity artifacts.
 - Website-only deploy: keep the current product version, bump the site/build version, and do not update the product release notes.
 - Docs-only deploy: normally no product version bump; update release notes only if the docs change is part of a broader release announcement.
 
@@ -89,15 +94,16 @@ When a user asks to "setup a release", "prepare a release", or similar, that req
 - A product release may also include a site-version bump if the website changed as part of that release.
 
 ## Tagging Flow
-1. Prepare the release commit with the correct `productVersion`, `siteVersion`, release notes, and public artifact/copy updates.
+1. Prepare the release commit with the correct `productVersion`, `siteVersion`, release notes, public copy updates, and public artifact updates if artifacts are in scope.
 2. Merge or push that commit to `master`.
 3. Create the matching git tag:
    - product release: `product/vX.Y.Z`
    - site-only deploy: `site/YYYY-MM-DD.N`
 4. Push the tag along with the branch state used for the deploy.
-5. Verify that CI, deployment, and hosted artifacts match the tagged release shape.
+5. Verify that CI, deployment, hosted outputs, and any artifacts in scope match the tagged release shape.
 
 ## Release Gate For M2
-- T-126 is not complete until the project has both:
-  - a working hosted artifact/deploy path for large public downloads
-  - a documented release checklist covering version bumps, release notes, and public artifact updates
+- T-126 is complete for M2 when the web-only public release path has:
+  - public copy that does not advertise unavailable CLI, VSIX, or Unity downloads
+  - a CI/deploy flow that builds and publishes the site without packaging large release binaries
+  - a documented release checklist covering version bumps, release notes, web-only releases, and future artifact releases

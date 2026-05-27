@@ -13,7 +13,7 @@ export function ReleaseNotesPage() {
     <>
       <Hero
         title="Release Notes"
-        summary="Product release notes for the public Radebe toolchain."
+        summary="Product release notes for the public Radebe web experience."
       />
       {productReleaseNotes.map((release) => (
         <article className="release-card" key={release.version}>

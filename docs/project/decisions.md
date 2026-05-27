@@ -828,3 +828,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: Existing `.rdb.meta` importer settings resolve without bulk asset rewrites, and future packages keep the importer identity stable. Any short-lived assets created against the accidental `6640e18c04fcca044c4a6433be509617` GUID would need reimport or meta repair, but no Eddie `.rdb.meta` files referenced that accidental GUID during verification.
 - Related tasks: T-134, T-133, T-117
 - Supersedes: N/A
+
+---
+
+### DEC-074: Publish `v0.1.0` As A Web-Only Public Release
+- Date: `2026-05-27`
+- Status: Accepted
+- Context: Cloudflare R2 would require a credit card even for the free tier, and the user is undecided between staying on Azure/Cloudflare or moving the public open-source project shape to GitHub, GitHub Actions, GitHub Pages, and GitHub Releases.
+- Decision: Publish the current `v0.1.0` release as a web-only public site release. Do not publish CLI, VSIX, or Unity package downloads in this release, keep public integration/download pages hidden, simplify `build:release:web` and the Azure pipeline so they build/deploy only the website, and defer the source/artifact-hosting decision to a follow-up task.
+- Consequences: M2 can close around the first public web authoring experience without requiring a credit-card-backed artifact host or a rushed GitHub migration. Public copy must not advertise unavailable downloadable tooling, and future public CLI/VSIX/Unity distribution needs a separate hosting decision before those pages are restored.
+- Related tasks: T-126, T-135, T-119
+- Supersedes: N/A

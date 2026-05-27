@@ -53,13 +53,13 @@ npm run package:unity
 
 This is now the default zero-Unity packaging path. It builds the latest SEA payload, assembles the canonical `Assets/Plugins/Radebe` package contents directly from the repo, uses the checked-in Unity `.meta` files where available, and writes `Temp/radebe-unity-plugin-<productVersion>.unitypackage`.
 
-Build the website with its downloadable release artifacts with:
+Build the public website with:
 
 ```powershell
 npm run build:release:web
 ```
 
-This packages the VS Code extension and Unity plugin first, then builds `radebe-web`. The current temporary Pages-safe setup only emits small web-served download assets under `dist/downloads/`; the large public release binaries are being moved to external hosting next.
+The current public release path is web-only. It builds `radebe-web` and emits only web-safe assets under `dist/`; CLI, VSIX, and Unity package downloads are intentionally excluded until the project chooses a public artifact-hosting path.
 
 ## CLI SEA Packaging
 

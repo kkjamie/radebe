@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "build:release:web": "node ./node_modules/typescript/bin/tsc -b radebe-core radebe-vscode scripts && node scripts/install-vscode-extension.mjs && node scripts/dist/src/sea.js build && node scripts/dist/src/unity-package-native-poc.js && node radebe-web/scripts/generate-example-previews.mjs && node ./node_modules/typescript/bin/tsc -b radebe-web && node ./node_modules/vite/bin/vite.js build --config radebe-web/vite.config.ts",
+    "build:release:web": "npm run build -w @radebe/web",
     "build:vscode": "node ./node_modules/typescript/bin/tsc -b radebe-core radebe-vscode",
     "clean": "npm run clean --workspaces --if-present",
     "dev:web": "npm run dev -w @radebe/web",

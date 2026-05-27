@@ -25,12 +25,12 @@ variables:
 
 stages:
   - stage: Build
-    displayName: Build Release Artifacts
+    displayName: Build Website
     jobs:
-      - job: BuildRelease
-        displayName: Build on Windows
+      - job: BuildWebsite
+        displayName: Build on Linux
         pool:
-          vmImage: windows-latest
+          vmImage: ubuntu-latest
         steps:
           - task: NodeTool@0
             inputs:
@@ -47,25 +47,13 @@ stages:
             displayName: Install dependencies
 
           - script: npm run build:release:web
-            displayName: Build release downloads and website
+            displayName: Build website
 
           - task: PublishPipelineArtifact@1
             inputs:
               targetPath: "$(Build.SourcesDirectory)/radebe-web/dist"
               artifact: "radebe-web-dist"
             displayName: Publish website artifact
-
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: "$(Build.SourcesDirectory)/Temp"
-              artifact: "radebe-release-downloads"
-            displayName: Publish packaged download artifacts
-
-          - task: PublishPipelineArtifact@1
-            inputs:
-              targetPath: "$(Build.SourcesDirectory)/artifacts/radebe-cli/sea/win32-x64"
-              artifact: "radebe-cli-win32-x64"
-            displayName: Publish Windows CLI payload
 
   - stage: Deploy
     displayName: Deploy Website
