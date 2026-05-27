@@ -838,4 +838,11 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Publish the current `v0.1.0` release as a web-only public site release. Do not publish CLI, VSIX, or Unity package downloads in this release, keep public integration/download pages hidden, simplify `build:release:web` and the Azure pipeline so they build/deploy only the website, and defer the source/artifact-hosting decision to a follow-up task.
 - Consequences: M2 can close around the first public web authoring experience without requiring a credit-card-backed artifact host or a rushed GitHub migration. Public copy must not advertise unavailable downloadable tooling, and future public CLI/VSIX/Unity distribution needs a separate hosting decision before those pages are restored.
 - Related tasks: T-126, T-135, T-119
+### DEC-075: Use `Appearance Passes` As The Renderer Umbrella For Fill/Stroke/Shadow/Glow
+- Date: `2026-05-27`
+- Status: Accepted
+- Context: The renderer refactor split rect, circle, and polygon code into per-command modules, but future maintainability work still needs one clear umbrella term for `fill`, `stroke`, `shadow`, and `glow` that does not blur the repo's existing distinction between geometry commands and their visual treatment.
+- Decision: Treat `fill`, `stroke`, `shadow`, and `glow` as `appearance passes` in renderer architecture discussions and follow-up tasks. Keep the user-facing command names unchanged, preserve the geometry-versus-appearance distinction in the language model, and use future refactors such as T-133 to explore shared implementation capabilities for those appearance passes across shapes.
+- Consequences: The project gets one durable internal term for the ordered visual passes applied to shapes and composited layers, without forcing a surface-language rename or collapsing shape-specific geometry logic too early. Follow-up architecture work can now target appearance-pass unification explicitly instead of alternating between `effects`, `appearance`, and other overloaded labels.
+- Related tasks: T-132, T-133
 - Supersedes: N/A
