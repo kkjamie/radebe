@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-26`
+Last updated: `2026-05-27`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -816,4 +816,15 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Treat the site-rendered product release notes as the canonical product release-notes source, keep that content in one dedicated module, and reserve it for product releases only rather than website-only deploy history.
 - Consequences: Preparing a release now explicitly includes finalizing the product release-note entry, website-only deploys should not add release-note entries, and the release-notes page becomes a pure renderer of the canonical content instead of a second source of truth.
 - Related tasks: T-126
+- Supersedes: N/A
+
+---
+
+### DEC-073: Preserve The Existing Unity ScriptedImporter GUID
+- Date: `2026-05-27`
+- Status: Accepted
+- Context: Eddie's existing `.rdb.meta` assets reference `RadebeSpriteImporter` through Unity's serialized ScriptedImporter script GUID `7d26963f36cf2114eb572a982375d4c1`, while the redeployed plugin script meta had drifted to `6640e18c04fcca044c4a6433be509617`, causing existing imports to show missing script.
+- Decision: Treat `7d26963f36cf2114eb572a982375d4c1` as the stable GUID for `radebe-unity/Assets/Editor/RadebeSpriteImporter.cs.meta` and preserve it in repo source, deployed plugin copies, and native Unity package output.
+- Consequences: Existing `.rdb.meta` importer settings resolve without bulk asset rewrites, and future packages keep the importer identity stable. Any short-lived assets created against the accidental `6640e18c04fcca044c4a6433be509617` GUID would need reimport or meta repair, but no Eddie `.rdb.meta` files referenced that accidental GUID during verification.
+- Related tasks: T-134, T-133, T-117
 - Supersedes: N/A

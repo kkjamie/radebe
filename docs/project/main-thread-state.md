@@ -1,7 +1,7 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-26`
+Last updated: `2026-05-27`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
@@ -12,6 +12,8 @@ Last updated: `2026-05-26`
 - Milestone planning is now intentionally split: M2 is a short closeout milestone for final website/release passes, M3 owns the deferred rendering/language backlog, and M4 owns the Unity/editor follow-on work.
 - T-125 is complete after user approval of the command-reference polish pass: the API summary at the top of command pages keeps three separate boxes for Properties, Children, and Notes, with one documented property or note per bullet, child role/category labels, and a Constructors subsection inside Properties for positional forms; fill-color constructor values are shown as `<fillcolor>` with an explicit `fill solid <value>` expansion note instead of being treated as a normal property; the preview metadata/zoom row now sits below the rendered preview; `cut` and `radius` have their own Geometry Modifiers pages; polygon/path/fill/effect/alpha/group examples were simplified and scaled up; regular polygon now shows separated side-count variants; stroke owns the path-style example plus clearer alignment and nested-star demos; polygon/star nested strokes now advance from the previous outer stroke envelope; mask has larger antialiased and multi-shape examples; and command examples render without diagnostics.
 - The remaining M2 closeout queue is T-126 release-path completion with external artifact hosting. `docs/project/release-process.md` now formalizes the non-CI parts of a release, including product-version bumps, site-version bumps, release notes, download/public-copy review, and post-deploy verification.
+- A 2026-05-27 operational Unity redeploy rebuilt the local `v0.1.0` SEA payload and native Unity package, deployed the plugin into Eddie under the canonical `Assets/Plugins/Radebe` root, and corrected the local ignored `.env` deploy subdir from the older `Assets/Radebe` value. This did not change roadmap priority or the remaining T-126 release-hosting work.
+- A follow-up 2026-05-27 Unity compatibility repair restored `radebe-unity/Assets/Editor/RadebeSpriteImporter.cs.meta` to Eddie's existing ScriptedImporter GUID `7d26963f36cf2114eb572a982375d4c1`, rebuilt the Unity package, and redeployed to Eddie. Existing `.rdb.meta` files were left untouched and should resolve the importer again after Unity reimports.
 - DEC-070 now records the split versioning policy: the website has separate `productVersion` and `siteVersion` values, the top bar and release notes stay on the product version, website-only deploys can advance the site version without forcing a product version bump, and git tags are split between `product/vX.Y.Z` and `site/YYYY-MM-DD.N`.
 - DEC-071 now fixes the concrete site-version format as `YYYY-MM-DD.N`, and the first prepared formal release candidate uses `siteVersion` `2026-05-26.1`.
 - DEC-072 now fixes the release-notes ownership model: the public site renders one canonical product release-notes content source, and those notes are for product releases only rather than website-only deploy history.

@@ -1,7 +1,7 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-05-26`
+Last updated: `2026-05-27`
 
 Use this as the single source of truth for active execution state. Keep `Active` limited to live execution items; closed work belongs in `Completed`.
 
@@ -44,6 +44,8 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Completed
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-134 | Repair Unity importer script GUID compatibility for Eddie `.rdb` assets | M2 | Gate C | P1 | Done | `codex` | None | Existing Eddie `.rdb.meta` files now resolve the deployed `RadebeSpriteImporter`; continue T-126 release-hosting closeout |
+| T-133 | Operationally rebuild and deploy the latest Unity plugin to Eddie | M2 | Gate C | P2 | Done | `codex` | None | Local Eddie deployment is refreshed under `Assets/Plugins/Radebe`; continue T-126 release-hosting closeout |
 | T-001 | Select workspace tooling and scaffold the TypeScript monorepo | M1 | Gate A | P0 | Done | `t-001-workspace-scaffold` | None | Hand off to T-002 with the scaffolded package boundaries and shared TypeScript config |
 | T-002 | Design the initial `radebe-core` API and module boundaries | M1 | Gate A | P0 | Done | `t-002-core-api-boundaries` | None | Hand off to T-003 for CLI packaging evaluation or T-004 for the first web authoring loop |
 | T-003 | Evaluate standalone executable packaging for `radebe-cli` | M0 | Gate C | P1 | Done | `t-003-cli-packaging-evaluation` | None | Hand off to T-006 for SEA implementation or T-005 for the Unity bridge contract using the accepted executable path |
