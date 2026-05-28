@@ -149,6 +149,20 @@ test("getArgumentHelp reports the active positional argument", () => {
   assert.equal(help?.activeArgument?.valueKind, "integer");
 });
 
+test("getArgumentHelp handles rect-inset and variadic trailing color positions", () => {
+  const rectInsetHelp = getArgumentHelp(atCursor("rect-inset 1 2 3 |"));
+
+  assert.equal(rectInsetHelp?.commandName, "rect-inset");
+  assert.equal(rectInsetHelp?.activeArgument?.name, "left");
+  assert.equal(rectInsetHelp?.activeArgument?.valueKind, "integer");
+
+  const polygonColorHelp = getArgumentHelp(atCursor("polygon 0 0 8 0 8 8 bl|"));
+
+  assert.equal(polygonColorHelp?.commandName, "polygon");
+  assert.equal(polygonColorHelp?.activeArgument?.name, "color");
+  assert.equal(polygonColorHelp?.activeArgument?.valueKind, "color");
+});
+
 test("getArgumentHelp includes optional schema arguments in the signature", () => {
   const rectHelp = getArgumentHelp(atCursor("rect |"));
 

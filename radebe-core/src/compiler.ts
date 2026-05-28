@@ -5,6 +5,10 @@ import {
   hasCapability,
   type CommandDefinition
 } from "./schema.js";
+import {
+  getPositionalArgumentDefinitionForBinding,
+  isStrictIntegerTokenText
+} from "./argument-binding.js";
 
 import type {
   CircleCommand,
@@ -365,7 +369,7 @@ function readRequiredInteger(
     return null;
   }
 
-  const value = Number.parseInt(token, 10);
+  const value = parseStrictIntegerToken(token);
 
   if (!Number.isInteger(value)) {
     diagnostics.push(
@@ -417,7 +421,7 @@ function readRequiredNumber(
     return null;
   }
 
-  const value = Number.parseFloat(token);
+  const value = parseStrictNumberToken(token);
 
   if (!Number.isFinite(value)) {
     diagnostics.push(
@@ -450,6 +454,22 @@ function readRequiredNumber(
   }
 
   return value;
+}
+
+function parseStrictIntegerToken(token: string): number {
+  if (!isStrictIntegerTokenText(token)) {
+    return Number.NaN;
+  }
+
+  return Number.parseInt(token, 10);
+}
+
+function parseStrictNumberToken(token: string): number {
+  if (!/^-?(?:\d+(?:\.\d+)?|\.\d+)$/.test(token)) {
+    return Number.NaN;
+  }
+
+  return Number.parseFloat(token);
 }
 
 function validateChildren(
@@ -1770,12 +1790,19 @@ function compilePolygonCommand(
 
   if (coordinateTokens.length % 2 !== 0) {
     const trailingToken = coordinateTokens[coordinateTokens.length - 1] ?? null;
-    const trailingNumber =
-      trailingToken === null ? Number.NaN : Number.parseInt(trailingToken, 10);
+    const trailingArgument =
+      trailingToken === null
+        ? null
+        : getPositionalArgumentDefinitionForBinding(
+            definition,
+            coordinateTokens,
+            coordinateTokens.length - 1,
+            { activeTokenText: trailingToken }
+          );
 
     if (
       trailingToken !== null &&
-      !Number.isInteger(trailingNumber) &&
+      trailingArgument?.name === "color" &&
       color === null &&
       coordinateTokens.length >= 7
     ) {
@@ -1795,8 +1822,8 @@ function compilePolygonCommand(
   for (let index = 0; index < coordinateTokens.length; index += 2) {
     const xToken = coordinateTokens[index]!;
     const yToken = coordinateTokens[index + 1]!;
-    const x = Number.parseInt(xToken, 10);
-    const y = Number.parseInt(yToken, 10);
+    const x = parseStrictIntegerToken(xToken);
+    const y = parseStrictIntegerToken(yToken);
 
     if (!Number.isInteger(x)) {
       diagnostics.push(

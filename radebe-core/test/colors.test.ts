@@ -42,6 +42,7 @@ test("getRadebeColorTokens finds value tokens without marking comments or comman
     "plot x=1 y=2 color=white",
     "rect 0 0 4 4 #70c8e8",
     "rect-inset 1 2 3 4 #112233",
+    "polygon 0 0 8 0 8 8 #abcdef",
     "var white #ffffff"
   ].join("\n");
   const tokens = getRadebeColorTokens(source).map((token) => ({
@@ -54,6 +55,7 @@ test("getRadebeColorTokens finds value tokens without marking comments or comman
     { text: "white", source: "white" },
     { text: "#70c8e8", source: "#70c8e8" },
     { text: "#112233", source: "#112233" },
+    { text: "#abcdef", source: "#abcdef" },
     { text: "#ffffff", source: "#ffffff" }
   ]);
 });

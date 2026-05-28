@@ -6,7 +6,7 @@ Last updated: `2026-05-28`
 ## Current Milestone / Gate
 - Milestone: `M3`
 - Gate: `Gate A`
-- Status: `Ready`
+- Status: `In Progress`
 
 ## Current Focus
 - DEC-079 records the new planning decision: move public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub, but complete the refactor milestone first.
@@ -14,7 +14,7 @@ Last updated: `2026-05-28`
 - M2 is paused. The local web-only `v0.1.0` release candidate remains prepared with `siteVersion` `2026-05-27.1`, release notes, hidden integration/download pages, and Pages-safe output, but Azure/Cloudflare publication is no longer the next objective.
 - T-126 is parked from the old Cloudflare closeout path and retargeted to M4 Gate E so the release is published and tagged through the GitHub path.
 - T-135 is no longer an undecided hosting comparison; it is now the M4 GitHub migration execution task for repo/source hosting, GitHub Actions, Pages, Releases, secrets, branch/cutover, and release binary hosting.
-- M3 Gate A should start with T-143, then T-141 and T-140: improve the core test safety net, unify argument/value binding, and split the compiler behind stable public APIs.
+- T-143 and T-141 are complete. M3 Gate A now centers on T-140: the core test safety net is split by concern, malformed numeric-token coverage is in place, and one shared internal binding helper now handles strict integer-token detection plus `rect-inset` and variadic trailing-color positional interpretation across compiler, language-service, and color-token detection.
 - M3 Gate B keeps T-133 and T-147 together: reduce renderer appearance-pass duplication and move internals toward DEC-078 class-owned compiler/renderer subsystems while preserving plain-data boundaries and allocation-light pixel loops.
 - M3 Gate C covers non-core refactor hotspots: T-142 web Playground split, T-144 Unity bridge helper split, T-145 web CSS token/style split, and T-146 web performance tooling split.
 - M5 now owns backlog validation through new task T-148. Rendering/language features, Unity/editor follow-ons, VS Code live preview, reusable editor packaging, and public-site follow-ons should not start until they are pruned, validated, merged, split, or assigned to fresh post-review milestones.
@@ -141,9 +141,9 @@ Last updated: `2026-05-28`
 - T-131 is a backlog task to resolve author-facing coordinate-space semantics before or alongside `outputscale`, including sprite bounds, point-like commands, filled extents, open paths, stroke alignment, antialiasing, tests, and docs.
 
 ## Best Next Tasks
-1. Start T-143 to split the core render test suite and add the first malformed numeric-token coverage for the refactor safety net.
-2. Start T-141 to design and implement the first shared argument-binding/value-validation seam across compiler, schema/language-service metadata, and color-token handling.
-3. Start T-140 after the T-141/T-143 groundwork is clear, keeping public `@radebe/core` compiler APIs stable.
+1. Start T-140 and extract compiler responsibilities into command-owned modules while keeping the new shared binding helper and public compiler APIs stable.
+2. Re-run the split core suite during T-140 so compiler extraction keeps schema, language-service, and renderer-adjacent behavior aligned.
+3. Re-check M3 Gate A evidence after T-140 to decide whether the gate can pass or needs a small follow-up.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.

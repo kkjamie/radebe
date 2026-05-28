@@ -19,7 +19,7 @@ Status: `Planned`
 ## Gate Definitions
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Gate A | Core Safety And Compiler Boundaries | The core render/compiler test safety net is easier to work with, shared argument/value binding exists for at least the duplicated high-risk cases, and the compiler is split behind stable public APIs | Not Started | Seed tasks: T-143, T-141, T-140 |
+| Gate A | Core Safety And Compiler Boundaries | The core render/compiler test safety net is easier to work with, shared argument/value binding exists for at least the duplicated high-risk cases, and the compiler is split behind stable public APIs | In Progress | T-143 and T-141 are complete: tests are split by concern, malformed-token coverage is in place, and `rect-inset` plus variadic trailing-color binding now share one helper across compiler, language-service, and color-token detection before T-140 |
 | Gate B | Renderer And Core Ownership | Renderer appearance-pass duplication is reduced where practical, and the first class-owned compiler/renderer slices follow DEC-078 without per-pixel object churn or instruction-owned rendering behavior | Not Started | Seed tasks: T-133, T-147 |
 | Gate C | Tooling And Surface Module Splits | The largest non-core hotspots are split into focused modules or services with closest-practical validation | Not Started | Seed tasks: T-142, T-144, T-145, T-146 |
 | Gate D | Refactor Consolidation | Refactor work is documented, tests/builds pass, remaining debt is either closed or re-scoped, and the repo is ready for GitHub migration | Not Started | Update task board, debt register, roadmap, and session log before advancing to M4 |

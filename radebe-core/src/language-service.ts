@@ -8,6 +8,7 @@ import {
   type CommandArgumentDefinition,
   type CommandDefinition
 } from "./schema.js";
+import { getPositionalArgumentDefinitionForBinding } from "./argument-binding.js";
 
 const INDENT = "  ";
 
@@ -464,18 +465,23 @@ function getVariadicArgumentHelp(
   }
 
   const sequence = variadic.sequence;
-  const minimumSequenceLength = (variadic.minRepeats ?? 0) * sequence.length;
   const currentToken = argumentState.currentToken;
   const activeIndex = argumentState.activeArgumentIndex;
   const activeTokenText = currentToken?.text ?? "";
-  const shouldUseTrailingArgument =
-    variadic.trailingArgument !== undefined &&
-    activeIndex >= minimumSequenceLength &&
-    activeTokenText.length > 0 &&
-    Number.isNaN(Number.parseInt(activeTokenText, 10));
-  const activeArgument = shouldUseTrailingArgument
-    ? variadic.trailingArgument!
-    : sequence[activeIndex % sequence.length] ?? null;
+  const positionalTokenTexts = argumentState.argumentTokens
+    .filter((token) => !token.text.includes("="))
+    .map((token) => token.text);
+  const activeArgument =
+    getPositionalArgumentDefinitionForBinding(
+      commandDefinition,
+      positionalTokenTexts,
+      activeIndex,
+      {
+        activeTokenText
+      }
+    ) ??
+    sequence[activeIndex % sequence.length] ??
+    null;
   const displayArguments =
     variadic.trailingArgument === undefined
       ? sequence
@@ -560,54 +566,6 @@ function getInlineChildArgumentHelp(
   };
 }
 
-function getRectInsetActiveArgument(
-  commandDefinition: CommandDefinition,
-  argumentState: ArgumentTokenState
-): CommandArgumentDefinition | null {
-  const currentToken = argumentState.currentToken;
-
-  if (currentToken?.text.includes("=")) {
-    return null;
-  }
-
-  const activeTokenIndex = currentToken
-    ? argumentState.argumentTokens.indexOf(currentToken)
-    : argumentState.activeArgumentIndex;
-  const tokensBeforeActive = argumentState.argumentTokens.slice(0, activeTokenIndex);
-  const positionalIndex = tokensBeforeActive.filter(
-    (token) => !token.text.includes("=")
-  ).length;
-  const positionalCount = currentToken
-    ? argumentState.argumentTokens.filter((token) => !token.text.includes("="))
-        .length
-    : positionalIndex + 1;
-
-  if (
-    (positionalCount === 2 && positionalIndex === 1) ||
-    (positionalCount === 5 && positionalIndex === 4)
-  ) {
-    return getCommandArgumentDefinition(commandDefinition, "color") ?? null;
-  }
-
-  if (positionalCount === 4 || positionalCount === 5) {
-    const sideName = ["top", "right", "bottom", "left"][positionalIndex];
-
-    return sideName
-      ? getCommandArgumentDefinition(commandDefinition, sideName) ?? null
-      : null;
-  }
-
-  if (positionalIndex === 0) {
-    return getCommandArgumentDefinition(commandDefinition, "inset") ?? null;
-  }
-
-  if (positionalIndex === 1) {
-    return getCommandArgumentDefinition(commandDefinition, "color") ?? null;
-  }
-
-  return null;
-}
-
 function getPositionalArgumentHelp(
   context: InternalContext,
   argumentState: ArgumentTokenState
@@ -626,12 +584,33 @@ function getPositionalArgumentHelp(
     commandDefinition,
     context.parentDefinition
   );
-  const customRectInsetArgument =
+  const currentToken = argumentState.currentToken;
+  const positionalTokenTexts = argumentState.argumentTokens
+    .filter((token) => !token.text.includes("="))
+    .map((token) => token.text);
+  const activeTokenIndex = currentToken
+    ? argumentState.argumentTokens.indexOf(currentToken)
+    : argumentState.activeArgumentIndex;
+  const positionalIndex = argumentState.argumentTokens
+    .slice(0, activeTokenIndex)
+    .filter((token) => !token.text.includes("=")).length;
+  const positionalCount = currentToken
+    ? positionalTokenTexts.length
+    : positionalIndex + 1;
+  const customPositionalArgument =
     commandDefinition.name === "rect-inset"
-      ? getRectInsetActiveArgument(commandDefinition, argumentState)
+      ? getPositionalArgumentDefinitionForBinding(
+          commandDefinition,
+          positionalTokenTexts,
+          positionalIndex,
+          {
+            positionalCount,
+            activeTokenText: currentToken?.text ?? ""
+          }
+        )
       : null;
   const activeArgument =
-    customRectInsetArgument ??
+    customPositionalArgument ??
     shorthandArguments[argumentState.activeArgumentIndex] ??
     argumentsForCommand[argumentState.activeArgumentIndex] ??
     null;

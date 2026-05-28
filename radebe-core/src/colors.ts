@@ -6,6 +6,7 @@ import {
   type CommandArgumentDefinition,
   type CommandDefinition
 } from "./schema.js";
+import { getPositionalArgumentDefinitionForBinding } from "./argument-binding.js";
 
 export interface RadebeRgbaColor {
   r: number;
@@ -120,50 +121,14 @@ function getPositionalArgumentDefinition(
   positionalIndex: number,
   positionalTokens: SourceTokenSpan[]
 ): CommandArgumentDefinition | null {
-  if (definition.name === "rect-inset") {
-    if (
-      (positionalTokens.length === 2 && positionalIndex === 1) ||
-      (positionalTokens.length === 5 && positionalIndex === 4)
-    ) {
-      return getCommandArgumentDefinition(definition, "color") ?? null;
+  return getPositionalArgumentDefinitionForBinding(
+    definition,
+    positionalTokens.map((positionalToken) => positionalToken.text),
+    positionalIndex,
+    {
+      activeTokenText: token.text
     }
-
-    if (positionalTokens.length === 4 || positionalTokens.length === 5) {
-      const sideName = ["top", "right", "bottom", "left"][positionalIndex];
-
-      return sideName
-        ? getCommandArgumentDefinition(definition, sideName) ?? null
-        : null;
-    }
-  }
-
-  const shorthandArgument =
-    getShorthandArgumentDefinitions(definition)[positionalIndex] ?? null;
-
-  if (shorthandArgument !== null) {
-    return shorthandArgument;
-  }
-
-  const argument = getCommandArgumentDefinitions(definition)[positionalIndex] ?? null;
-
-  if (argument !== null) {
-    return argument;
-  }
-
-  const variadic = definition.variadicArguments;
-  const trailingArgument = variadic?.trailingArgument;
-
-  if (!variadic || !trailingArgument) {
-    return null;
-  }
-
-  const minimumTokenCount = (variadic.minRepeats ?? 0) * variadic.sequence.length;
-  const isPotentialTrailingToken =
-    positionalIndex === positionalTokens.length - 1 &&
-    positionalTokens.length > minimumTokenCount &&
-    Number.isNaN(Number.parseInt(token.text, 10));
-
-  return isPotentialTrailingToken ? trailingArgument : null;
+  );
 }
 
 function getColorTokenCandidate(
