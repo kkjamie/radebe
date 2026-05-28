@@ -187,7 +187,7 @@ writeFileSync(
 rmSync(vsixPath, { force: true });
 run(
   getLocalBin("vsce"),
-  ["package", "--allow-missing-repository", "--no-dependencies", "--out", vsixPath],
+  ["package", "--allow-missing-repository", "--out", vsixPath],
   { cwd: stageRoot, shell: process.platform === "win32" }
 );
 

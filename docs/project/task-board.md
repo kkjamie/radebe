@@ -47,6 +47,8 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Completed
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-139 | Fix VS Code Enter keybinding for smart newline and suggestions | M4 | Gate B | P2 | Done | `codex` | None | Corrected VSIX now bundles `@radebe/core` and is installed into the normal VS Code profile; reload VS Code and verify contextual completions plus smart Enter |
+| T-138 | Refresh local VS Code extension install for live testing | M4 | Gate B | P2 | Done | `codex` | None | Latest local VSIX installed into the normal VS Code profile; reload VS Code and retest Enter completion acceptance before deciding whether to adjust the smart-newline keybinding |
 | T-134 | Repair Unity importer script GUID compatibility for Eddie `.rdb` assets | M2 | Gate C | P1 | Done | `codex` | None | Existing Eddie `.rdb.meta` files now resolve the deployed `RadebeSpriteImporter`; continue T-126 release-hosting closeout |
 | T-133 | Operationally rebuild and deploy the latest Unity plugin to Eddie | M2 | Gate C | P2 | Done | `codex` | None | Local Eddie deployment is refreshed under `Assets/Plugins/Radebe`; continue T-126 release-hosting closeout |
 | T-132 | Refactor the core renderer into maintainable modules | M3 | Gate B | P2 | Done | `codex` | None | The renderer now keeps the public `src/renderer.ts` entry stable while moving rect, circle, and polygon rendering into per-command folders with `fill`, `stroke`, `glow`, and `shadow` modules plus shared layer/mask/sampling helpers, which makes future renderer work safer without changing behavior |

@@ -14,7 +14,8 @@
   ],
   "activationEvents": [
     "onLanguage:radebe",
-    "onCommand:radebe.openTextRenderPreview"
+    "onCommand:radebe.openTextRenderPreview",
+    "onCommand:radebe.insertSmartNewline"
   ],
   "main": "./dist/src/extension.js",
   "files": [
@@ -54,7 +55,7 @@
       {
         "command": "radebe.insertSmartNewline",
         "key": "enter",
-        "when": "editorTextFocus && editorLangId == radebe"
+        "when": "editorTextFocus && editorLangId == radebe && !suggestWidgetVisible"
       }
     ]
   },
