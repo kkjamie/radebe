@@ -838,6 +838,10 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Publish the current `v0.1.0` release as a web-only public site release. Do not publish CLI, VSIX, or Unity package downloads in this release, keep public integration/download pages hidden, simplify `build:release:web` and the Azure pipeline so they build/deploy only the website, and defer the source/artifact-hosting decision to a follow-up task.
 - Consequences: M2 can close around the first public web authoring experience without requiring a credit-card-backed artifact host or a rushed GitHub migration. Public copy must not advertise unavailable downloadable tooling, and future public CLI/VSIX/Unity distribution needs a separate hosting decision before those pages are restored.
 - Related tasks: T-126, T-135, T-119
+- Supersedes: N/A
+
+---
+
 ### DEC-075: Use `Appearance Passes` As The Renderer Umbrella For Fill/Stroke/Shadow/Glow
 - Date: `2026-05-27`
 - Status: Accepted
@@ -880,4 +884,15 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Protect renderer performance by dispatching at document, command, shape, or appearance-pass granularity rather than per pixel. Classes are acceptable for prepared state such as samplers, contours, coverage masks, layers, and pass objects. Hot pixel loops should remain allocation-light, shape-stable, and numeric/array-oriented; avoid creating per-pixel class instances or relying on object-heavy polymorphism inside inner loops.
 - Consequences: Refactors can become more object-oriented without destabilizing consumers of `@radebe/core` or the web worker boundary. Compiler and renderer ownership should become easier to navigate, and future command/effect additions can land in discoverable classes instead of broad shared helper modules. The tradeoff is that future work must avoid blanket mechanical class conversion; each extraction should keep tests passing, maintain serializable data boundaries, and measure or reason carefully around render hot paths.
 - Related tasks: T-147, T-140, T-141, T-143, T-133, T-142, T-146
+- Supersedes: N/A
+
+---
+
+### DEC-079: Move Public Hosting And Pipelines To GitHub After Refactoring
+- Date: `2026-05-28`
+- Status: Accepted
+- Context: The project previously deferred the choice between Azure/Cloudflare/R2 and GitHub for public source, website, release binary hosting, and pipelines. The user has now chosen GitHub, but wants the refactor work completed before that migration.
+- Decision: Move Radebe public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub, using the sequence M3 refactoring, M4 GitHub migration, then M5 backlog review before broad feature work resumes.
+- Consequences: T-135 becomes an execution task for GitHub migration instead of a hosting comparison task. T-126 is parked from the Azure/Cloudflare closeout path and retargeted to GitHub release cutover. Rendering/language, Unity/editor, VS Code preview, reusable editor, and other feature backlog items are parked behind M5 validation before new feature milestones are created.
+- Related tasks: T-126, T-135, T-140, T-141, T-142, T-143, T-144, T-145, T-146, T-147, T-148
 - Supersedes: N/A
