@@ -415,7 +415,6 @@ function App() {
         <div className="site-sidebar-inner">
           <div>
             <h1 className="site-brand-title">Radebe</h1>
-            <p className="site-brand-meta">Language reference</p>
           </div>
           <nav className="site-nav">
             <div className="nav-section">

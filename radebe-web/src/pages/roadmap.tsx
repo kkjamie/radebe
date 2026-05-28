@@ -7,16 +7,81 @@ export const roadmapPage: Extract<PageDefinition, { kind: "roadmap" }> = {
   title: "Roadmap"
 };
 
-const roadmapSections = [
+type RoadmapVisualKind = "npm" | "unity" | "vscode";
+
+type RoadmapFeature = {
+  body: string;
+  status?: string;
+  title: string;
+} & (
+  | {
+      syntax: string;
+      visual?: never;
+    }
+  | {
+      syntax?: never;
+      visual: RoadmapVisualKind;
+    }
+);
+
+type RoadmapSection = {
+  features: RoadmapFeature[];
+  summary: string;
+  title: string;
+};
+
+const roadmapSections: RoadmapSection[] = [
+  {
+    title: "Integrations",
+    summary:
+      "Bringing radebe support to different platforms.",
+    features: [
+      {
+        title: "Unity plugin",
+        body: "Import `.rdb` files in Unity and generate sprites for game projects.",
+        status: "Incoming",
+        visual: "unity"
+      },
+      {
+        title: "VS Code extension",
+        body:
+          "Syntax highlighting, completions, diagnostics, color tools, and preview commands for `.rdb` files.",
+        status: "Incoming",
+        visual: "vscode"
+      },
+      {
+        title: "npm packages",
+        body:
+          "Public packages for using the parser, compiler, renderer, and editor pieces from JavaScript.",
+        status: "Incoming",
+        visual: "npm"
+      },
+      {
+        title: "Reusable web editor",
+        body:
+          "A reusable React component for embedding the Radebe editor and live preview.",
+        status: "Incoming",
+        syntax: [
+          "import { RadebeEditor } from \"@radebe/editor/react\";",
+          "",
+          "<RadebeEditor",
+          "  source={source}",
+          "  onSourceChange={setSource}",
+          "  preview=\"live\"",
+          "/>"
+        ].join("\n")
+      }
+    ]
+  },
   {
     title: "Rendering And Appearance",
     summary:
-      "Features that expand how drawables are painted, layered, and combined into richer sprite surfaces.",
+      "More ways to paint, layer, and combine sprite artwork.",
     features: [
       {
         title: "Noise fills",
         body:
-          "Seeded texture fills with scale controls, color ramps, and stable output for sci-fi panels and surface detail.",
+          "Seeded texture fills for panel grain, surface detail, and stable generated noise.",
         syntax: [
           "rect-inset 8",
           "  fill noise seed=17 scale=6",
@@ -26,7 +91,7 @@ const roadmapSections = [
       {
         title: "Cloud and fractal fills",
         body:
-          "Smooth procedural fill families for cloudy, plasma, and layered fractal looks with deterministic seeds.",
+          "Cloudy, plasma, and layered fractal fills with repeatable seeds.",
         syntax: [
           "circle 32 32 24",
           "  fill cloud seed=42 scale=9",
@@ -37,7 +102,7 @@ const roadmapSections = [
       {
         title: "Voronoi and cell fills",
         body:
-          "Cell-based fills for cracked panels, alien technology surfaces, shields, and map-like UI backgrounds.",
+          "Cell patterns for cracked panels, shields, maps, and sci-fi surfaces.",
         syntax: [
           "rect 0 0 96 48",
           "  fill voronoi seed=11 cells=18",
@@ -47,7 +112,7 @@ const roadmapSections = [
       {
         title: "Tileable patterns",
         body:
-          "Pattern fills such as stripes, hatches, dots, grids, scanlines, and circuit-like repeats.",
+          "Stripes, hatches, dots, grids, scanlines, and circuit-like repeats.",
         syntax: [
           "rect-inset 6",
           "  fill pattern stripes angle=45 spacing=4 alpha=0.35",
@@ -56,7 +121,7 @@ const roadmapSections = [
       },
       {
         title: "Blend modes",
-        body: "Layer-friendly compositing controls for ordered appearance passes.",
+        body: "Blend controls for stacked fills, strokes, shadows, and glows.",
         syntax: [
           "rect 8 8 96 40 #101820",
           "  fill solid #70c8e8 blend=screen alpha=0.4"
@@ -65,7 +130,7 @@ const roadmapSections = [
       {
         title: "Boolean regions",
         body:
-          "Union, subtract, intersect, and difference operations for composing shape regions before painting.",
+          "Combine shapes with union, subtract, intersect, and difference before painting.",
         syntax: [
           "region badge subtract",
           "  rect 8 8 80 32",
@@ -75,7 +140,7 @@ const roadmapSections = [
       },
       {
         title: "Mask composition modes",
-        body: "Stacked or nested mask regions with add, intersect, subtract, and replace semantics.",
+        body: "Stack and combine masks with add, intersect, subtract, and replace.",
         syntax: [
           "mask panel mode=intersect",
           "  shape",
@@ -87,14 +152,14 @@ const roadmapSections = [
     ]
   },
   {
-    title: "Language Expressiveness",
+    title: "Language Authoring",
     summary:
-      "Features that make source files more reusable, responsive to sprite bounds, and expressive for complex shapes.",
+      "Source features for scaling, reuse, layout, and more precise shape control.",
     features: [
       {
         title: "Output scale",
         body:
-          "A sprite-level `outputscale` property for exporting larger rasters while scaling every authored pixel metric together.",
+          "Export larger rasters from the same source while scaling every pixel value together.",
         syntax: [
           "sprite badge",
           "  size 32 32",
@@ -106,7 +171,7 @@ const roadmapSections = [
       },
       {
         title: "Symbolic bounds and expressions",
-        body: "Readable values such as `left+8`, `right-8`, `center-x`, and reusable arithmetic.",
+        body: "Readable values like `left+8`, `right-8`, `center-x`, and simple arithmetic.",
         syntax: [
           "rect left+8 top+8 right-8 bottom-8",
           "line left+16 center-y right-16 center-y #d8f8ff"
@@ -115,7 +180,7 @@ const roadmapSections = [
       {
         title: "Built-in sprite variables",
         body:
-          "Read-only sprite values for width, height, center, and bounds without declaring them in every file.",
+          "Use sprite width, height, center, and bounds without declaring them yourself.",
         syntax: [
           "rect 0 0 $sprite.width $sprite.height #101820",
           "line 0 $sprite.center-y $sprite.width $sprite.center-y #d8f8ff"
@@ -124,7 +189,7 @@ const roadmapSections = [
       {
         title: "Relative dimension units",
         body:
-          "Width- and height-relative values for responsive source that still compiles to deterministic pixels.",
+          "Use width- and height-relative values while keeping deterministic pixel output.",
         syntax: [
           "rect 10%W 12%H 80%W 76%H #101820",
           "line 0 0.5h 1w 0.5h #70c8e8"
@@ -133,7 +198,7 @@ const roadmapSections = [
       {
         title: "Inline comments",
         body:
-          "End-of-line notes for explaining source without moving the explanation onto its own line.",
+          "Add notes at the end of a command line.",
         syntax: [
           "rect 8 8 96 40 #101820",
           "  cut 4 # chamfer each corner",
@@ -143,7 +208,7 @@ const roadmapSections = [
       {
         title: "Command ordering diagnostics",
         body:
-          "Clear compiler and editor guidance for where properties, geometry modifiers, appearance passes, and effects belong.",
+          "Clear messages when properties, modifiers, fills, strokes, or effects are out of order.",
         syntax: [
           "rect 8 8 96 40",
           "  cut 4",
@@ -154,7 +219,7 @@ const roadmapSections = [
       {
         title: "Transforms",
         body:
-          "Translate, rotate, scale, and mirror for shapes or groups while keeping pixel output predictable.",
+          "Translate, rotate, scale, and mirror shapes or groups predictably.",
         syntax: [
           "group pointer",
           "  rotate 45 center-x=32 center-y=32",
@@ -163,7 +228,7 @@ const roadmapSections = [
       },
       {
         title: "Reusable symbols",
-        body: "Small component definitions for repeated bolts, tabs, dividers, and panel details.",
+        body: "Define reusable pieces like bolts, tabs, dividers, and panel details.",
         syntax: [
           "symbol bolt size color",
           "  circle 0 0 size color",
@@ -173,7 +238,7 @@ const roadmapSections = [
       },
       {
         title: "Richer paths",
-        body: "Caps, joins, closed paths, fill behavior, and curve commands.",
+        body: "Add caps, joins, closed paths, fills, and curves.",
         syntax: [
           "path rail close=true",
           "  point 12 12",
@@ -185,7 +250,7 @@ const roadmapSections = [
       {
         title: "Targeted corner controls",
         body:
-          "Selector-based `cut` and `radius` controls for rectangle corners and polygon-family vertices.",
+          "Apply `cut` and `radius` to specific rectangle corners or polygon vertices.",
         syntax: [
           "rect 0 0 96 40 #101820",
           "  cut top 8",
@@ -197,51 +262,72 @@ const roadmapSections = [
       }
     ]
   },
-  {
-    title: "Tooling And Integrations",
-    summary:
-      "Features that make Radebe source easier to package, embed, and use inside game-authoring workflows.",
-    features: [
-      {
-        title: "Source-authored import metadata",
-        body:
-          "Sprite import hints for Unity-facing settings such as pivot, pixels per unit, borders, slicing, and filters.",
-        syntax: [
-          "sprite panel",
-          "  size 128 48",
-          "  unity pivot=center ppu=100",
-          "  border 8 8 8 8"
-        ].join("\n")
-      },
-      {
-        title: "Reusable editor package",
-        body: "A packaging boundary for embedding the editor surface outside this site.",
-        syntax: [
-          "import { RadebeEditor } from \"@radebe/editor\"",
-          "<RadebeEditor source={source} onChange={setSource} />"
-        ].join("\n")
-      },
-      {
-        title: "Unity live authoring",
-        body:
-          "A Unity editor surface with live preview parity once importer and language workflows are ready for it.",
-        syntax: [
-          "Assets/Create/Radebe Sprite",
-          "Open Radebe Authoring Window",
-          "Edit .rdb source with live generated Sprite preview"
-        ].join("\n")
-      }
-    ]
-  }
 ];
+
+function RoadmapVisual(props: { kind: RoadmapVisualKind }) {
+  const logo = {
+    npm: {
+      label: "npm packages",
+      src: "https://cdn.simpleicons.org/npm/CB3837"
+    },
+    unity: {
+      label: "Unity plugin",
+      src: "https://cdn.simpleicons.org/unity/FFFFFF"
+    },
+    vscode: {
+      label: "VS Code extension",
+      src: ""
+    }
+  }[props.kind];
+
+  if (props.kind === "vscode") {
+    return (
+      <div className="roadmap-visual roadmap-visual--vscode" aria-label={logo.label} role="img">
+        <svg
+          className="roadmap-brand-logo roadmap-brand-logo--vscode"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z" />
+        </svg>
+        <p className="roadmap-visual-label">{logo.label}</p>
+      </div>
+    );
+  }
+
+  if (props.kind === "npm") {
+    return (
+      <div className="roadmap-visual roadmap-visual--npm" aria-label="npm package" role="img">
+        <img
+          className={`roadmap-brand-logo roadmap-brand-logo--${props.kind}`}
+          alt=""
+          src={logo.src}
+        />
+        <p className="roadmap-visual-label">{logo.label}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`roadmap-visual roadmap-visual--${props.kind}`}
+      aria-label={logo.label}
+      role="img"
+    >
+      <img
+        className={`roadmap-brand-logo roadmap-brand-logo--${props.kind}`}
+        alt=""
+        src={logo.src}
+      />
+      <p className="roadmap-visual-label">{logo.label}</p>
+    </div>
+  );
+}
 
 export function RoadmapPage() {
   return (
     <>
-      <Hero
-        title="Roadmap"
-        summary="This page tracks user-facing capabilities from the project task board. New language, rendering, editor, and integration features belong here; internal fixes generally stay off the public roadmap unless they change the author workflow."
-      />
+      <Hero title="Roadmap" />
       {roadmapSections.map((section) => (
         <section className="roadmap-section" key={section.title}>
           <h3 className="roadmap-heading">{section.title}</h3>
@@ -249,12 +335,21 @@ export function RoadmapPage() {
           <div className="roadmap-grid">
             {section.features.map((feature) => (
               <article className="roadmap-card" key={feature.title}>
-                <h4 className="roadmap-card-title">{feature.title}</h4>
+                <div className="roadmap-card-header">
+                  <h4 className="roadmap-card-title">{feature.title}</h4>
+                  {feature.status !== undefined ? (
+                    <span className="roadmap-status">{feature.status}</span>
+                  ) : null}
+                </div>
                 <p className="roadmap-card-body">{feature.body}</p>
-                <HighlightedCodeBlock
-                  source={feature.syntax}
-                  options={{ strictCommands: false }}
-                />
+                {feature.visual !== undefined ? (
+                  <RoadmapVisual kind={feature.visual} />
+                ) : (
+                  <HighlightedCodeBlock
+                    source={feature.syntax}
+                    options={{ strictCommands: false }}
+                  />
+                )}
               </article>
             ))}
           </div>

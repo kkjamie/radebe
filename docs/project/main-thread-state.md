@@ -18,7 +18,8 @@ Last updated: `2026-05-27`
 - DEC-071 now fixes the concrete site-version format as `YYYY-MM-DD.N`, and the web-only public release uses `siteVersion` `2026-05-27.1`.
 - DEC-072 now fixes the release-notes ownership model: the public site renders one canonical product release-notes content source, and those notes are for product releases only rather than website-only deploy history.
 - DEC-074 now records the web-only release decision: publish `v0.1.0` without CLI, VSIX, or Unity downloads, keep public integration/download pages hidden, simplify the release build to the web app, and defer the GitHub-versus-Azure/Cloudflare artifact/source-hosting choice to T-135.
-- The first public release candidate is now prepared locally as a web-only product `v0.1.0`. The public release notes page describes it as the first public web release, and the home page no longer advertises unavailable CLI, Unity, or VS Code downloads.
+- The first public release candidate is now prepared locally as a web-only product `v0.1.0`. The public release notes page describes it as the first public web release and clarifies that downloadable CLI, VS Code, and Unity packages are not part of this release; the home page still describes those ecosystem directions as intended capabilities.
+- The public Roadmap now leads with an Integrations section covering Unity plugin, VS Code extension, npm packages, and reusable web editor support, using real brand-logo visuals for platform cards and a React-style usage snippet for the reusable editor.
 - Local validation for the web-only release candidate is in a good state: `npm run typecheck` passed outside the sandbox after the known local user-profile `EPERM`, `npm test` passed, and `npm run build:release:web` passed outside the sandbox. The generated `radebe-web/dist/downloads/` contains only `radebe-unity-bridge.manifest.json`; no `.exe`, `.vsix`, or `.unitypackage` is emitted.
 - M3 now contains the next rendering/language expansion tasks such as expressions, relative units, sprite output scaling, coordinate-space semantics, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean regions, mask composition, and mixed-corner follow-up work.
 - T-132 is now complete. `radebe-core/src/renderer.ts` stays as the public renderer entrypoint, while rect, circle, and polygon rendering moved into per-command folders with `fill`, `stroke`, `glow`, and `shadow` modules plus shared raster/layer helpers.
@@ -147,8 +148,8 @@ Last updated: `2026-05-27`
 - T-131 is a backlog task to resolve author-facing coordinate-space semantics before or alongside `outputscale`, including sprite bounds, point-like commands, filled extents, open paths, stroke alignment, antialiasing, tests, and docs.
 
 ## Best Next Tasks
-1. Merge/push the web-only `v0.1.0` release commit to `master`.
-2. Verify the Azure/Cloudflare Pages deployment and create the matching `product/v0.1.0` and `site/2026-05-27.1` tags if the hosted release is good.
+1. Verify the Azure/Cloudflare Pages deployment from the latest `master` push.
+2. Create the matching `product/v0.1.0` and `site/2026-05-27.1` tags if the hosted release is good.
 3. Start T-135 only after M2 closeout if the next priority is deciding GitHub migration and public artifact hosting for CLI, VSIX, and Unity downloads.
 
 ## Resume Checklist

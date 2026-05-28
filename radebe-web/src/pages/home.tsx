@@ -24,10 +24,10 @@ export function HomePage() {
           <h3 className="plain-list-title">Key features</h3>
           <ul className="plain-list-items">
             <li>Simple &amp; readable</li>
-            <li>Live browser editor</li>
-            <li>Command reference</li>
-            <li>Editable examples</li>
-            <li>No install required</li>
+            <li>Consumable as a Node package</li>
+            <li>CLI support</li>
+            <li>Unity integration</li>
+            <li>VS Code extension</li>
           </ul>
         </section>
         <div className="hero-actions">

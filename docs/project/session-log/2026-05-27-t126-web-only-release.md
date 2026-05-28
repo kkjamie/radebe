@@ -7,11 +7,12 @@ Milestone/Gate: `M2 / Gate D`
 
 ## Scope Completed
 - Re-scoped the `v0.1.0` public release to a web-only site publish with no CLI, VSIX, or Unity package downloads.
-- Updated public website copy so the home page and release notes no longer advertise unavailable CLI, Unity, or VS Code downloads.
+- Updated public website copy so release notes clarify that CLI, VSIX, and Unity downloads are not part of the web-only release, while the home page can still describe those ecosystem directions as intended capabilities.
 - Updated `siteVersion` to `2026-05-27.1` for the web-only publish.
 - Simplified `npm run build:release:web` so it builds only `@radebe/web`.
 - Simplified `azure-pipelines.yml` so the build stage runs on hosted Linux, publishes only `radebe-web/dist`, and no longer publishes packaged download artifacts.
 - Updated release process and planning docs so M2 can close around the web-only release while the public source/artifact-hosting decision moves to T-135.
+- Restored the original homepage ecosystem bullets after review and moved an Integrations section to the top of the roadmap, covering Unity plugin, VS Code extension, npm packages, and reusable web editor support with real brand-logo visuals where appropriate.
 
 ## Files Changed
 - `README.md`
@@ -40,9 +41,10 @@ Milestone/Gate: `M2 / Gate D`
 - `npm test` passed.
 - `npm run build:release:web` passed outside the sandbox.
 - Confirmed `radebe-web/dist/downloads/` contains only `radebe-unity-bridge.manifest.json`; no `.exe`, `.vsix`, or `.unitypackage` is emitted.
+- Local preview checked at `http://127.0.0.1:4173/#/roadmap`, including desktop and narrow screenshots under `Temp/`.
 
 ## Remaining Work
-- Commit, merge/push the web-only release to `master`, and verify the Cloudflare Pages deploy.
+- Verify the Cloudflare Pages deploy from the `master` push.
 - Create the matching `product/v0.1.0` and `site/2026-05-27.1` tags after hosted verification if the release is good.
 - Later run T-135 to decide whether public source/artifact hosting moves to GitHub or stays split across Azure/Cloudflare plus a separate artifact host.
 
@@ -52,9 +54,9 @@ Milestone/Gate: `M2 / Gate D`
 - The future CLI, VSIX, and Unity public download story remains intentionally deferred.
 
 ## Exact Next 3 Steps
-1. Commit the web-only release changes and merge/push them to `master`.
-2. Verify the hosted Azure/Cloudflare Pages deployment and check the public site copy.
-3. Tag the verified release as `product/v0.1.0` and `site/2026-05-27.1`, then close T-126 if the hosted deploy is good.
+1. Verify the hosted Azure/Cloudflare Pages deployment and check the public site copy.
+2. Tag the verified release as `product/v0.1.0` and `site/2026-05-27.1` if the hosted deploy is good.
+3. Close T-126 and pass M2 Gate D after hosted verification and tagging are complete.
 
 ## Paste-Ready Next Thread Prompt
 ```md

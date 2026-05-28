@@ -8,7 +8,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-126 | Publish the web-only `v0.1.0` site release | M2 | Gate D | P1 | In Progress | `codex` | None | Merge/push the web-only release to `master`, then verify the Cloudflare Pages deploy and tag the released site/product state |
+| T-126 | Publish the web-only `v0.1.0` site release | M2 | Gate D | P1 | In Progress | `codex` | None | Verify the Cloudflare Pages deploy from the `master` push, then tag the released site/product state if the hosted site is good |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

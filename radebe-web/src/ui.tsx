@@ -80,13 +80,15 @@ export function ActionLink(props: { link: DownloadLink }) {
 
 export function Hero(props: {
   title: string;
-  summary: string;
+  summary?: string;
   children?: ComponentChildren;
 }) {
   return (
     <section className="hero">
       <h2 className="hero-heading">{props.title}</h2>
-      <p className="hero-summary">{props.summary}</p>
+      {props.summary !== undefined ? (
+        <p className="hero-summary">{props.summary}</p>
+      ) : null}
       {props.children}
     </section>
   );

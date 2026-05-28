@@ -794,16 +794,84 @@ body {
   min-width: 0;
 }
 
+.roadmap-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
 .roadmap-card-title {
   margin: 0;
   font-size: 1.14rem;
   color: #fff3e1;
 }
 
+.roadmap-status {
+  flex: 0 0 auto;
+  border: 1px solid rgba(125,211,252,0.32);
+  border-radius: 999px;
+  background: rgba(125,211,252,0.1);
+  color: #c9f4ff;
+  padding: 3px 8px;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .roadmap-card-body {
   margin: 0;
   color: #d2c7b4;
   line-height: 1.55;
+}
+
+.roadmap-visual {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 178px;
+  padding: 22px;
+  background: #111416;
+  overflow: hidden;
+}
+
+.roadmap-visual--unity {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.11), rgba(255,255,255,0.02)),
+    #16191c;
+}
+
+.roadmap-visual--vscode {
+  background:
+    linear-gradient(135deg, rgba(52,152,219,0.34), rgba(32,54,76,0.22)),
+    #10151b;
+}
+
+.roadmap-visual--npm {
+  background:
+    linear-gradient(135deg, rgba(205,60,60,0.32), rgba(32,18,18,0.2)),
+    #171112;
+}
+
+.roadmap-brand-logo {
+  display: block;
+  width: 84px;
+  height: 84px;
+  fill: currentColor;
+  object-fit: contain;
+}
+
+.roadmap-brand-logo--vscode {
+  color: #007acc;
+}
+
+.roadmap-visual-label {
+  margin: 0;
+  color: #f1e7da;
+  font-weight: 700;
+  text-align: center;
 }
 
 .integration-command-grid {
