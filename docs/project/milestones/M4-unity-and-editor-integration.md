@@ -3,7 +3,7 @@
 Milestone ID: `M4`
 Title: `Unity And Editor Integration`
 Owner: `Main Thread`
-Last updated: `2026-05-26`
+Last updated: `2026-05-28`
 Status: `Planned`
 
 ## Outcome
@@ -18,7 +18,7 @@ Status: `Planned`
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Gate A | Unity Metadata Contract | Unity-facing source metadata and importer expectations are defined, implemented, and validated | Not Started | Seed task: T-072 |
-| Gate B | Reusable Editor Surface | The editor host is packaged behind a deliberate reusable boundary with documented consumption expectations | Not Started | Seed task: T-054 |
+| Gate B | Reusable Editor Surface | The editor host is packaged behind a deliberate reusable boundary with documented consumption expectations | Not Started | Seed tasks: T-054, T-137 |
 | Gate C | Unity Authoring Workflow | Unity gets a practical editor/live-authoring experience that builds on the reusable editor and packaged CLI/plugin path | Not Started | Seed task: T-055 |
 
 Allowed status values: `Not Started`, `In Progress`, `Passed`, `Blocked`.

@@ -219,11 +219,26 @@ const roadmapSections: RoadmapSection[] = [
       {
         title: "Transforms",
         body:
-          "Translate, rotate, scale, and mirror shapes or groups predictably.",
+          "Translate, rotate, and scale shapes or groups predictably.",
         syntax: [
           "group pointer",
           "  rotate 45 center-x=32 center-y=32",
           "  polygon 24 8 40 32 24 56 #ffcc88"
+        ].join("\n")
+      },
+      {
+        title: "Repeat containers",
+        body:
+          "Structural containers for linear, grid, radial, mirrored, tiled, and path-following repetition.",
+        syntax: [
+          "repeat-radial 12 64 64",
+          "  rect 61 8 6 16 #d8f8ff",
+          "",
+          "mirror x=64",
+          "  polygon 64 24 96 64 64 104 #70c8e8",
+          "",
+          "tile 0 0 128 64 dx=16 dy=16",
+          "  circle 0 0 2 #70c8e8"
         ].join("\n")
       },
       {

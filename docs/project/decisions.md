@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-27`
+Last updated: `2026-05-28`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -845,4 +845,26 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Treat `fill`, `stroke`, `shadow`, and `glow` as `appearance passes` in renderer architecture discussions and follow-up tasks. Keep the user-facing command names unchanged, preserve the geometry-versus-appearance distinction in the language model, and use future refactors such as T-133 to explore shared implementation capabilities for those appearance passes across shapes.
 - Consequences: The project gets one durable internal term for the ordered visual passes applied to shapes and composited layers, without forcing a surface-language rename or collapsing shape-specific geometry logic too early. Follow-up architecture work can now target appearance-pass unification explicitly instead of alternating between `effects`, `appearance`, and other overloaded labels.
 - Related tasks: T-132, T-133
+- Supersedes: N/A
+
+---
+
+### DEC-076: Model Repetition Features As Structural Containers
+- Date: `2026-05-28`
+- Status: Accepted
+- Context: Cog and repeated-detail authoring exposed a broader need for radial, linear, grid, mirrored, tiled, and path-following repetition without adding a narrow one-off `cog` command or treating repeated path vertices as one concatenated path by default.
+- Decision: Track repeaters as structural containers that instantiate child drawables under deterministic transforms. The planned family is `repeat-linear`, `repeat-grid`, `repeat-radial`, `mirror`, `tile`, and later `repeat-along-path`; `scatter` is intentionally excluded from the current planned set.
+- Consequences: The language gets a general reuse/composition direction for bolts, cogs, dial ticks, vents, grids, and tile-like regions while preserving shape commands as geometry primitives. Implementation should define transform semantics for repeated child drawables, keep repeated paths independent unless a later region-combination feature says otherwise, distinguish fixed-count `repeat-grid` from bounded-area `tile`, and defer `repeat-along-path` until richer path semantics are available.
+- Related tasks: T-069, T-070, T-071, T-136
+- Supersedes: N/A
+
+---
+
+### DEC-077: Keep VS Code Live Preview As A Lightweight WebviewPanel
+- Date: `2026-05-28`
+- Status: Accepted
+- Context: The VS Code extension already owns native `.rdb` editing and language support, while the existing web playground includes a Preact and CodeMirror authoring surface that should not be duplicated inside VS Code.
+- Decision: Implement the VS Code live rendered preview as an in-editor `WebviewPanel` that sits beside the native text editor, consumes `@radebe/core` render output from the extension side, and draws only the rendered artifact plus minimal preview controls/status in the webview. Do not open a separate browser window and do not embed the full `radebe-web` playground.
+- Consequences: VS Code keeps its native editor, undo, language features, and extension-host integration while gaining a rendered preview pane similar to Markdown Preview. The implementation can reuse the shared render artifact and selected preview-display logic without introducing Preact/CodeMirror into the extension preview. The task stays internal to the VS Code extension backlog and is intentionally excluded from the public website roadmap.
+- Related tasks: T-137, T-056, T-058
 - Supersedes: N/A

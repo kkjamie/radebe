@@ -1,7 +1,7 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-05-27`
+Last updated: `2026-05-28`
 
 ## Current Milestone / Gate
 - Milestone: `M2`
@@ -18,13 +18,16 @@ Last updated: `2026-05-27`
 - DEC-071 now fixes the concrete site-version format as `YYYY-MM-DD.N`, and the web-only public release uses `siteVersion` `2026-05-27.1`.
 - DEC-072 now fixes the release-notes ownership model: the public site renders one canonical product release-notes content source, and those notes are for product releases only rather than website-only deploy history.
 - DEC-074 now records the web-only release decision: publish `v0.1.0` without CLI, VSIX, or Unity downloads, keep public integration/download pages hidden, simplify the release build to the web app, and defer the GitHub-versus-Azure/Cloudflare artifact/source-hosting choice to T-135.
+- DEC-077 now records the VS Code live preview direction: implement it as a lightweight in-editor WebviewPanel beside the native `.rdb` editor, reuse `@radebe/core` render output, and avoid both a separate browser window and embedding the full Preact/CodeMirror web playground.
 - The first public release candidate is now prepared locally as a web-only product `v0.1.0`. The public release notes page describes it as the first public web release and clarifies that downloadable CLI, VS Code, and Unity packages are not part of this release; the home page still describes those ecosystem directions as intended capabilities.
 - The public Roadmap now leads with an Integrations section covering Unity plugin, VS Code extension, npm packages, and reusable web editor support, using real brand-logo visuals for platform cards and a React-style usage snippet for the reusable editor.
 - Local validation for the web-only release candidate is in a good state: `npm run typecheck` passed outside the sandbox after the known local user-profile `EPERM`, `npm test` passed, and `npm run build:release:web` passed outside the sandbox. The generated `radebe-web/dist/downloads/` contains only `radebe-unity-bridge.manifest.json`; no `.exe`, `.vsix`, or `.unitypackage` is emitted.
-- M3 now contains the next rendering/language expansion tasks such as expressions, relative units, sprite output scaling, coordinate-space semantics, procedural fills, blend modes, transforms, reusable symbols, richer paths, boolean regions, mask composition, and mixed-corner follow-up work.
+- M3 now contains the next rendering/language expansion tasks such as expressions, relative units, sprite output scaling, coordinate-space semantics, procedural fills, blend modes, transforms, reusable symbols, structural repeater containers, richer paths, boolean regions, mask composition, and mixed-corner follow-up work.
 - T-132 is now complete. `radebe-core/src/renderer.ts` stays as the public renderer entrypoint, while rect, circle, and polygon rendering moved into per-command folders with `fill`, `stroke`, `glow`, and `shadow` modules plus shared raster/layer helpers.
 - T-133 is the new renderer maintainability follow-up in M3: unify as much repeated shape-side appearance-pass logic as practical behind shared capabilities such as coverage, stroke-distance/perimeter sampling, and fill coordinate spaces without collapsing the clearer command seams from T-132 too early.
-- M4 now contains the Unity/editor work that should only resume deliberately: source-authored import metadata, reusable editor packaging, Unity live-authoring parity, and T-135 for deciding the public source/artifact-hosting path before restoring CLI, VSIX, or Unity downloads.
+- T-136 is a new M3 Gate B backlog task for structural repeater containers. The planned family is `repeat-linear`, `repeat-grid`, `repeat-radial`, `mirror`, `tile`, and later `repeat-along-path`; `scatter` is intentionally not in the current planned set.
+- T-137 is a new M4 Gate B backlog task for adding a VS Code live rendered preview pane. It is scoped to the VS Code extension and should stay off the public website roadmap.
+- M4 now contains the Unity/editor work that should only resume deliberately: source-authored import metadata, reusable editor packaging, the VS Code live rendered preview pane, Unity live-authoring parity, and T-135 for deciding the public source/artifact-hosting path before restoring CLI, VSIX, or Unity downloads.
 - T-128 swept the public Roadmap page so it now includes planned player-facing language/tooling backlog items such as `outputscale`, ordering diagnostics, split procedural fill families, and updated targeted corner controls while excluding internal release, optimization, and polish work.
 - The recovered source product spec is now reflected in code through an indentation-aware command tree, a schema-backed compiler registry, a small `sprite` header block with nested `size` and `background` properties, root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands, generic property normalization across positional inline args, named inline args, and child property commands, plus actual `fill` / `solid` / explicit `gradient-linear` / explicit `gradient-radial` appearance commands while `gradient` remains the compatibility alias for the linear form.
 - `rect-inset` now accepts four-side shorthand in `top right bottom left` order on both the command form, such as `rect-inset 4 4 8 8`, and the child property form, such as `inset 4 4 8 8`; existing uniform `rect-inset 6`, optional trailing color shorthand, and expanded `top` / `right` / `bottom` / `left` properties remain supported.
