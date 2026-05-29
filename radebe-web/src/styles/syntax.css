@@ -1,0 +1,17 @@
+.syntax-command { color: var(--color-accent); font-weight: 700; }
+.syntax-child-command { color: var(--color-syntax-child); font-weight: 700; }
+.syntax-property-command { color: var(--color-syntax-property-command); font-weight: 700; }
+.syntax-property { color: var(--color-syntax-property); }
+.syntax-value { color: var(--color-syntax-value); }
+.syntax-variable { color: var(--color-success-accent); font-weight: 700; }
+.syntax-comment { color: var(--color-syntax-comment); font-style: italic; }
+.syntax-punctuation { color: var(--color-syntax-punctuation); }
+.syntax-unknown { color: var(--color-error-soft); text-decoration: underline wavy var(--color-error); text-underline-offset: 3px; }
+
+.diagnostic-squiggle {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: var(--color-error);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+}

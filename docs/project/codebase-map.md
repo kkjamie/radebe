@@ -52,7 +52,8 @@ Last updated: `2026-05-29`
 - `radebe-web/src/playground/`: focused Playground internals for activation queueing, language assist helpers/rendering, CodeMirror syntax/color/diagnostic decorations, and preview/cached-preview presentation.
 - `radebe-web/src/syntax-highlight.ts`: shared static source highlighter used outside CodeMirror surfaces.
 - `radebe-web/src/ui.tsx`: reusable Preact page panels and small UI primitives used by page renderers.
-- `radebe-web/src/styles.css`: stylesheet for the web shell, editor, sidebar, and shared components.
+- `radebe-web/src/styles.css`: CSS cascade entrypoint that imports focused web style modules.
+- `radebe-web/src/styles/`: focused web style modules for tokens, base rules, syntax highlighting, editor/assist styling, shell/navigation/perf UI, page components, Playground styling, and responsive rules.
 - `radebe-web/src/types.ts`: web-only page/content types shared across the web modules.
 - `radebe-vscode/src/extension.ts`: VS Code extension activation for `.rdb` completions, signature help, diagnostics, color decorations/picker presentations, smart newline indentation, smart edits, and text render preview.
 - `radebe-vscode/src/language-adapter.ts`: pure adapter layer that converts VS Code-style offsets into shared `@radebe/core` language-service, color-token, and diagnostic-range calls.

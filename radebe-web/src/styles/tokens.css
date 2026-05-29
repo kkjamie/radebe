@@ -1,0 +1,84 @@
+:root {
+  --font-mono: Consolas, "Courier New", monospace;
+
+  --color-bg-page: #101214;
+  --color-bg-surface: #111416;
+  --color-bg-surface-raised: #151819;
+  --color-bg-editor: #12110f;
+  --color-bg-panel: #171512;
+  --color-bg-panel-warm: #191613;
+  --color-bg-canvas: #0d1011;
+  --color-bg-nav-active: #28231e;
+  --color-bg-completion-active: #222b2e;
+  --color-bg-button: #182024;
+  --color-bg-button-hover: #1d2b30;
+  --color-bg-card: rgba(255,255,255,0.035);
+  --color-bg-control: rgba(255,255,255,0.04);
+  --color-bg-link: rgba(255,255,255,0.02);
+  --color-bg-muted: rgba(255,255,255,0.03);
+  --color-bg-disabled: rgba(255,255,255,0.015);
+  --color-bg-active-line: rgba(255,255,255,0.024);
+  --color-bg-queued: rgba(18,17,15,0.72);
+  --color-bg-perf: rgba(10,13,15,0.94);
+
+  --color-text: #f4efe6;
+  --color-text-strong: #f8f4ec;
+  --color-text-bright: #f1ece3;
+  --color-text-heading: #fff3e1;
+  --color-text-nav: #efe6d9;
+  --color-text-body: #d2c7b4;
+  --color-text-copy: #d8cdbf;
+  --color-text-muted: #cbbda7;
+  --color-text-subtle: #b7ab99;
+  --color-text-faint: #8fa09d;
+  --color-text-disabled: #8e8476;
+  --color-text-editor-muted: #746a5f;
+  --color-text-editor-line: #a4998b;
+
+  --color-accent: #7dd3fc;
+  --color-accent-muted: #68b9d7;
+  --color-accent-soft: #bdefff;
+  --color-accent-bright: #d8f8ff;
+  --color-accent-pill: #c9f4ff;
+  --color-success: #c4f5b1;
+  --color-success-accent: #84e6a7;
+  --color-error: #ff6262;
+  --color-error-soft: #ff9f9f;
+  --color-error-text: #ffb8b8;
+  --color-warning: #ffcf99;
+
+  --color-syntax-child: #c4a7ff;
+  --color-syntax-property-command: #f0b35f;
+  --color-syntax-property: #ffc66d;
+  --color-syntax-value: #d8e6b3;
+  --color-syntax-comment: #7f948a;
+  --color-syntax-punctuation: #9d9183;
+
+  --border-faint: 1px solid rgba(255,255,255,0.05);
+  --border-subtle: 1px solid rgba(255,255,255,0.08);
+  --border-card: 1px solid rgba(255,255,255,0.09);
+  --border-muted: 1px solid rgba(255,255,255,0.1);
+  --border-soft: 1px solid rgba(255,255,255,0.12);
+  --border-control: 1px solid rgba(255,255,255,0.14);
+  --border-active: 1px solid rgba(255,255,255,0.18);
+  --border-accent-faint: 1px solid rgba(125,211,252,0.24);
+  --border-accent-muted: 1px solid rgba(125,211,252,0.28);
+  --border-accent: 1px solid rgba(125,211,252,0.32);
+  --border-accent-strong: 1px solid rgba(125,211,252,0.45);
+  --border-accent-focus: 1px solid rgba(125,211,252,0.48);
+  --border-success: 1px solid rgba(132,230,167,0.32);
+  --border-error: 1px solid rgba(255,98,98,0.38);
+
+  --bg-accent-faint: rgba(125,211,252,0.08);
+  --bg-accent-soft: rgba(125,211,252,0.1);
+  --bg-accent-active: rgba(125,211,252,0.12);
+  --bg-accent-selection: rgba(125,211,252,0.24);
+  --bg-success-soft: rgba(132,230,167,0.08);
+  --bg-error-soft: rgba(255,98,98,0.1);
+
+  --shadow-brand: drop-shadow(0 0 6px rgba(112,200,232,0.22));
+  --shadow-popover: 0 14px 30px rgba(0,0,0,0.34);
+  --shadow-popover-soft: 0 14px 30px rgba(0,0,0,0.26);
+  --shadow-panel: 0 18px 40px rgba(0,0,0,0.38);
+  --shadow-sprite: 0 18px 40px rgba(0,0,0,0.35);
+}
