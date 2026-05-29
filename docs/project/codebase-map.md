@@ -28,6 +28,7 @@ Last updated: `2026-05-29`
 - `radebe-core/src/schema.ts`: command registry, child-capability rules, compiler-facing shorthand/property metadata, and editor-facing argument, enum, indentation, inline-child, and shorthand-expansion metadata.
 - `radebe-core/src/language-service.ts`: headless editor assistance API for cursor context, schema-driven completions, argument help, enum suggestions, smart edits, and Enter indentation.
 - `radebe-core/src/renderer.ts`: public renderer boundary plus the convenience source-to-artifact pipeline helper.
+- `radebe-core/src/renderer/renderer.ts`: internal `DocumentRenderer` owner that orchestrates compiled document rasterization behind the public renderer facade.
 - `radebe-core/src/renderer/shared.ts`: internal shared raster, layer, mask, gradient, contour, and sampling helpers consumed by command renderers.
 - `radebe-core/src/renderer/appearance.ts`: internal shared appearance-pass helpers, currently including covered fill drawing across command-owned coverage samplers.
 - `radebe-core/src/renderer/commands/*/`: per-command renderer folders, with rect/circle/polygon currently split into `fill`, `stroke`, `glow`, `shadow`, and command entry modules.
