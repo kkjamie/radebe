@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-05-28`
+Last updated: `2026-05-29`
 
 ## Planning Horizon
 - Current: `2026-05-24` to `2026-06-07`
@@ -13,7 +13,7 @@ Last updated: `2026-05-28`
 | M0 | Planning baseline for the Radebe monorepo and package model | P0 | Done | 2026-05-24 | Initial setup | `docs/project/milestones/M0-planning-phase.md` | Passed |
 | M1 | Workspace scaffold for `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` | P0 | Done | 2026-06-07 | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Passed |
 | M2 | Website and release closeout candidate for the first usable authoring loop | P1 | Paused | 2026-06-07 | M1 completed; historical M2 gates A-C passed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate D blocked |
-| M3 | Refactoring and architecture stabilization before public GitHub migration | P1 | Planned | 2026-06-21 | M2 release candidate prepared; GitHub migration intentionally waits | `docs/project/milestones/M3-refactoring-stabilization.md` | Gate A |
+| M3 | Refactoring and architecture stabilization before public GitHub migration | P1 | In Progress | 2026-06-21 | M2 release candidate prepared; GitHub migration intentionally waits | `docs/project/milestones/M3-refactoring-stabilization.md` | Gate B |
 | M4 | GitHub migration for source, website, release binaries, and pipelines | P1 | Planned | 2026-07-05 | M3 refactor consolidation | `docs/project/milestones/M4-github-migration.md` | Gate A |
 | M5 | Full backlog review and future milestone replan before broad feature work resumes | P1 | Planned | 2026-07-12 | M4 GitHub migration | `docs/project/milestones/M5-backlog-review-and-replan.md` | Gate A |
 
@@ -25,9 +25,10 @@ Last updated: `2026-05-28`
 ## Current Focus
 - The milestone order has been reworked around the 2026-05-28 GitHub decision: refactoring first, GitHub migration second, backlog review third, then any remaining feature/integration work only after that review splits the next milestones.
 - M2 is paused rather than pushed through the Azure/Cloudflare closeout path. The local web-only `v0.1.0` release candidate, `siteVersion` `2026-05-27.1`, release notes, hidden public integration/download pages, and Pages-safe build output remain useful preparation, but public publication is retargeted to the M4 GitHub cutover.
-- M3 now owns the refactor/stabilization queue: T-143 test-suite split, T-141 shared argument binding, T-140 compiler modularization, T-133 renderer appearance-pass capability cleanup, T-147 class-owned compiler/renderer internals, T-142 web Playground split, T-144 Unity bridge helper split, T-145 web CSS token/style split, and T-146 web performance tooling split.
+- M3 now owns the refactor/stabilization queue: Gate A is complete through T-143 test-suite split, T-141 shared argument binding, and T-140 compiler modularization; Gate B now centers on T-147 class-owned compiler/renderer internals and T-133 renderer appearance-pass capability cleanup before Gate C non-core module splits.
 - M4 now owns the accepted GitHub migration: code hosting, website hosting, release binary hosting, GitHub Actions pipelines, and retargeted `v0.1.0` publication/tagging. T-135 is no longer a comparison task; it is the migration execution task.
 - M5 now owns the deliberate backlog review before "everything else". Rendering/language features, Unity/editor work, VS Code live preview, reusable editor packaging, and public-site follow-ons should be pruned, validated, merged, split, or re-milestoned there before new feature work begins.
+- T-140 is now complete: `radebe-core` keeps the public `src/compiler.ts` and `compileDocument` contract stable, while compiler internals are split into shared utility/value readers, variable resolution, sprite header compilation, appearance-pass compilation, primitive commands, rect/circle/polygon/path command modules, and structural group/mask modules under `src/compiler/`.
 - T-132 is now complete: `radebe-core` keeps the public `src/renderer.ts` boundary stable, but rect, circle, and polygon rendering are now split into per-command folders with `fill`, `stroke`, `glow`, and `shadow` modules plus shared raster/layer helpers. The next renderer maintainability follow-up is T-133, which should unify repeated shape appearance-pass logic behind reusable capabilities without erasing the clearer command boundaries.
 - A 2026-05-28 maintainability audit added follow-up refactor tasks for the M3 cleanup queue: T-140 compiler modularization, T-141 shared argument binding across compiler/editor/color metadata, T-142 web Playground module split, T-143 core test-suite split, T-144 Unity bridge helper split, T-145 web CSS token/style split, T-146 web performance tooling split, and T-147 class-owned compiler/renderer architecture.
 - DEC-078 sets the architecture direction for T-147 and related refactors: keep public parser/compiler/renderer function APIs as facades, keep compiled render instructions descriptive and data-oriented at package/worker/test boundaries, and move internal orchestration into classes such as compiler contexts, command compilers, document renderers, command renderers, appearance passes, samplers, layers, and masks while protecting pixel-loop performance.
