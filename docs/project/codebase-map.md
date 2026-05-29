@@ -61,7 +61,8 @@ Last updated: `2026-05-29`
 - `radebe-unity/docs/cli-bridge-contract.md`: Unity-facing invocation, install/update, and error-reporting contract for the packaged CLI bridge.
 - `radebe-unity/bridge.manifest.json`: bridge metadata that mirrors the Unity contract baseline and packaged artifact expectations.
 - `radebe-unity/PackageRoot.meta` and `radebe-unity/PackageRoot/**/*.meta`: repo-owned Unity-authored metadata mirror for package-root assets that do not live directly under `radebe-unity/Assets`, such as `bridge.manifest.json` and packaged CLI payload entries.
-- `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`: Unity-side install validation, plugin-local payload copy/update, and smoke-invocation helper for the packaged CLI payload under `Assets/Plugins/Radebe/Tools/radebe-cli/`.
+- `radebe-unity/Assets/Editor/RadebeCliBridgeHelper.cs`: Unity-side public editor facade for CLI payload validation, install/update, compile-file invocation, and smoke testing.
+- `radebe-unity/Assets/Editor/RadebeCliBridge*.cs`, `RadebeCliPayloadService.cs`, and `RadebeCliProcessInvoker.cs`: focused Unity bridge internals for constants, manifest DTOs, result DTOs, platform/path resolution, payload validation/install, and CLI process invocation/argument quoting.
 - `radebe-unity/Assets/Editor/RadebeSpriteImporter.cs`: Unity `.rdb` ScriptedImporter that invokes `radebe-cli compile <file> --format unity-json` and creates generated `Texture2D` plus `Sprite` subassets.
 - `radebe-unity/Assets/Editor/RadebeUnityMenu.cs`: Unity editor menu entrypoints for payload validation, install/update, and smoke testing.
 - `radebe-unity/Assets/Editor/RadebeUnityImportVerifier.cs`: batchmode-friendly utility for asserting that a configured `.rdb` asset imports as a generated Sprite.
