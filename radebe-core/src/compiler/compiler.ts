@@ -41,6 +41,17 @@ import {
   type VariableEnvironment
 } from "./variables.js";
 
+/**
+ * Owns the compiler stage after parsing and before rendering.
+ *
+ * The source pipeline is:
+ * 1. `parseSource` normalizes text, tokenizes non-comment lines by whitespace,
+ *    and builds an indentation-based command syntax tree.
+ * 2. `Compiler` validates that tree against the schema, resolves file-scoped
+ *    variables, compiles the sprite header, and lowers author commands into
+ *    plain compiled draw instructions.
+ * 3. `renderDocument` consumes those instructions and rasterizes the sprite.
+ */
 export class Compiler {
   private readonly diagnostics: RadebeDiagnostic[] = [];
   private readonly commands: CompiledDrawCommand[] = [];
