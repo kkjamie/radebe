@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-05-27`
+Last updated: `2026-05-29`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -21,7 +21,9 @@ Last updated: `2026-05-27`
 ## Core Runtime Paths
 - `radebe-core/src/index.ts`: root public API that re-exports shared types and the common parse/compile/render helpers.
 - `radebe-core/src/parser.ts`: parser boundary for converting source text into the shared parsed document shape.
-- `radebe-core/src/compiler.ts`: compiler boundary for transforming parsed documents into renderable compiled documents.
+- `radebe-core/src/compiler.ts`: public compiler facade for transforming parsed documents into renderable compiled documents.
+- `radebe-core/src/compiler/compiler.ts`: internal `Compiler` owner that holds compiler diagnostics, variable state, sprite state, root command sequencing, and draw-command dispatch behind the public facade.
+- `radebe-core/src/compiler/`: internal compiler implementation modules for shared compiler utilities, variables, sprite headers, appearance passes, rectangle modifiers, command compilers, and structural group/mask compilers.
 - `radebe-core/src/colors.ts`: shared Radebe color parsing, formatting, named-color registry, and source token range extraction for editor color decorators.
 - `radebe-core/src/schema.ts`: command registry, child-capability rules, compiler-facing shorthand/property metadata, and editor-facing argument, enum, indentation, inline-child, and shorthand-expansion metadata.
 - `radebe-core/src/language-service.ts`: headless editor assistance API for cursor context, schema-driven completions, argument help, enum suggestions, smart edits, and Enter indentation.

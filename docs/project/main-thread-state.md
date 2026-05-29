@@ -15,7 +15,7 @@ Last updated: `2026-05-29`
 - T-126 is parked from the old Cloudflare closeout path and retargeted to M4 Gate E so the release is published and tagged through the GitHub path.
 - T-135 is no longer an undecided hosting comparison; it is now the M4 GitHub migration execution task for repo/source hosting, GitHub Actions, Pages, Releases, secrets, branch/cutover, and release binary hosting.
 - T-143, T-141, and T-140 are complete, so M3 Gate A has passed. The core test safety net is split by concern, malformed numeric-token coverage is in place, one shared internal binding helper now handles strict integer-token detection plus `rect-inset` and variadic trailing-color positional interpretation across compiler, language-service, and color-token detection, and the compiler is split behind the stable public `compileDocument` facade.
-- M3 Gate B is now active. It keeps T-147 and T-133 together: introduce the first class-owned compiler/renderer subsystem slice and reduce renderer appearance-pass duplication while preserving plain-data boundaries and allocation-light pixel loops.
+- M3 Gate B is now active. T-147 is complete with an internal `Compiler` owner behind the public `compileDocument` facade; T-133 is next to reduce renderer appearance-pass duplication while preserving plain-data boundaries and allocation-light pixel loops.
 - M3 Gate C covers non-core refactor hotspots: T-142 web Playground split, T-144 Unity bridge helper split, T-145 web CSS token/style split, and T-146 web performance tooling split.
 - M5 now owns backlog validation through new task T-148. Rendering/language features, Unity/editor follow-ons, VS Code live preview, reusable editor packaging, and public-site follow-ons should not start until they are pruned, validated, merged, split, or assigned to fresh post-review milestones.
 - T-125 final public website QA/polish, T-074 vocabulary alignment, the 2026-05-27 Unity redeploy/GUID repair, and the 2026-05-28 VS Code Enter/autocomplete fix remain completed historical context.
@@ -141,9 +141,9 @@ Last updated: `2026-05-29`
 - T-131 is a backlog task to resolve author-facing coordinate-space semantics before or alongside `outputscale`, including sprite bounds, point-like commands, filled extents, open paths, stroke alignment, antialiasing, tests, and docs.
 
 ## Best Next Tasks
-1. Start T-147 and introduce the first class-owned compiler or renderer subsystem slice behind the existing public function facades.
-2. Keep T-133 close behind T-147 so renderer appearance-pass duplication is reduced without erasing the clearer command renderer boundaries from T-132.
-3. Re-check M3 Gate B evidence after the first T-147/T-133 slice to decide whether Gate B needs another narrow follow-up before Gate C.
+1. Start T-133 and reduce renderer appearance-pass duplication behind reusable coverage, stroke-distance/perimeter sampling, or fill-coordinate capabilities.
+2. Preserve the renderer command boundaries from T-132 and keep hot pixel loops allocation-light while introducing any new helper or class-owned capability.
+3. Re-check M3 Gate B evidence after T-133 to decide whether the gate can pass or needs one narrow follow-up before Gate C.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.
