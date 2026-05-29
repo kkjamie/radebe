@@ -48,7 +48,8 @@ Last updated: `2026-05-29`
 - `radebe-web/src/pages/command-reference.tsx`: generic command reference page component that renders command docs and examples.
 - `radebe-web/src/pages/index.ts`: barrel exports for page components and page definitions.
 - `radebe-web/src/content/commands/*.ts`: one command reference doc module per sidebar command page, with `content/commands/index.ts` preserving navigation order.
-- `radebe-web/src/playground.tsx`: Preact-hosted CodeMirror Radebe editor/preview surface, schema-driven assists, diagnostics, color swatches, and preview rendering.
+- `radebe-web/src/playground.tsx`: Preact-hosted Playground orchestration shell for the CodeMirror editor, preview lifecycle, source state, and rendered layout.
+- `radebe-web/src/playground/`: focused Playground internals for activation queueing, language assist helpers/rendering, CodeMirror syntax/color/diagnostic decorations, and preview/cached-preview presentation.
 - `radebe-web/src/syntax-highlight.ts`: shared static source highlighter used outside CodeMirror surfaces.
 - `radebe-web/src/ui.tsx`: reusable Preact page panels and small UI primitives used by page renderers.
 - `radebe-web/src/styles.css`: stylesheet for the web shell, editor, sidebar, and shared components.

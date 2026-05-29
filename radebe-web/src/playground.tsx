@@ -3,730 +3,62 @@ import {
   EditorSelection,
   EditorState,
   Prec,
-  RangeSetBuilder,
-  StateEffect,
-  StateField,
   Transaction,
   type TransactionSpec
 } from "@codemirror/state";
 import {
-  Decoration,
-  type DecorationSet,
   EditorView,
   keymap,
-  ViewPlugin,
-  WidgetType,
   type ViewUpdate
 } from "@codemirror/view";
-import {
-  formatRadebeColor,
-  getRadebeColorTokens,
-  parseRadebeColorToken,
-  type RadebeRgbaColor
-} from "@radebe/core/colors";
 import {
   getArgumentHelp,
   getEnterIndentation,
   getLanguageCompletions,
   getLanguageSmartEdits,
-  type LanguageArgumentHelp,
-  type LanguageCompletionItem,
   type LanguageCompletionResult,
   type LanguageServiceRequest,
   type LanguageTextEdit
 } from "@radebe/core/language-service";
-import { getCommandDefinition } from "@radebe/core/schema";
-import type { PipelineResult, RadebeDiagnostic } from "@radebe/core/types";
+import type { PipelineResult } from "@radebe/core/types";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 import { markPerfDuration, markPerfPoint } from "./perf.js";
 import {
+  getNowMs,
+  requestPlaygroundActivation,
+  type PlaygroundActivationLease
+} from "./playground/activation.js";
+import {
+  adjustOffsetForEdit,
+  getLanguagePosition,
+  isCompletionRequestShortcut,
+  isCursorNavigationKey
+} from "./playground/assist.js";
+import {
+  getVisibleCompletionCount,
+  renderArgumentHelp,
+  renderCompletionList
+} from "./playground/assist-view.js";
+import {
+  createSourceDiagnosticDecorations,
+  diagnosticDecorations,
+  setDiagnosticDecorations,
+  sourceColorSwatches,
+  sourceSyntaxHighlighter
+} from "./playground/editor-decorations.js";
+import {
+  PlaygroundPreviewPresenter,
+  type CachedPreview
+} from "./playground/preview-presenter.js";
+import {
   enqueuePreviewRender,
   type PreviewRenderTicket
 } from "./playground-preview-queue.js";
-import { isVariableUsageToken } from "./syntax-highlight.js";
 import type { ExamplePlayground } from "./types.js";
-
-type SourceTokenSpan = {
-  text: string;
-  from: number;
-  to: number;
-};
 
 const ASSIST_UPDATE_DELAY_MS = 35;
 const PREVIEW_RENDER_DELAY_MS = 120;
-const MAX_CONCURRENT_STANDARD_PLAYGROUND_STARTS = 1;
-
-type CachedPreview = {
-  src: string;
-  width: number;
-  height: number;
-};
-
-type PlaygroundActivationLease = {
-  release: () => void;
-};
-
-type PlaygroundActivationPriority = {
-  distanceFromViewportPx: number;
-  topPx: number;
-  visible: boolean;
-};
-
-type PlaygroundActivationRequest = {
-  token: number;
-  getPriority: () => PlaygroundActivationPriority;
-  grant: (lease: PlaygroundActivationLease) => void;
-};
-
-const pendingPlaygroundActivations = new Map<number, PlaygroundActivationRequest>();
-let activeStandardPlaygroundStarts = 0;
-let nextPlaygroundActivationToken = 0;
-
-function getNowMs(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
-function compareActivationRequests(
-  left: PlaygroundActivationRequest,
-  right: PlaygroundActivationRequest
-): number {
-  const leftPriority = left.getPriority();
-  const rightPriority = right.getPriority();
-
-  if (leftPriority.visible !== rightPriority.visible) {
-    return leftPriority.visible ? -1 : 1;
-  }
-
-  if (leftPriority.visible && rightPriority.visible) {
-    if (leftPriority.topPx !== rightPriority.topPx) {
-      return leftPriority.topPx - rightPriority.topPx;
-    }
-  } else if (
-    leftPriority.distanceFromViewportPx !== rightPriority.distanceFromViewportPx
-  ) {
-    return leftPriority.distanceFromViewportPx - rightPriority.distanceFromViewportPx;
-  }
-
-  return left.token - right.token;
-}
-
-function pumpPlaygroundActivationQueue(): void {
-  while (
-    activeStandardPlaygroundStarts < MAX_CONCURRENT_STANDARD_PLAYGROUND_STARTS &&
-    pendingPlaygroundActivations.size > 0
-  ) {
-    const nextRequest = [...pendingPlaygroundActivations.values()].sort(
-      compareActivationRequests
-    )[0];
-
-    if (!nextRequest) {
-      return;
-    }
-
-    pendingPlaygroundActivations.delete(nextRequest.token);
-    activeStandardPlaygroundStarts += 1;
-
-    let released = false;
-    const lease: PlaygroundActivationLease = {
-      release: () => {
-        if (released) {
-          return;
-        }
-
-        released = true;
-        activeStandardPlaygroundStarts = Math.max(
-          activeStandardPlaygroundStarts - 1,
-          0
-        );
-        pumpPlaygroundActivationQueue();
-      }
-    };
-
-    nextRequest.grant(lease);
-  }
-}
-
-function requestPlaygroundActivation(request: Omit<PlaygroundActivationRequest, "token">): {
-  cancel: () => void;
-  reprioritize: () => void;
-} {
-  const token = nextPlaygroundActivationToken;
-
-  nextPlaygroundActivationToken += 1;
-  pendingPlaygroundActivations.set(token, {
-    ...request,
-    token
-  });
-  pumpPlaygroundActivationQueue();
-
-  return {
-    cancel: () => {
-      if (pendingPlaygroundActivations.delete(token)) {
-        pumpPlaygroundActivationQueue();
-      }
-    },
-    reprioritize: () => {
-      pumpPlaygroundActivationQueue();
-    }
-  };
-}
-
-function getLanguagePosition(source: string, offset: number): LanguageServiceRequest["position"] {
-  const beforeCursor = source.slice(0, offset).replace(/\r\n/g, "\n");
-  const lines = beforeCursor.split("\n");
-
-  return {
-    line: lines.length,
-    column: lines[lines.length - 1]!.length + 1
-  };
-}
-
-type ArgumentHelpDefinition = LanguageArgumentHelp["arguments"][number];
-
-function formatArgumentKind(argument: ArgumentHelpDefinition): string {
-  return argument.enumValues?.join("|") ?? argument.valueKind;
-}
-
-function formatArgumentName(argument: ArgumentHelpDefinition): string {
-  return argument.required ? argument.name : `${argument.name}?`;
-}
-
-function isCompletionRequestShortcut(event: KeyboardEvent): boolean {
-  return (
-    event.ctrlKey &&
-    !event.altKey &&
-    !event.metaKey &&
-    (event.key === " " || event.code === "Space")
-  );
-}
-
-function isCursorNavigationKey(event: KeyboardEvent): boolean {
-  return [
-    "ArrowLeft",
-    "ArrowRight",
-    "Home",
-    "End",
-    "PageUp",
-    "PageDown"
-  ].includes(event.key);
-}
-
-function adjustOffsetForEdit(offset: number, edit: LanguageTextEdit): number {
-  if (edit.end <= offset) {
-    return offset + edit.text.length - (edit.end - edit.start);
-  }
-
-  if (edit.start < offset) {
-    return edit.start + edit.text.length;
-  }
-
-  return offset;
-}
-
-function getSourceTokenSpans(lineText: string, lineFrom: number): SourceTokenSpan[] {
-  return [...lineText.matchAll(/\S+/g)].map((match) => {
-    const from = lineFrom + (match.index ?? 0);
-
-    return {
-      text: match[0],
-      from,
-      to: from + match[0].length
-    };
-  });
-}
-
-function getCommandTokenSyntaxClass(token: string): string {
-  const definition = getCommandDefinition(token);
-
-  if (!definition) {
-    return "syntax-unknown";
-  }
-
-  return definition.kind === "property"
-    ? "syntax-property-command"
-    : "syntax-command";
-}
-
-function getArgumentTokenSyntaxClass(
-  token: string,
-  context: { commandName: string; argumentIndex: number }
-): string {
-  const equalsIndex = token.indexOf("=");
-
-  if (equalsIndex > 0) {
-    return "syntax-property";
-  }
-
-  if (context.commandName === "var" && context.argumentIndex === 0) {
-    return "syntax-variable";
-  }
-
-  if (isVariableUsageToken(token)) {
-    return "syntax-variable";
-  }
-
-  const definition = getCommandDefinition(token);
-
-  if (definition && definition.kind !== "property") {
-    return "syntax-child-command";
-  }
-
-  return "syntax-value";
-}
-
-function createSourceSyntaxDecorations(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
-
-  for (const { from, to } of view.visibleRanges) {
-    let position = from;
-
-    while (position <= to) {
-      const line = view.state.doc.lineAt(position);
-      const lineText = line.text;
-
-      if (lineText.trimStart().startsWith("#")) {
-        builder.add(line.from, line.to, Decoration.mark({ class: "syntax-comment" }));
-      } else {
-        const tokens = getSourceTokenSpans(lineText, line.from);
-        let commandName = "";
-        let argumentIndex = 0;
-
-        tokens.forEach((token, tokenIndex) => {
-          const className =
-            tokenIndex === 0
-              ? getCommandTokenSyntaxClass(token.text)
-              : getArgumentTokenSyntaxClass(token.text, {
-                  commandName,
-                  argumentIndex
-                });
-
-          builder.add(token.from, token.to, Decoration.mark({ class: className }));
-
-          if (tokenIndex === 0) {
-            commandName = token.text;
-          } else {
-            argumentIndex += 1;
-          }
-        });
-      }
-
-      if (line.to >= to || line.number === view.state.doc.lines) {
-        break;
-      }
-
-      position = line.to + 1;
-    }
-  }
-
-  return builder.finish();
-}
-
-function formatNativeColorInputValue(color: RadebeRgbaColor): string {
-  return formatRadebeColor({ ...color, a: 1 });
-}
-
-function formatCssColor(color: RadebeRgbaColor): string {
-  return `rgba(${Math.round(color.r)}, ${Math.round(color.g)}, ${Math.round(color.b)}, ${color.a})`;
-}
-
-function applyColorSwatchBackground(element: HTMLElement, color: RadebeRgbaColor): void {
-  const cssColor = formatCssColor(color);
-
-  if (color.a >= 1) {
-    element.style.background = cssColor;
-    element.style.backgroundPosition = "";
-    element.style.backgroundSize = "";
-    return;
-  }
-
-  element.style.background = [
-    `linear-gradient(${cssColor}, ${cssColor})`,
-    "linear-gradient(45deg, #8b8174 25%, transparent 25%)",
-    "linear-gradient(-45deg, #8b8174 25%, transparent 25%)",
-    "linear-gradient(45deg, transparent 75%, #8b8174 75%)",
-    "linear-gradient(-45deg, transparent 75%, #8b8174 75%)"
-  ].join(", ");
-  element.style.backgroundPosition = "0 0, 0 0, 0 4px, 4px -4px, -4px 0";
-  element.style.backgroundSize =
-    "100% 100%, 8px 8px, 8px 8px, 8px 8px, 8px 8px";
-}
-
-let closeActiveNativeColorPicker: (() => void) | null = null;
-
-function openNativeColorPicker(
-  view: EditorView,
-  from: number,
-  to: number,
-  color: RadebeRgbaColor,
-  anchor: DOMRect
-): void {
-  const input = document.createElement("input");
-
-  closeActiveNativeColorPicker?.();
-
-  function cleanup(): void {
-    window.removeEventListener("focus", handleWindowFocus);
-    input.remove();
-    if (closeActiveNativeColorPicker === cleanup) {
-      closeActiveNativeColorPicker = null;
-    }
-  }
-
-  function handleWindowFocus(): void {
-    window.setTimeout(cleanup, 0);
-  }
-
-  input.type = "color";
-  input.className = "source-color-native-picker";
-  input.value = formatNativeColorInputValue(color);
-  input.style.left = `${Math.round(anchor.left)}px`;
-  input.style.top = `${Math.round(anchor.top)}px`;
-  input.style.width = `${Math.max(Math.round(anchor.width), 18)}px`;
-  input.style.height = `${Math.max(Math.round(anchor.height), 18)}px`;
-  input.tabIndex = -1;
-  input.setAttribute("aria-hidden", "true");
-  input.addEventListener("change", () => {
-    const nextColor = parseRadebeColorToken(input.value);
-
-    if (nextColor === null) {
-      cleanup();
-      return;
-    }
-
-    const replacement = formatRadebeColor({ ...nextColor, a: color.a });
-    view.dispatch({
-      changes: { from, to, insert: replacement },
-      selection: EditorSelection.cursor(from + replacement.length)
-    });
-    cleanup();
-    view.focus();
-  });
-  input.addEventListener("cancel", cleanup);
-
-  document.body.append(input);
-  closeActiveNativeColorPicker = cleanup;
-  window.addEventListener("focus", handleWindowFocus);
-  input.focus({ preventScroll: true });
-
-  try {
-    const pickerInput = input as HTMLInputElement & { showPicker?: () => void };
-
-    if (typeof pickerInput.showPicker === "function") {
-      pickerInput.showPicker();
-    } else {
-      input.click();
-    }
-  } catch {
-    input.click();
-  }
-}
-
-class SourceColorSwatchWidget extends WidgetType {
-  constructor(
-    readonly from: number,
-    readonly to: number,
-    readonly tokenText: string,
-    readonly color: RadebeRgbaColor
-  ) {
-    super();
-  }
-
-  eq(other: SourceColorSwatchWidget): boolean {
-    return (
-      this.from === other.from &&
-      this.to === other.to &&
-      this.tokenText === other.tokenText &&
-      formatRadebeColor(this.color) === formatRadebeColor(other.color)
-    );
-  }
-
-  toDOM(view: EditorView): HTMLElement {
-    const button = document.createElement("button");
-
-    button.type = "button";
-    button.className = "source-color-swatch";
-    button.title = `Edit color ${this.tokenText}`;
-    button.setAttribute("aria-label", `Edit color ${this.tokenText}`);
-    applyColorSwatchBackground(button, this.color);
-    button.addEventListener("mousedown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-    });
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      openNativeColorPicker(
-        view,
-        this.from,
-        this.to,
-        this.color,
-        button.getBoundingClientRect()
-      );
-    });
-
-    return button;
-  }
-
-  ignoreEvent(): boolean {
-    return true;
-  }
-}
-
-function createSourceColorDecorations(view: EditorView): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
-  const source = view.state.doc.toString();
-  const colorTokens = getRadebeColorTokens(source);
-
-  colorTokens.forEach((token) => {
-    const isVisible = view.visibleRanges.some((range) => {
-      return token.start >= range.from && token.start <= range.to;
-    });
-
-    if (!isVisible) {
-      return;
-    }
-
-    builder.add(
-      token.start,
-      token.start,
-      Decoration.widget({
-        side: -1,
-        widget: new SourceColorSwatchWidget(
-          token.start,
-          token.end,
-          token.text,
-          token.color
-        )
-      })
-    );
-  });
-
-  return builder.finish();
-}
-
-function findTokenAtOffset(
-  tokens: SourceTokenSpan[],
-  offset: number
-): SourceTokenSpan | null {
-  return (
-    tokens.find((token) => token.from <= offset && offset <= token.to) ??
-    tokens.find((token) => token.from > offset) ??
-    tokens[0] ??
-    null
-  );
-}
-
-function findTokenMatchingValue(
-  tokens: SourceTokenSpan[],
-  value: string
-): SourceTokenSpan | null {
-  return (
-    tokens.find(
-      (token) =>
-        token.text === value ||
-        (token.text.includes("=") && token.text.split("=").at(-1) === value)
-    ) ?? null
-  );
-}
-
-function findFirstExtraPositionalToken(
-  tokens: SourceTokenSpan[]
-): SourceTokenSpan | null {
-  const commandToken = tokens[0];
-  const definition = commandToken ? getCommandDefinition(commandToken.text) : null;
-  const shorthandLength = definition?.shorthandSchema?.length ?? 0;
-  let positionalIndex = 0;
-
-  for (const token of tokens.slice(1)) {
-    if (token.text.includes("=")) {
-      continue;
-    }
-
-    if (positionalIndex >= shorthandLength) {
-      return token;
-    }
-
-    positionalIndex += 1;
-  }
-
-  return tokens.at(-1) ?? null;
-}
-
-function findArgumentTokenByName(
-  tokens: SourceTokenSpan[],
-  argumentName: string
-): SourceTokenSpan | null {
-  const commandToken = tokens[0];
-  const definition = commandToken ? getCommandDefinition(commandToken.text) : null;
-  let positionalIndex = 0;
-
-  for (const token of tokens.slice(1)) {
-    const equalsIndex = token.text.indexOf("=");
-
-    if (equalsIndex > 0) {
-      if (token.text.slice(0, equalsIndex) === argumentName) {
-        return token;
-      }
-
-      continue;
-    }
-
-    const shorthandName = definition?.shorthandSchema?.[positionalIndex];
-
-    if (shorthandName === argumentName) {
-      return token;
-    }
-
-    positionalIndex += 1;
-  }
-
-  return null;
-}
-
-function getReceivedDiagnosticToken(message: string): string | null {
-  return message.match(/Received "([^"]+)"/)?.[1] ?? null;
-}
-
-function getQuotedDiagnosticToken(message: string): string | null {
-  return message.match(/"([^"]+)"/)?.[1] ?? null;
-}
-
-function getDiagnosticTokenRange(
-  view: EditorView,
-  diagnostic: RadebeDiagnostic
-): { from: number; to: number } | null {
-  if (
-    diagnostic.line === undefined ||
-    diagnostic.line < 1 ||
-    diagnostic.line > view.state.doc.lines
-  ) {
-    return null;
-  }
-
-  const line = view.state.doc.line(diagnostic.line);
-  const tokens = getSourceTokenSpans(line.text, line.from);
-
-  if (tokens.length === 0) {
-    return null;
-  }
-
-  const receivedToken = getReceivedDiagnosticToken(diagnostic.message);
-  const quotedToken = getQuotedDiagnosticToken(diagnostic.message);
-  const inferredToken =
-    (receivedToken ? findTokenMatchingValue(tokens, receivedToken) : null) ??
-    (diagnostic.message.includes("too many positional arguments")
-      ? findFirstExtraPositionalToken(tokens)
-      : null) ??
-    (quotedToken ? findArgumentTokenByName(tokens, quotedToken) : null) ??
-    (quotedToken ? findTokenMatchingValue(tokens, quotedToken) : null) ??
-    findTokenAtOffset(
-      tokens,
-      line.from + Math.max((diagnostic.column ?? 1) - 1, 0)
-    );
-
-  if (!inferredToken) {
-    return null;
-  }
-
-  return {
-    from: inferredToken.from,
-    to: inferredToken.to
-  };
-}
-
-function createSourceDiagnosticDecorations(
-  view: EditorView,
-  diagnostics: RadebeDiagnostic[]
-): DecorationSet {
-  const builder = new RangeSetBuilder<Decoration>();
-  const ranges = diagnostics
-    .map((diagnostic) => {
-      const range = getDiagnosticTokenRange(view, diagnostic);
-
-      return range === null
-        ? null
-        : {
-            ...range,
-            message: diagnostic.message
-          };
-    })
-    .filter((range): range is { from: number; to: number; message: string } => {
-      return range !== null && range.from < range.to;
-    })
-    .sort((left, right) => left.from - right.from || left.to - right.to);
-
-  ranges.forEach((range) => {
-    builder.add(
-      range.from,
-      range.to,
-      Decoration.mark({
-        attributes: { title: range.message },
-        class: "diagnostic-squiggle"
-      })
-    );
-  });
-
-  return builder.finish();
-}
-
-const setDiagnosticDecorations = StateEffect.define<DecorationSet>();
-
-const diagnosticDecorations = StateField.define<DecorationSet>({
-  create() {
-    return Decoration.none;
-  },
-  update(decorations, transaction) {
-    let nextDecorations = decorations.map(transaction.changes);
-
-    for (const effect of transaction.effects) {
-      if (effect.is(setDiagnosticDecorations)) {
-        nextDecorations = effect.value;
-      }
-    }
-
-    return nextDecorations;
-  },
-  provide: (field) => EditorView.decorations.from(field)
-});
-
-const sourceSyntaxHighlighter = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-
-    constructor(view: EditorView) {
-      this.decorations = createSourceSyntaxDecorations(view);
-    }
-
-    update(update: ViewUpdate): void {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = createSourceSyntaxDecorations(update.view);
-      }
-    }
-  },
-  {
-    decorations: (plugin) => plugin.decorations
-  }
-);
-
-const sourceColorSwatches = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-
-    constructor(view: EditorView) {
-      this.decorations = createSourceColorDecorations(view);
-    }
-
-    update(update: ViewUpdate): void {
-      if (update.docChanged || update.viewportChanged) {
-        this.decorations = createSourceColorDecorations(update.view);
-      }
-    }
-  },
-  {
-    decorations: (plugin) => plugin.decorations
-  }
-);
 
 export function Playground(props: {
   playground: ExamplePlayground;
@@ -872,10 +204,23 @@ export function Playground(props: {
     const initialSource =
       props.sourceState.get(props.playground.id) ?? props.playground.source;
     const cachedPreview = props.cachedPreview;
+    const previewPresenter = new PlaygroundPreviewPresenter(
+      {
+        cachedPreviewImage,
+        diagnosticsOutput,
+        previewMeta,
+        previewState,
+        spriteCanvas,
+        spriteSurface,
+        spriteViewport,
+        status,
+        zoomSelect
+      },
+      cachedPreview
+    );
     let editorView: EditorView;
     let livePreviewActive =
       cachedPreview === undefined || props.sourceState.has(props.playground.id);
-    let currentArtifactSize = { width: 1, height: 1 };
     let completionResult: LanguageCompletionResult | null = null;
     let activeCompletionIndex = 0;
     let completionListExplicit = false;
@@ -916,139 +261,6 @@ export function Playground(props: {
       activationLeaseRef.current = null;
     }
 
-    function setPreviewState(
-      state: "cached" | "dirty" | "error" | "queued" | "refreshing" | "rendered",
-      label: string
-    ): void {
-      previewState.dataset.state = state;
-      previewState.textContent = label;
-    }
-
-    function getViewportContentSize(): { width: number; height: number } {
-      const viewportRect = spriteViewport.getBoundingClientRect();
-      const viewportStyle = window.getComputedStyle(spriteViewport);
-      const horizontalPadding =
-        (Number.parseFloat(viewportStyle.paddingLeft) || 0) +
-        (Number.parseFloat(viewportStyle.paddingRight) || 0);
-      const verticalPadding =
-        (Number.parseFloat(viewportStyle.paddingTop) || 0) +
-        (Number.parseFloat(viewportStyle.paddingBottom) || 0);
-
-      return {
-        width: Math.max(viewportRect.width - horizontalPadding, 1),
-        height: Math.max(viewportRect.height - verticalPadding, 1)
-      };
-    }
-
-    function applyCanvasScale(width: number, height: number): void {
-      currentArtifactSize = {
-        width: Math.max(width, 1),
-        height: Math.max(height, 1)
-      };
-
-      let scale = Number.parseInt(zoomSelect.value, 10);
-
-      if (zoomSelect.value === "fit") {
-        const viewportSize = getViewportContentSize();
-
-        scale = Math.max(
-          Math.min(
-            Math.floor(
-              Math.min(
-                viewportSize.width / currentArtifactSize.width,
-                viewportSize.height / currentArtifactSize.height
-              )
-            ),
-            32
-          ),
-          1
-        );
-      }
-
-      const scaledWidth = `${currentArtifactSize.width * scale}px`;
-      const scaledHeight = `${currentArtifactSize.height * scale}px`;
-
-      spriteCanvas.style.width = scaledWidth;
-      spriteCanvas.style.height = scaledHeight;
-      if (cachedPreviewImage) {
-        cachedPreviewImage.style.width = scaledWidth;
-        cachedPreviewImage.style.height = scaledHeight;
-      }
-      spriteSurface.style.width = spriteCanvas.style.width;
-      spriteSurface.style.height = spriteCanvas.style.height;
-    }
-
-    function showCachedPreview(): void {
-      if (!cachedPreview) {
-        return;
-      }
-
-      spriteCanvas.hidden = true;
-      if (cachedPreviewImage) {
-        cachedPreviewImage.hidden = false;
-      }
-      applyCanvasScale(cachedPreview.width, cachedPreview.height);
-      status.textContent = "Cached preview.";
-      setPreviewState("cached", "Cached");
-      previewMeta.textContent =
-        `Artifact: sprite-grid ${cachedPreview.width}x${cachedPreview.height}`;
-      diagnosticsOutput.textContent = "(cached preview)";
-    }
-
-    function showLiveCanvas(): void {
-      spriteCanvas.hidden = false;
-      if (cachedPreviewImage) {
-        cachedPreviewImage.hidden = true;
-      }
-    }
-
-    function drawCheckerboardFallback(width: number, height: number): void {
-      const context = spriteCanvas.getContext("2d");
-
-      if (!context) {
-        return;
-      }
-
-      context.clearRect(0, 0, width, height);
-      context.fillStyle = "#151311";
-      context.fillRect(0, 0, width, height);
-    }
-
-    function drawSprite(
-      pixels: (string | null)[][],
-      width: number,
-      height: number,
-      background: string
-    ): void {
-      spriteCanvas.width = Math.max(width, 1);
-      spriteCanvas.height = Math.max(height, 1);
-      applyCanvasScale(width, height);
-
-      const context = spriteCanvas.getContext("2d");
-
-      if (!context) {
-        return;
-      }
-
-      context.clearRect(0, 0, spriteCanvas.width, spriteCanvas.height);
-
-      if (background !== "transparent") {
-        context.fillStyle = background;
-        context.fillRect(0, 0, width, height);
-      }
-
-      pixels.forEach((row, y) => {
-        row.forEach((pixel, x) => {
-          if (pixel === null) {
-            return;
-          }
-
-          context.fillStyle = pixel;
-          context.fillRect(x, y, 1, 1);
-        });
-      });
-    }
-
     function getEditorSource(): string {
       return editorView.state.doc.toString();
     }
@@ -1073,7 +285,7 @@ export function Playground(props: {
 
     function schedulePreviewUpdate(delayMs = PREVIEW_RENDER_DELAY_MS): void {
       clearPreviewUpdate();
-      setPreviewState(
+      previewPresenter.setState(
         previewRenderTicket === null ? "queued" : "dirty",
         previewRenderTicket === null ? "Queued" : "Dirty"
       );
@@ -1114,7 +326,7 @@ export function Playground(props: {
         fitScaleFrame = null;
 
         if (!disposed && zoomSelect.value === "fit") {
-          applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
+          previewPresenter.applyCurrentScale();
         }
       });
     }
@@ -1177,10 +389,7 @@ export function Playground(props: {
             return;
           }
 
-          setPreviewState("error", "Error");
-          status.textContent = "Preview render failed.";
-          previewMeta.textContent = "Artifact: unavailable";
-          diagnosticsOutput.textContent = error.message;
+          previewPresenter.showRenderError(error.message);
 
           if (!hasReportedFirstPreview) {
             hasReportedFirstPreview = true;
@@ -1189,7 +398,7 @@ export function Playground(props: {
         },
         onStart: () => {
           if (!disposed) {
-            setPreviewState("refreshing", "Refreshing");
+            previewPresenter.setState("refreshing", "Refreshing");
           }
         }
       });
@@ -1197,41 +406,13 @@ export function Playground(props: {
     }
 
     function applyPreviewResult(result: PipelineResult): void {
-      const diagnosticsText = result.diagnostics
-        .map((diagnostic) => {
-          const location =
-            diagnostic.line === undefined
-              ? diagnostic.stage
-              : `${diagnostic.stage}:${diagnostic.line}:${diagnostic.column ?? 1}`;
-
-          return `${location} ${diagnostic.message}`;
-        })
-        .join("\n");
-
-      showLiveCanvas();
-      setPreviewState("rendered", "Rendered");
-      status.textContent = `Parsed ${result.parsed.commands.length} root command(s), compiled ${result.compiled.commands.length} draw command(s).`;
-      previewMeta.textContent = `Artifact: ${result.artifact.kind} ${result.artifact.width}x${result.artifact.height} background=${result.artifact.background}`;
-      diagnosticsOutput.textContent =
-        diagnosticsText === "" ? "(no diagnostics)" : diagnosticsText;
+      previewPresenter.applyResult(result);
       editorView.dispatch({
         effects: setDiagnosticDecorations.of(
           createSourceDiagnosticDecorations(editorView, result.diagnostics)
         ),
         annotations: Transaction.addToHistory.of(false)
       });
-
-      if (result.artifact.width === 0 || result.artifact.height === 0) {
-        applyCanvasScale(1, 1);
-        drawCheckerboardFallback(1, 1);
-      } else {
-        drawSprite(
-          result.artifact.pixels,
-          result.artifact.width,
-          result.artifact.height,
-          result.artifact.background
-        );
-      }
 
       if (!hasReportedFirstPreview) {
         hasReportedFirstPreview = true;
@@ -1274,68 +455,6 @@ export function Playground(props: {
       sourceAssist.style.top = `${top}px`;
     }
 
-    function renderCompletionList(items: LanguageCompletionItem[]): void {
-      completionList.replaceChildren();
-      completionList.hidden = items.length === 0;
-
-      if (items.length === 0) {
-        return;
-      }
-
-      activeCompletionIndex = Math.min(
-        Math.max(activeCompletionIndex, 0),
-        items.length - 1
-      );
-
-      items.slice(0, 12).forEach((item, index) => {
-        const option = document.createElement("button");
-        const label = document.createElement("span");
-        const detail = document.createElement("span");
-
-        option.type = "button";
-        option.className = "completion-item";
-        option.dataset.active = index === activeCompletionIndex ? "true" : "false";
-        label.textContent = item.label;
-        detail.className = "completion-detail";
-        detail.textContent = item.detail ?? item.kind;
-        option.append(label, detail);
-        option.addEventListener("mousedown", (event) => {
-          event.preventDefault();
-          applyCompletion(index);
-        });
-        completionList.append(option);
-      });
-    }
-
-    function renderArgumentHelp(help: LanguageArgumentHelp | null): void {
-      argumentHelp.replaceChildren();
-      argumentHelp.hidden = help === null || help.arguments.length === 0;
-
-      if (help === null || help.arguments.length === 0) {
-        return;
-      }
-
-      const command = document.createElement("span");
-      command.className = "argument-command";
-      command.textContent = help.parentCommandName
-        ? `${help.parentCommandName} ${help.commandName}`
-        : help.commandName;
-      argumentHelp.append(command);
-
-      help.arguments.forEach((argument, index) => {
-        const token = document.createElement("span");
-        const kind = document.createElement("span");
-
-        token.className = "argument-token";
-        token.dataset.active = index === help.activeArgumentIndex ? "true" : "false";
-        token.append(formatArgumentName(argument));
-        kind.className = "argument-kind";
-        kind.textContent = `:${formatArgumentKind(argument)}`;
-        token.append(kind);
-        argumentHelp.append(token);
-      });
-    }
-
     function updateAssist(): void {
       if (!editorView.hasFocus) {
         hideAssist();
@@ -1345,10 +464,16 @@ export function Playground(props: {
       const request = createLanguageRequest();
       completionResult = getLanguageCompletions(request);
       updateAssistPosition();
-      renderCompletionList(
-        shouldShowCompletionList(completionResult) ? completionResult.items : []
+      activeCompletionIndex = renderCompletionList(
+        completionList,
+        shouldShowCompletionList(completionResult) ? completionResult.items : [],
+        activeCompletionIndex,
+        applyCompletion
       );
-      renderArgumentHelp(argumentHelpOpen ? getArgumentHelp(request) : null);
+      renderArgumentHelp(
+        argumentHelp,
+        argumentHelpOpen ? getArgumentHelp(request) : null
+      );
       sourceAssist.hidden = completionList.hidden && argumentHelp.hidden;
     }
 
@@ -1447,14 +572,11 @@ export function Playground(props: {
       scheduleAssistUpdate();
     }
 
-    function getVisibleCompletionCount(): number {
-      return completionList.hidden
-        ? 0
-        : Math.min(completionResult?.items.length ?? 0, 12);
-    }
-
     function moveActiveCompletion(delta: number): boolean {
-      const completionCount = getVisibleCompletionCount();
+      const completionCount = getVisibleCompletionCount(
+        completionList,
+        completionResult
+      );
 
       if (completionCount === 0) {
         return false;
@@ -1462,12 +584,17 @@ export function Playground(props: {
 
       activeCompletionIndex =
         (activeCompletionIndex + delta + completionCount) % completionCount;
-      renderCompletionList(completionResult?.items ?? []);
+      activeCompletionIndex = renderCompletionList(
+        completionList,
+        completionResult?.items ?? [],
+        activeCompletionIndex,
+        applyCompletion
+      );
       return true;
     }
 
     function acceptActiveCompletion(): boolean {
-      if (getVisibleCompletionCount() === 0) {
+      if (getVisibleCompletionCount(completionList, completionResult) === 0) {
         return false;
       }
 
@@ -1743,7 +870,7 @@ export function Playground(props: {
     );
 
     function handleZoomChange(): void {
-      applyCanvasScale(currentArtifactSize.width, currentArtifactSize.height);
+      previewPresenter.applyCurrentScale();
     }
 
     const resizeObserver = new ResizeObserver(() => {
@@ -1755,7 +882,7 @@ export function Playground(props: {
     if (livePreviewActive) {
       schedulePreviewUpdate(0);
     } else {
-      showCachedPreview();
+      previewPresenter.showCachedPreview();
       markPerfPoint("playground-cached-preview-shown", props.playground.id);
       releaseStartup("cached-preview");
     }
