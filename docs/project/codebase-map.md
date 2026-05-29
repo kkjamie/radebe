@@ -70,6 +70,8 @@ Last updated: `2026-05-29`
 
 ## Tooling / Build Paths
 - `scripts/src/doctor.ts`: initial repo automation entrypoint for workspace health checks.
+- `scripts/src/web-page-perf.ts`: web page performance diagnostics CLI entrypoint that serves the built site, launches a local browser sweep, and writes route reports.
+- `scripts/src/web-page-perf/`: focused performance tooling modules for path discovery, static serving and progress capture, browser/WebSocket probing, metrics reduction, Markdown/JSON report writing, CLI parsing, and shared report types.
 - `scripts/src/sea.ts`: release-time bundling and Node SEA packaging automation for `radebe-cli`.
 - `scripts/src/unity-common.ts`: shared Unity deploy/package config parsing and filesystem helpers.
 - `scripts/src/unity-deploy.ts`: local Unity plugin deployment helper that reads `.env` / `RADEBE_UNITY_PROJECT_PATH`, copies `radebe-unity/Assets` plus `bridge.manifest.json` into `Assets/Plugins/Radebe`, and installs the current platform packaged CLI payload under `Tools/radebe-cli/`.
