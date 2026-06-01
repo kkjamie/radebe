@@ -79,7 +79,7 @@ test("creates a text render preview from the shared renderer", () => {
     ].join("\n")
   );
 
-  assert.match(preview, /Radebe render artifact: sprite-grid/);
+  assert.match(preview, /Radebe rendered image: rendered-image/);
   assert.match(preview, /Size: 4x3/);
   assert.match(preview, /Diagnostics:\n\(no diagnostics\)/);
 });

@@ -328,7 +328,7 @@ export function createRenderPreviewText(source: string): string {
         });
 
   return [
-    `Radebe render artifact: ${result.artifact.kind}`,
+    `Radebe rendered image: ${result.artifact.kind}`,
     `Size: ${result.artifact.width}x${result.artifact.height}`,
     `Background: ${result.artifact.background}`,
     "",

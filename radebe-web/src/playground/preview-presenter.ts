@@ -114,14 +114,14 @@ export class PlaygroundPreviewPresenter {
     this.elements.status.textContent = "Cached preview.";
     this.setState("cached", "Cached");
     this.elements.previewMeta.textContent =
-      `Artifact: sprite-grid ${this.cachedPreview.width}x${this.cachedPreview.height}`;
+      `Rendered image: ${this.cachedPreview.width}x${this.cachedPreview.height}`;
     this.elements.diagnosticsOutput.textContent = "(cached preview)";
   }
 
   public showRenderError(message: string): void {
     this.setState("error", "Error");
     this.elements.status.textContent = "Preview render failed.";
-    this.elements.previewMeta.textContent = "Artifact: unavailable";
+    this.elements.previewMeta.textContent = "Rendered image: unavailable";
     this.elements.diagnosticsOutput.textContent = message;
   }
 
@@ -131,7 +131,7 @@ export class PlaygroundPreviewPresenter {
     this.showLiveCanvas();
     this.setState("rendered", "Rendered");
     this.elements.status.textContent = `Parsed ${result.parsed.commands.length} root command(s), compiled ${result.compiled.commands.length} draw command(s).`;
-    this.elements.previewMeta.textContent = `Artifact: ${result.artifact.kind} ${result.artifact.width}x${result.artifact.height} background=${result.artifact.background}`;
+    this.elements.previewMeta.textContent = `Rendered image: ${result.artifact.width}x${result.artifact.height} background=${result.artifact.background}`;
     this.elements.diagnosticsOutput.textContent =
       diagnosticsText === "" ? "(no diagnostics)" : diagnosticsText;
 

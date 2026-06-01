@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import { compileDocument, parseSource, renderDocument, renderSource } from "../src/index.js";
 
-test("renderDocument rasterizes plot and line commands into a sprite grid", () => {
+test("renderDocument rasterizes plot and line commands into a rendered image", () => {
   const parsed = parseSource({
     source:
       "sprite panel\n  size 5 4\n  background transparent\n\nplot 2 2 #ffffff\nline 0 0 4 0 #70c8e8"
@@ -12,7 +12,7 @@ test("renderDocument rasterizes plot and line commands into a sprite grid", () =
   const result = renderDocument(compiled.document);
 
   assert.deepEqual(result.artifact, {
-    kind: "sprite-grid",
+    kind: "rendered-image",
     width: 5,
     height: 4,
     background: "transparent",
@@ -369,6 +369,19 @@ test("renderDocument rasterizes dashed circle strokes", () => {
     true
   );
   assert.equal(result.artifact.pixels[5]?.[5], null);
+});
+
+test("renderSource advances nested circle strokes from the outer radius", () => {
+  const result = renderSource({
+    source:
+      "sprite ring\n  size 11 11\n  background transparent\n\ncircle 5 5 3 #18242c\n  stroke 2 #70c8e8\n    stroke width=1 color=white align=outside"
+  });
+
+  assert.deepEqual(result.diagnostics, []);
+  assert.equal(result.artifact.pixels[0]?.[5], "#ffffff");
+  assert.equal(result.artifact.pixels[1]?.[5], "#70c8e8");
+  assert.equal(result.artifact.pixels[5]?.[5], "#18242c");
+  assert.equal(result.artifact.pixels[0]?.[0], null);
 });
 
 test("renderDocument applies multiple rectangle fills in order", () => {
@@ -824,6 +837,24 @@ test("renderSource applies group stroke to the combined child contour", () => {
     [null, "#ffffff", "#101010", "#ffffff", null],
     [null, "#ffffff", "#ffffff", "#ffffff", null],
     [null, null, null, null, null]
+  ]);
+  assert.deepEqual(result.diagnostics, []);
+});
+
+test("renderSource advances nested group strokes from the composited contour", () => {
+  const result = renderSource({
+    source:
+      "sprite grouped-nested-stroke\n  size 9 7\n  background transparent\n\ngroup badge\n  rect-inset 2 #18242c\n  stroke 2 #70c8e8\n    stroke 1 white"
+  });
+
+  assert.deepEqual(result.artifact.pixels, [
+    [null, null, null, null, null, null, null, null, null],
+    [null, "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", null],
+    [null, "#ffffff", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#ffffff", null],
+    [null, "#ffffff", "#70c8e8", "#18242c", "#18242c", "#18242c", "#70c8e8", "#ffffff", null],
+    [null, "#ffffff", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#70c8e8", "#ffffff", null],
+    [null, "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", null],
+    [null, null, null, null, null, null, null, null, null]
   ]);
   assert.deepEqual(result.diagnostics, []);
 });

@@ -2,44 +2,40 @@ import { drawCircleCommand } from "./commands/circle/index.js";
 import { drawPolygonCommand } from "./commands/polygon/index.js";
 import { drawRectCommand } from "./commands/rect/index.js";
 import {
+  drawCoverageFill,
+  drawCoverageGlow,
+  drawCoverageShadow,
+  drawCoverageStroke,
+  normalizeCoverageAppearancePasses,
+  type CoverageAppearancePasses
+} from "./appearance.js";
+import { createAlphaMaskCoverageSource } from "./coverage.js";
+import {
   buildAlphaMask,
-  buildSpreadMask,
   compositeLayer,
-  createBoxBlurredAlphaSampler,
   createLayer,
-  drawGlowFromAlpha,
-  expandBounds,
   formatColor,
   getAlphaMaskBounds,
   getClosestPathSegmentSample,
-  getGlowBlurRadius,
   getMaskAlpha,
   getPathStrokeBounds,
   getPixelCoverage,
-  resolveStrokeExtents,
-  getShadowBlurRadius,
   getStrokePatternState,
-  offsetAndExpandBounds,
   parseColor,
   sampleFillColor,
-  sampleMaskAlpha,
   setPixel,
   withOpacity,
   type AlphaMask,
   type DrawnGrid,
   type Layer,
-  type PixelGrid,
-  type RectBounds
+  type PixelGrid
 } from "./shared.js";
 
 import type {
   CompiledDocument,
   CompiledDrawCommand,
-  GlowAppearance,
-  RectFill,
   RenderArtifact,
   RenderResult,
-  ShadowAppearance,
   StrokeAppearance
 } from "../types.js";
 
@@ -49,201 +45,24 @@ import type {
  * The source pipeline is:
  * 1. `parseSource` normalizes source text into an indentation-based syntax tree.
  * 2. `compileDocument` lowers that tree into plain compiled draw instructions.
- * 3. `DocumentRenderer` rasterizes the compiled document into a sprite-grid artifact.
+ * 3. `DocumentRenderer` rasterizes the compiled document into a rendered image.
  */
 export class DocumentRenderer {
   public constructor(private readonly document: CompiledDocument) {}
 
   public render(): RenderResult {
     return {
-      artifact: this.buildSpriteGridArtifact(),
+      artifact: this.buildRenderedImage(),
       diagnostics: []
     };
   }
 
-  private drawMaskFill(
-    layer: Layer,
-    mask: AlphaMask,
-    bounds: RectBounds,
-    fill: RectFill
-  ): void {
-    for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
-      for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-        const coverage = getMaskAlpha(mask, x, y);
-
-        if (coverage <= 0) {
-          continue;
-        }
-
-        const color = sampleFillColor(fill, bounds, x, y);
-
-        if (color !== null) {
-          setPixel(layer.pixels, layer.drawnPixels, x, y, color, fill.alpha * coverage);
-        }
-      }
-    }
-  }
-
-  private drawMaskShadow(
-    layer: Layer,
-    mask: AlphaMask,
-    bounds: RectBounds,
-    shadow: ShadowAppearance
-  ): void {
-    if (shadow.fill === null) {
-      return;
-    }
-
-    const blurRadius = getShadowBlurRadius(shadow);
-    const expansion = Math.max(Math.ceil(Math.abs(shadow.spread)), 0);
-    const shadowBounds = offsetAndExpandBounds(
-      bounds,
-      shadow.offsetX,
-      shadow.offsetY,
-      expansion
-    );
-    const drawBounds =
-      blurRadius === 0 ? shadowBounds : expandBounds(shadowBounds, blurRadius);
-    const sampleShadowAlpha = (sampleX: number, sampleY: number) => {
-      const sourceX = Math.round(sampleX - shadow.offsetX);
-      const sourceY = Math.round(sampleY - shadow.offsetY);
-
-      return sampleMaskAlpha(mask, sourceX, sourceY, shadow.spread);
-    };
-    const sampleShadowCoverage = createBoxBlurredAlphaSampler(
-      drawBounds,
-      blurRadius,
-      sampleShadowAlpha
-    );
-
-    for (let y = drawBounds.y; y < drawBounds.y + drawBounds.height; y += 1) {
-      for (let x = drawBounds.x; x < drawBounds.x + drawBounds.width; x += 1) {
-        const coverage = sampleShadowCoverage(x, y);
-
-        if (coverage <= 0) {
-          continue;
-        }
-
-        const color = sampleFillColor(shadow.fill, shadowBounds, x, y);
-
-        if (color !== null) {
-          setPixel(
-            layer.pixels,
-            layer.drawnPixels,
-            x,
-            y,
-            color,
-            shadow.alpha * shadow.fill.alpha * coverage
-          );
-        }
-      }
-    }
-  }
-
-  private drawMaskGlow(
-    layer: Layer,
-    mask: AlphaMask,
-    bounds: RectBounds,
-    glow: GlowAppearance
-  ): void {
-    if (glow.fill === null) {
-      return;
-    }
-
-    const spread = Math.max(glow.spread, 0);
-    const blurRadius = getGlowBlurRadius(glow);
-    const glowBounds =
-      glow.mode === "outer" ? expandBounds(bounds, spread) : bounds;
-    const drawBounds =
-      glow.mode === "outer" ? expandBounds(glowBounds, blurRadius) : bounds;
-    const sampleSourceAlpha = (sampleX: number, sampleY: number) =>
-      getMaskAlpha(mask, Math.round(sampleX), Math.round(sampleY));
-    const sampleGlowBaseAlpha = (sampleX: number, sampleY: number) =>
-      sampleMaskAlpha(
-        mask,
-        Math.round(sampleX),
-        Math.round(sampleY),
-        glow.mode === "outer" ? spread : -spread
-      );
-
-    drawGlowFromAlpha(
-      layer.pixels,
-      layer.drawnPixels,
-      glow,
-      drawBounds,
-      glowBounds,
-      sampleSourceAlpha,
-      sampleGlowBaseAlpha
-    );
-  }
-
-  private drawMaskStroke(
-    layer: Layer,
-    mask: AlphaMask,
-    bounds: RectBounds,
-    stroke: StrokeAppearance
-  ): void {
-    const { inner, outer } = resolveStrokeExtents(stroke.width, stroke.align);
-    const strokeBounds = expandBounds(bounds, outer);
-
-    if (stroke.fill !== null) {
-      for (let y = strokeBounds.y; y < strokeBounds.y + strokeBounds.height; y += 1) {
-        for (let x = strokeBounds.x; x < strokeBounds.x + strokeBounds.width; x += 1) {
-          const patternPosition = x - strokeBounds.x + (y - strokeBounds.y);
-
-          if (
-            !getStrokePatternState(
-              stroke.style,
-              patternPosition,
-              stroke.width,
-              stroke.dashLength,
-              stroke.gapLength,
-              stroke.dotSpacing
-            )
-          ) {
-            continue;
-          }
-
-          const outerAlpha =
-            outer > 0 ? sampleMaskAlpha(mask, x, y, outer) : getMaskAlpha(mask, x, y);
-          const innerAlpha =
-            inner > 0 ? sampleMaskAlpha(mask, x, y, -inner) : getMaskAlpha(mask, x, y);
-          const coverage = Math.max(outerAlpha - innerAlpha, 0);
-
-          if (coverage <= 0) {
-            continue;
-          }
-
-          const color = sampleFillColor(stroke.fill, strokeBounds, x, y);
-
-          if (color !== null) {
-            setPixel(
-              layer.pixels,
-              layer.drawnPixels,
-              x,
-              y,
-              color,
-              stroke.alpha * stroke.fill.alpha * coverage
-            );
-          }
-        }
-      }
-    }
-
-    const nestedMask = buildSpreadMask(mask, outer);
-    const nestedBounds = outer > 0 ? strokeBounds : bounds;
-
-    stroke.strokes.forEach((nestedStroke) => {
-      this.drawMaskStroke(layer, nestedMask, nestedBounds, nestedStroke);
-    });
-  }
-
-  private groupHasPasses(command: Extract<CompiledDrawCommand, { kind: "group" }>): boolean {
+  private groupHasPasses(passes: CoverageAppearancePasses): boolean {
     return (
-      command.fills.length > 0 ||
-      (command.glows?.length ?? 0) > 0 ||
-      (command.shadows?.length ?? 0) > 0 ||
-      command.strokes.length > 0
+      passes.fills.length > 0 ||
+      passes.glows.length > 0 ||
+      passes.shadows.length > 0 ||
+      passes.strokes.length > 0
     );
   }
 
@@ -383,7 +202,9 @@ export class DocumentRenderer {
     command: Extract<CompiledDrawCommand, { kind: "group" }>,
     defaultAntialias: boolean
   ): void {
-    if (!this.groupHasPasses(command)) {
+    const passes = normalizeCoverageAppearancePasses(command);
+
+    if (!this.groupHasPasses(passes)) {
       command.commands.forEach((childCommand) => {
         this.drawCommand(pixels, drawnPixels, childCommand, defaultAntialias);
       });
@@ -410,27 +231,28 @@ export class DocumentRenderer {
       return;
     }
 
+    const coverageSource = createAlphaMaskCoverageSource(mask, bounds);
     const finalLayer = createLayer(width, height);
 
-    (command.shadows ?? []).forEach((shadow) => {
-      this.drawMaskShadow(finalLayer, mask, bounds, shadow);
+    passes.shadows.forEach((shadow) => {
+      drawCoverageShadow(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, shadow);
     });
-    (command.glows ?? [])
+    passes.glows
       .filter((glow) => glow.mode === "outer")
       .forEach((glow) => {
-        this.drawMaskGlow(finalLayer, mask, bounds, glow);
+        drawCoverageGlow(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, glow);
       });
     compositeLayer(finalLayer.pixels, finalLayer.drawnPixels, childLayer);
-    command.fills.forEach((fill) => {
-      this.drawMaskFill(finalLayer, mask, bounds, fill);
+    passes.fills.forEach((fill) => {
+      drawCoverageFill(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, fill);
     });
-    (command.glows ?? [])
+    passes.glows
       .filter((glow) => glow.mode === "inner")
       .forEach((glow) => {
-        this.drawMaskGlow(finalLayer, mask, bounds, glow);
+        drawCoverageGlow(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, glow);
       });
-    command.strokes.forEach((stroke) => {
-      this.drawMaskStroke(finalLayer, mask, bounds, stroke);
+    passes.strokes.forEach((stroke) => {
+      drawCoverageStroke(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, stroke);
     });
 
     compositeLayer(pixels, drawnPixels, finalLayer);
@@ -557,7 +379,7 @@ export class DocumentRenderer {
     this.drawPixelLine(pixels, drawnPixels, command);
   }
 
-  private buildSpriteGridArtifact(): RenderArtifact {
+  private buildRenderedImage(): RenderArtifact {
     const width = this.document.sprite?.width ?? 0;
     const height = this.document.sprite?.height ?? 0;
     const background = this.document.sprite?.background ?? "transparent";
@@ -589,7 +411,7 @@ export class DocumentRenderer {
     );
 
     return {
-      kind: "sprite-grid",
+      kind: "rendered-image",
       width,
       height,
       background,

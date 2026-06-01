@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-05-28`
+Last updated: `2026-06-01`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -895,4 +895,81 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Move Radebe public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub, using the sequence M3 refactoring, M4 GitHub migration, then M5 backlog review before broad feature work resumes.
 - Consequences: T-135 becomes an execution task for GitHub migration instead of a hosting comparison task. T-126 is parked from the Azure/Cloudflare closeout path and retargeted to GitHub release cutover. Rendering/language, Unity/editor, VS Code preview, reusable editor, and other feature backlog items are parked behind M5 validation before new feature milestones are created.
 - Related tasks: T-126, T-135, T-140, T-141, T-142, T-143, T-144, T-145, T-146, T-147, T-148
+- Supersedes: N/A
+
+---
+
+### DEC-080: Promote Renderer Shared Cleanup Before M3 Consolidation
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: After T-133 and T-149, TD-003 and TD-009 still tracked renderer/shared and broader class-owned architecture debt. The user explicitly identified the shared renderer work as worth attacking soon instead of leaving it only as register text for T-150 to close or defer.
+- Decision: Add T-151 as a near-term M3 Gate D task to reduce `renderer/shared.ts` concentration and repeated stroke/shadow/glow, group, or mask helper logic before final M3 consolidation. Add T-152 as the broader TD-009 follow-up for future targeted class-owned core subsystem slices, validated during M5 rather than expanding M3 indefinitely.
+- Consequences: M3 Gate D now runs T-151 before T-150, so the GitHub migration starts after one more focused renderer cleanup slice and the final consolidation review. T-152 keeps the remaining class-owned architecture direction visible without blocking M4 unless the M5 review deliberately promotes it.
+- Related tasks: T-151, T-152, T-150, T-133, T-147, T-149
+- Supersedes: N/A
+
+---
+
+### DEC-081: Use Coverage Sources For Shared Renderer Appearance Passes
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: The compiler and language already model `fill`, `stroke`, `shadow`, and `glow` as shared appearance passes, and composited groups/masks already operate on rendered alpha coverage. The renderer still had group/mask-specific pass loops inside `DocumentRenderer`, while primitive shape fills used a callback-based covered-fill helper.
+- Decision: Introduce a renderer-internal `CoverageSource` contract as the shared target for appearance-pass rendering. Coverage sources expose bounds, alpha sampling, spread sampling, optional stroke pattern positioning, and nested-stroke expansion. Primitive shape fills can use coverage sources; composited groups use alpha-mask-backed coverage sources; shared appearance helpers draw fill, stroke, shadow, and glow over that contract.
+- Consequences: The renderer now has one explicit abstraction for "paint this appearance pass over a covered region" without moving behavior onto plain render instructions or creating per-pixel objects. T-151 established the contract and group path; T-153 later moved primitive rect/circle/polygon stroke, shadow, and glow modules onto full coverage sources while path stroke remains separate.
+- Related tasks: T-151, T-153, T-152, T-133, T-147, T-149
+- Supersedes: N/A
+
+---
+
+### DEC-082: Use Primitive Coverage Sources For Shape Appearance Passes
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: After T-151, composited group appearance passes used the shared coverage-source renderer, but primitive rect, circle, and polygon stroke/shadow/glow modules still repeated their own pass loops even though their geometry could be represented as alpha coverage plus spread and stroke-pattern positioning.
+- Decision: Add full rect, circle, and polygon coverage-source factories and route primitive fill, stroke, shadow, and glow modules through the shared coverage appearance helpers. Keep path stroke outside this model for now because open paths need cap/join/path-length semantics rather than closed-region fill coverage.
+- Consequences: Primitive shapes and composited alpha surfaces now use the same renderer strategy for appearance passes while preserving shape-specific contour, spread, dash, and nested-stroke semantics inside source factories. Future path or class-owned renderer work should not force open paths into the closed-shape coverage abstraction without an explicit path-stroke design.
+- Related tasks: T-153, T-151, T-150, T-152
+- Supersedes: N/A
+
+---
+
+### DEC-083: Keep Primitive Command Modules As Coverage Entrypoints
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: T-153 unified primitive shape appearance behavior through coverage sources, but the file layout still had per-shape `fill`, `stroke`, `shadow`, and `glow` modules that only adapted a shape command into the shared coverage renderer.
+- Decision: Collapse those adapter modules. Rect, circle, and polygon command entry modules now create their shape-specific coverage source and call one shared ordered coverage appearance-pass helper.
+- Consequences: The renderer file layout now matches the shared appearance-pass model: primitive shape modules own coverage-source selection, while `renderer/appearance.ts` owns appearance-pass order and rendering. Path stroke remains separate because it is an open path, not a closed coverage region.
+- Related tasks: T-154, T-153, T-151, T-150
+- Supersedes: N/A
+
+---
+
+### DEC-084: Split Coverage Appearance Passes Behind A Stable Barrel
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: After T-154, `renderer/appearance.ts` owned fill, stroke, shadow, glow, and ordered-pass orchestration in one growing module even though future fill families and pass behavior will expand independently.
+- Decision: Keep `renderer/appearance.ts` as the stable public-internal barrel and move coverage fill, stroke, shadow, glow, and pass-order orchestration into focused modules under `renderer/appearance/`.
+- Consequences: Existing renderer imports keep working, while future appearance-pass work has smaller module targets. The split is behavior-preserving and does not move path stroke into the closed-shape coverage model.
+- Related tasks: T-155, T-154, T-153, T-151, T-150
+- Supersedes: N/A
+
+---
+
+### DEC-085: Name The Public Render Output `RenderedImage`
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: The old public output name `SpriteGridRenderArtifact` reflected an early implementation-oriented sprite-grid contract, but Radebe output is more broadly a rendered 2D image that may become a sprite, icon, UI panel, texture, or preview.
+- Decision: Rename the main public render output type to `RenderedImage` and set its runtime `kind` to `rendered-image`. Keep `RenderArtifact` as the current result property type alias and keep `SpriteGridRenderArtifact` as a deprecated type alias for compatibility.
+- Consequences: Public terminology is less game-specific and less storage-detail-oriented, while existing type consumers have a migration path. Consumers that branch on `artifact.kind` should update from `sprite-grid` to `rendered-image`.
+- Related tasks: T-158, T-157, T-150
+- Supersedes: N/A
+
+---
+
+### DEC-086: Standardize TypeScript Readability Rules
+- Date: `2026-06-01`
+- Status: Accepted
+- Context: Recent renderer refactors exposed style drift around implicit local types for domain results, dense multiline call sites, blank-line spacing, and architecture-label comments that were precise but not very human.
+- Decision: Record repo-wide TypeScript readability rules in the shared engineering standards, with Radebe-specific pointers in the project styleguide. Function and API boundaries stay explicitly typed; local variables from non-obvious domain function calls should also be explicitly typed; wrapped calls should put each argument on its own line, while short single-argument calls can stay inline; blank lines should separate distinct phases; comments and JSDoc should explain purpose, behavior, or contract in plain English.
+- Consequences: Future cleanup can apply the rule in touched code without a noisy mechanical sweep. Reviews have a concrete standard for when an annotation, blank line, or clearer comment wording is useful.
+- Related tasks: T-160, T-150
 - Supersedes: N/A

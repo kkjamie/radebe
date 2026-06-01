@@ -250,8 +250,8 @@ export interface CompileResult {
   diagnostics: RadebeDiagnostic[];
 }
 
-export interface SpriteGridRenderArtifact {
-  kind: "sprite-grid";
+export interface RenderedImage {
+  kind: "rendered-image";
   width: number;
   height: number;
   background: string;
@@ -259,7 +259,12 @@ export interface SpriteGridRenderArtifact {
   pixels: (string | null)[][];
 }
 
-export type RenderArtifact = SpriteGridRenderArtifact;
+/**
+ * @deprecated Use `RenderedImage`.
+ */
+export type SpriteGridRenderArtifact = RenderedImage;
+
+export type RenderArtifact = RenderedImage;
 
 export interface RenderResult {
   artifact: RenderArtifact;

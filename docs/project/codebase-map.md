@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-05-29`
+Last updated: `2026-06-01`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -27,12 +27,14 @@ Last updated: `2026-05-29`
 - `radebe-core/src/colors.ts`: shared Radebe color parsing, formatting, named-color registry, and source token range extraction for editor color decorators.
 - `radebe-core/src/schema.ts`: command registry, child-capability rules, compiler-facing shorthand/property metadata, and editor-facing argument, enum, indentation, inline-child, and shorthand-expansion metadata.
 - `radebe-core/src/language-service.ts`: headless editor assistance API for cursor context, schema-driven completions, argument help, enum suggestions, smart edits, and Enter indentation.
-- `radebe-core/src/renderer.ts`: public renderer boundary plus the convenience source-to-artifact pipeline helper.
+- `radebe-core/src/renderer.ts`: public renderer boundary with documented `renderDocument` and `renderSource` APIs for compiled-document rendering and full source-to-rendered-image pipeline rendering.
 - `radebe-core/src/renderer/renderer.ts`: internal `DocumentRenderer` owner that orchestrates compiled document rasterization behind the public renderer facade.
 - `radebe-core/src/renderer/shared.ts`: internal shared raster, layer, mask, gradient, contour, and sampling helpers consumed by command renderers.
-- `radebe-core/src/renderer/appearance.ts`: internal shared appearance-pass helpers, currently including covered fill drawing across command-owned coverage samplers.
-- `radebe-core/src/renderer/commands/*/`: per-command renderer folders, with rect/circle/polygon currently split into `fill`, `stroke`, `glow`, `shadow`, and command entry modules.
-- `radebe-core/src/types.ts`: shared contracts that define the cross-stage document, render artifact, and diagnostic shapes.
+- `radebe-core/src/renderer/coverage.ts`: internal coverage-source contract and source factories for rect, circle, polygon, and alpha-mask-backed composited surfaces.
+- `radebe-core/src/renderer/appearance.ts`: internal barrel that preserves the stable appearance helper import path.
+- `radebe-core/src/renderer/appearance/`: focused coverage appearance modules for fill, stroke, shadow, glow, and ordered pass orchestration.
+- `radebe-core/src/renderer/commands/*/`: per-command renderer folders; rect/circle/polygon command entries create shape coverage sources and delegate ordered appearance rendering to shared coverage helpers.
+- `radebe-core/src/types.ts`: shared contracts that define the cross-stage document, `RenderedImage` render output, and diagnostic shapes.
 - `radebe-core/test/`: initial Node test coverage for shared runtime behavior.
 - `radebe-cli/src/`: CLI entrypoint and future command/file IO orchestration.
 - `radebe-cli/test/`: initial CLI behavior coverage.

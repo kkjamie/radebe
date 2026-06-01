@@ -1,6 +1,6 @@
 /**
- * Public compiler stage facade. Keep implementation detail inside
- * `src/compiler/` so this package entry point stays stable for consumers.
+ * Exposes the compiler API that turns parsed command trees into render-ready
+ * documents, while the implementation stays inside `src/compiler/`.
  */
 import { Compiler } from "./compiler/compiler.js";
 

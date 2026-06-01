@@ -77,6 +77,7 @@ export type {
   PlotCommand,
   RadebeDiagnostic,
   RenderArtifact,
+  RenderedImage,
   RenderResult,
   RadebeStage,
   SpriteGridRenderArtifact,
