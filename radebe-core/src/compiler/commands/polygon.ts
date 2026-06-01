@@ -1,16 +1,15 @@
-import { getCommandDefinition } from "../../schema.js";
+import {
+  getCommandDefinition,
+  type CommandDefinition
+} from "../../schema.js";
 import { getPositionalArgumentDefinitionForBinding } from "../../argument-binding.js";
 
 import type {
-  GlowAppearance,
   ParsedCommandNode,
   PolygonCommand,
   PolygonPoint,
   RadebeDiagnostic,
-  RectFill,
-  RectRadius,
-  ShadowAppearance,
-  StrokeAppearance
+  RectRadius
 } from "../../types.js";
 
 import { compileShapeAppearances } from "../appearance.js";
@@ -21,6 +20,7 @@ import {
   parseStrictIntegerToken,
   readOptionalBoolean,
   readOptionalString,
+  readPropertyChildValue,
   readRequiredInteger,
   resolveCommandProperties,
   setResolvedValue,
@@ -36,6 +36,22 @@ type FloatPoint = {
   x: number;
   y: number;
 };
+
+type PolygonInlineArguments = {
+  coordinateTokens: string[];
+  propertyValues: Map<string, string>;
+  color: string | null;
+};
+
+type PolygonModifiers = {
+  cut: number | null;
+  radius: RectRadius | null;
+};
+
+type PolygonAppearanceBundle = ReturnType<typeof compileShapeAppearances>;
+
+const MIN_POLYGON_POINTS_ARGUMENT = { min: 3 } as const;
+const POSITIVE_INTEGER_ARGUMENT = { min: 1 } as const;
 
 export function compilePolygonPoint(
   node: ParsedCommandNode,
@@ -313,117 +329,127 @@ function applyPolygonCornerModifiers(
   return points;
 }
 
-export function compilePolygonCommand(
+function collectPolygonInlineArguments(
   node: ParsedCommandNode,
-  diagnostics: RadebeDiagnostic[],
-  options: CompileDrawOptions = {}
-): PolygonCommand | null {
-  const definition = getCommandDefinition(node.name);
-
-  if (!definition) {
-    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
-    return null;
-  }
-
-  validateChildren(node, definition, diagnostics);
-
+  diagnostics: RadebeDiagnostic[]
+): PolygonInlineArguments {
   const coordinateTokens: string[] = [];
   const propertyValues = new Map<string, string>();
-  const points: PolygonPoint[] = [];
   let color: string | null = null;
-  let cut: number | null = null;
-  let radius: RectRadius | null = null;
 
   node.args.forEach((token) => {
     const equalsIndex = token.indexOf("=");
 
-    if (equalsIndex > 0) {
-      const key = token.slice(0, equalsIndex);
-      const value = token.slice(equalsIndex + 1);
-
-      if (key === "antialias") {
-        if (value.length === 0) {
-          diagnostics.push(
-            createCompilerDiagnostic(
-              'The polygon command received an empty value for "antialias".',
-              node
-            )
-          );
-          return;
-        }
-
-        setResolvedValue(propertyValues, "antialias", value, node, diagnostics);
-        return;
-      }
-
-      if (key !== "color") {
-        diagnostics.push(
-          createCompilerDiagnostic(
-            `The polygon command does not support named argument "${key}".`,
-            node
-          )
-        );
-        return;
-      }
-
-      if (value.length === 0) {
-        diagnostics.push(
-          createCompilerDiagnostic(
-            'The polygon command received an empty value for "color".',
-            node
-          )
-        );
-        return;
-      }
-
-      if (color !== null) {
-        diagnostics.push(
-          createCompilerDiagnostic(
-            'The polygon command received duplicate "color" values.',
-            node
-          )
-        );
-        return;
-      }
-
-      color = value;
+    if (equalsIndex <= 0) {
+      coordinateTokens.push(token);
       return;
     }
 
-    coordinateTokens.push(token);
-  });
+    const key = token.slice(0, equalsIndex);
+    const value = token.slice(equalsIndex + 1);
 
-  if (coordinateTokens.length % 2 !== 0) {
-    const trailingToken = coordinateTokens[coordinateTokens.length - 1] ?? null;
-    const trailingArgument =
-      trailingToken === null
-        ? null
-        : getPositionalArgumentDefinitionForBinding(
-            definition,
-            coordinateTokens,
-            coordinateTokens.length - 1,
-            { activeTokenText: trailingToken }
-          );
+    if (key === "antialias") {
+      if (value.length === 0) {
+        diagnostics.push(
+          createCompilerDiagnostic(
+            'The polygon command received an empty value for "antialias".',
+            node
+          )
+        );
+        return;
+      }
 
-    if (
-      trailingToken !== null &&
-      trailingArgument?.name === "color" &&
-      color === null &&
-      coordinateTokens.length >= 7
-    ) {
-      color = trailingToken;
-      coordinateTokens.pop();
-    } else {
+      setResolvedValue(propertyValues, "antialias", value, node, diagnostics);
+      return;
+    }
+
+    if (key !== "color") {
       diagnostics.push(
         createCompilerDiagnostic(
-          "The polygon command expects point coordinates as whitespace-separated x y pairs, with an optional trailing color shorthand.",
+          `The polygon command does not support named argument "${key}".`,
           node
         )
       );
-      return null;
+      return;
     }
+
+    if (value.length === 0) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          'The polygon command received an empty value for "color".',
+          node
+        )
+      );
+      return;
+    }
+
+    if (color !== null) {
+      diagnostics.push(
+        createCompilerDiagnostic(
+          'The polygon command received duplicate "color" values.',
+          node
+        )
+      );
+      return;
+    }
+
+    color = value;
+  });
+
+  return {
+    coordinateTokens,
+    propertyValues,
+    color
+  };
+}
+
+function resolveTrailingPolygonColor(
+  node: ParsedCommandNode,
+  definition: CommandDefinition,
+  coordinateTokens: string[],
+  color: string | null,
+  diagnostics: RadebeDiagnostic[]
+): string | null | undefined {
+  if (coordinateTokens.length % 2 === 0) {
+    return color;
   }
 
+  const trailingToken = coordinateTokens[coordinateTokens.length - 1] ?? null;
+  const trailingArgument =
+    trailingToken === null
+      ? null
+      : getPositionalArgumentDefinitionForBinding(
+          definition,
+          coordinateTokens,
+          coordinateTokens.length - 1,
+          { activeTokenText: trailingToken }
+        );
+
+  if (
+    trailingToken !== null &&
+    trailingArgument?.name === "color" &&
+    color === null &&
+    coordinateTokens.length >= 7
+  ) {
+    coordinateTokens.pop();
+    return trailingToken;
+  }
+
+  diagnostics.push(
+    createCompilerDiagnostic(
+      "The polygon command expects point coordinates as whitespace-separated x y pairs, with an optional trailing color shorthand.",
+      node
+    )
+  );
+  return undefined;
+}
+
+function appendPolygonPointsFromTokens(
+  node: ParsedCommandNode,
+  coordinateTokens: string[],
+  points: PolygonPoint[],
+  diagnostics: RadebeDiagnostic[]
+): boolean {
   for (let index = 0; index < coordinateTokens.length; index += 2) {
     const xToken = coordinateTokens[index]!;
     const yToken = coordinateTokens[index + 1]!;
@@ -437,7 +463,7 @@ export function compilePolygonCommand(
           node
         )
       );
-      return null;
+      return false;
     }
 
     if (!Number.isInteger(y)) {
@@ -447,17 +473,25 @@ export function compilePolygonCommand(
           node
         )
       );
-      return null;
+      return false;
     }
 
     points.push({ x, y });
   }
 
-  const appearances = compileShapeAppearances(node, diagnostics);
-  const fills: RectFill[] = appearances.fills;
-  const glows: GlowAppearance[] = appearances.glows;
-  const shadows: ShadowAppearance[] = appearances.shadows;
-  const strokes: StrokeAppearance[] = appearances.strokes;
+  return true;
+}
+
+function collectPolygonChildren(
+  node: ParsedCommandNode,
+  points: PolygonPoint[],
+  propertyValues: Map<string, string>,
+  initialColor: string | null,
+  diagnostics: RadebeDiagnostic[]
+): { color: string | null } & PolygonModifiers {
+  let color = initialColor;
+  let cut: number | null = null;
+  let radius: RectRadius | null = null;
 
   node.children.forEach((child) => {
     if (child.name === "point") {
@@ -471,23 +505,9 @@ export function compilePolygonCommand(
     }
 
     if (child.name === "color") {
-      const childDefinition = getCommandDefinition(child.name);
+      const value = readPropertyChildValue(child, diagnostics);
 
-      if (!childDefinition) {
-        return;
-      }
-
-      const childArguments = parseArguments(child, childDefinition);
-      diagnostics.push(...childArguments.diagnostics);
-      const value = childArguments.values.get("value");
-
-      if (!value) {
-        diagnostics.push(
-          createCompilerDiagnostic(
-            'The color command requires "value".',
-            child
-          )
-        );
+      if (value === null) {
         return;
       }
 
@@ -516,90 +536,159 @@ export function compilePolygonCommand(
     }
 
     if (child.name === "antialias") {
-      const childDefinition = getCommandDefinition(child.name);
+      const value = readPropertyChildValue(child, diagnostics);
 
-      if (!childDefinition) {
-        return;
+      if (value !== null) {
+        setResolvedValue(propertyValues, "antialias", value, node, diagnostics);
       }
-
-      const childArguments = parseArguments(child, childDefinition);
-      diagnostics.push(...childArguments.diagnostics);
-      const value = childArguments.values.get("value");
-
-      if (!value) {
-        diagnostics.push(
-          createCompilerDiagnostic(
-            'The antialias command requires "value".',
-            child
-          )
-        );
-        return;
-      }
-
-      setResolvedValue(propertyValues, "antialias", value, node, diagnostics);
     }
   });
 
+  return { color, cut, radius };
+}
+
+function commandHasAppearance(appearances: PolygonAppearanceBundle): boolean {
+  return (
+    appearances.fills.length > 0 ||
+    appearances.glows.length > 0 ||
+    appearances.shadows.length > 0 ||
+    appearances.strokes.length > 0
+  );
+}
+
+function addMaskShapeFillIfNeeded(
+  appearances: PolygonAppearanceBundle,
+  options: CompileDrawOptions
+): void {
+  if (options.maskShape && !commandHasAppearance(appearances)) {
+    appearances.fills.push(createMaskShapeFill());
+  }
+}
+
+function buildPolygonCommand(
+  node: ParsedCommandNode,
+  points: PolygonPoint[],
+  color: string | null,
+  antialias: boolean | null,
+  modifiers: PolygonModifiers,
+  appearances: PolygonAppearanceBundle,
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions
+): PolygonCommand | null {
   if (color !== null) {
-    fills.unshift({
+    appearances.fills.unshift({
       kind: "solid",
       color,
       alpha: 1
     });
   }
 
-  if (
-    options.maskShape &&
-    fills.length === 0 &&
-    glows.length === 0 &&
-    shadows.length === 0 &&
-    strokes.length === 0
-  ) {
-    fills.push(createMaskShapeFill());
-  }
+  addMaskShapeFillIfNeeded(appearances, options);
 
   if (!validatePolygonPoints(node, points, diagnostics)) {
     return null;
   }
 
-  const finalPoints = applyPolygonCornerModifiers(node, points, cut, radius, diagnostics);
+  const finalPoints = applyPolygonCornerModifiers(
+    node,
+    points,
+    modifiers.cut,
+    modifiers.radius,
+    diagnostics
+  );
 
   if (finalPoints === null || !validatePolygonPoints(node, finalPoints, diagnostics)) {
     return null;
   }
 
-  if (
-    fills.length === 0 &&
-    glows.length === 0 &&
-    shadows.length === 0 &&
-    strokes.length === 0
-  ) {
+  if (!commandHasAppearance(appearances)) {
     diagnostics.push(
       createCompilerDiagnostic(
-        "The polygon command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.",
+        `The ${node.name} command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.`,
         node
       )
     );
     return null;
   }
 
-  const antialias = readOptionalBoolean(
-    node,
-    propertyValues,
-    "antialias",
-    diagnostics
-  );
-
   return {
     kind: "polygon",
     lineNumber: node.lineNumber,
     ...(antialias === null ? {} : { antialias }),
     points: finalPoints,
-    fills,
-    ...(shadows.length === 0 ? {} : { shadows }),
-    ...(glows.length === 0 ? {} : { glows }),
-    strokes
+    fills: appearances.fills,
+    ...(appearances.shadows.length === 0 ? {} : { shadows: appearances.shadows }),
+    ...(appearances.glows.length === 0 ? {} : { glows: appearances.glows }),
+    strokes: appearances.strokes
   };
+}
+
+export function compilePolygonCommand(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[],
+  options: CompileDrawOptions = {}
+): PolygonCommand | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  validateChildren(node, definition, diagnostics);
+
+  const inlineArguments = collectPolygonInlineArguments(node, diagnostics);
+  const color = resolveTrailingPolygonColor(
+    node,
+    definition,
+    inlineArguments.coordinateTokens,
+    inlineArguments.color,
+    diagnostics
+  );
+
+  if (color === undefined) {
+    return null;
+  }
+
+  const points: PolygonPoint[] = [];
+
+  if (
+    !appendPolygonPointsFromTokens(
+      node,
+      inlineArguments.coordinateTokens,
+      points,
+      diagnostics
+    )
+  ) {
+    return null;
+  }
+
+  const appearances = compileShapeAppearances(node, diagnostics);
+  const childDetails = collectPolygonChildren(
+    node,
+    points,
+    inlineArguments.propertyValues,
+    color,
+    diagnostics
+  );
+
+  const antialias = readOptionalBoolean(
+    node,
+    inlineArguments.propertyValues,
+    "antialias",
+    diagnostics
+  );
+
+  return buildPolygonCommand(
+    node,
+    points,
+    childDetails.color,
+    antialias,
+    childDetails,
+    appearances,
+    diagnostics,
+    options
+  );
 }
 
 function generateRadialPolygonPoints(
@@ -619,6 +708,161 @@ function generateRadialPolygonPoints(
   });
 }
 
+function isGeneratedPolygonPropertyChildName(name: string): boolean {
+  return (
+    name === "x" ||
+    name === "y" ||
+    name === "sides" ||
+    name === "points" ||
+    name === "inner-radius" ||
+    name === "outer-radius" ||
+    name === "color" ||
+    name === "antialias"
+  );
+}
+
+function collectGeneratedPolygonChildren(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  diagnostics: RadebeDiagnostic[]
+): PolygonModifiers {
+  let cut: number | null = null;
+  let radius: RectRadius | null = null;
+
+  for (const child of node.children) {
+    if (child.name === "cut") {
+      cut = compileUniformPolygonCut(child, diagnostics);
+      continue;
+    }
+
+    if (child.name === "radius") {
+      radius = compileRectRadius(child, diagnostics);
+      continue;
+    }
+
+    if (!isGeneratedPolygonPropertyChildName(child.name)) {
+      continue;
+    }
+
+    const value = readPropertyChildValue(child, diagnostics);
+
+    if (value !== null) {
+      setResolvedValue(values, child.name, value, node, diagnostics);
+    }
+  }
+
+  return { cut, radius };
+}
+
+function resolveRegularPolygonPoints(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  centerX: number | null,
+  centerY: number | null,
+  diagnostics: RadebeDiagnostic[]
+): PolygonPoint[] | null {
+  const sides = readRequiredInteger(
+    node,
+    values,
+    "sides",
+    diagnostics,
+    MIN_POLYGON_POINTS_ARGUMENT
+  );
+  const radius = readRequiredInteger(
+    node,
+    values,
+    "radius",
+    diagnostics,
+    POSITIVE_INTEGER_ARGUMENT
+  );
+
+  if (centerX === null || centerY === null || sides === null || radius === null) {
+    return null;
+  }
+
+  return generateRadialPolygonPoints(
+    centerX,
+    centerY,
+    Array.from({ length: sides }, () => radius)
+  );
+}
+
+function resolveStarPolygonPoints(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  centerX: number | null,
+  centerY: number | null,
+  diagnostics: RadebeDiagnostic[]
+): PolygonPoint[] | null {
+  const starPoints = readRequiredInteger(
+    node,
+    values,
+    "points",
+    diagnostics,
+    MIN_POLYGON_POINTS_ARGUMENT
+  );
+  const innerRadius = readRequiredInteger(
+    node,
+    values,
+    "inner-radius",
+    diagnostics,
+    POSITIVE_INTEGER_ARGUMENT
+  );
+  const outerRadius = readRequiredInteger(
+    node,
+    values,
+    "outer-radius",
+    diagnostics,
+    POSITIVE_INTEGER_ARGUMENT
+  );
+
+  if (
+    innerRadius !== null &&
+    outerRadius !== null &&
+    outerRadius <= innerRadius
+  ) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        'The polygon-star command expects "outer-radius" to be greater than "inner-radius".',
+        node
+      )
+    );
+  }
+
+  if (
+    centerX === null ||
+    centerY === null ||
+    starPoints === null ||
+    innerRadius === null ||
+    outerRadius === null ||
+    outerRadius <= innerRadius
+  ) {
+    return null;
+  }
+
+  return generateRadialPolygonPoints(
+    centerX,
+    centerY,
+    Array.from({ length: starPoints * 2 }, (_, index) =>
+      index % 2 === 0 ? outerRadius : innerRadius
+    )
+  );
+}
+
+function resolveGeneratedPolygonPoints(
+  node: ParsedCommandNode,
+  values: Map<string, string>,
+  centerX: number | null,
+  centerY: number | null,
+  diagnostics: RadebeDiagnostic[]
+): PolygonPoint[] | null {
+  if (node.name === "polygon-regular") {
+    return resolveRegularPolygonPoints(node, values, centerX, centerY, diagnostics);
+  }
+
+  return resolveStarPolygonPoints(node, values, centerX, centerY, diagnostics);
+}
+
 export function compileGeneratedPolygonCommand(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[],
@@ -636,53 +880,7 @@ export function compileGeneratedPolygonCommand(
   const parsedArguments = parseArguments(node, definition);
   const values = new Map(parsedArguments.values);
   diagnostics.push(...parsedArguments.diagnostics);
-  let cut: number | null = null;
-  let modifierRadius: RectRadius | null = null;
-
-  for (const child of node.children) {
-    if (child.name === "cut") {
-      cut = compileUniformPolygonCut(child, diagnostics);
-      continue;
-    }
-
-    if (child.name === "radius") {
-      modifierRadius = compileRectRadius(child, diagnostics);
-      continue;
-    }
-
-    const childDefinition = getCommandDefinition(child.name);
-
-    if (!childDefinition) {
-      continue;
-    }
-
-    if (
-      child.name === "x" ||
-      child.name === "y" ||
-      child.name === "sides" ||
-      child.name === "points" ||
-      child.name === "inner-radius" ||
-      child.name === "outer-radius" ||
-      child.name === "color" ||
-      child.name === "antialias"
-    ) {
-      const childArguments = parseArguments(child, childDefinition);
-      diagnostics.push(...childArguments.diagnostics);
-      const value = childArguments.values.get("value");
-
-      if (!value) {
-        diagnostics.push(
-          createCompilerDiagnostic(
-            `The ${child.name} command requires "value".`,
-            child
-          )
-        );
-        continue;
-      }
-
-      setResolvedValue(values, child.name, value, node, diagnostics);
-    }
-  }
+  const modifiers = collectGeneratedPolygonChildren(node, values, diagnostics);
 
   const color = readOptionalString(values, "color");
   const antialias = readOptionalBoolean(
@@ -692,148 +890,29 @@ export function compileGeneratedPolygonCommand(
     diagnostics
   );
   const appearances = compileShapeAppearances(node, diagnostics);
-  const fills: RectFill[] = appearances.fills;
-  const glows: GlowAppearance[] = appearances.glows;
-  const shadows: ShadowAppearance[] = appearances.shadows;
-  const strokes: StrokeAppearance[] = appearances.strokes;
   const centerX = readRequiredInteger(node, values, "x", diagnostics);
   const centerY = readRequiredInteger(node, values, "y", diagnostics);
-  let points: PolygonPoint[] | null = null;
 
-  if (node.name === "polygon-regular") {
-    const sides = readRequiredInteger(
-      node,
-      values,
-      "sides",
-      diagnostics,
-      { min: 3 }
-    );
-    const radius = readRequiredInteger(
-      node,
-      values,
-      "radius",
-      diagnostics,
-      { min: 1 }
-    );
-
-    if (centerX !== null && centerY !== null && sides !== null && radius !== null) {
-      points = generateRadialPolygonPoints(
-        centerX,
-        centerY,
-        Array.from({ length: sides }, () => radius)
-      );
-    }
-  } else {
-    const starPoints = readRequiredInteger(
-      node,
-      values,
-      "points",
-      diagnostics,
-      { min: 3 }
-    );
-    const innerRadius = readRequiredInteger(
-      node,
-      values,
-      "inner-radius",
-      diagnostics,
-      { min: 1 }
-    );
-    const outerRadius = readRequiredInteger(
-      node,
-      values,
-      "outer-radius",
-      diagnostics,
-      { min: 1 }
-    );
-
-    if (
-      innerRadius !== null &&
-      outerRadius !== null &&
-      outerRadius <= innerRadius
-    ) {
-      diagnostics.push(
-        createCompilerDiagnostic(
-          'The polygon-star command expects "outer-radius" to be greater than "inner-radius".',
-          node
-        )
-      );
-    }
-
-    if (
-      centerX !== null &&
-      centerY !== null &&
-      starPoints !== null &&
-      innerRadius !== null &&
-      outerRadius !== null &&
-      outerRadius > innerRadius
-    ) {
-      points = generateRadialPolygonPoints(
-        centerX,
-        centerY,
-        Array.from({ length: starPoints * 2 }, (_, index) =>
-          index % 2 === 0 ? outerRadius : innerRadius
-        )
-      );
-    }
-  }
-
-  if (color !== null) {
-    fills.unshift({
-      kind: "solid",
-      color,
-      alpha: 1
-    });
-  }
-
-  if (
-    options.maskShape &&
-    fills.length === 0 &&
-    glows.length === 0 &&
-    shadows.length === 0 &&
-    strokes.length === 0
-  ) {
-    fills.push(createMaskShapeFill());
-  }
-
-  if (points === null || !validatePolygonPoints(node, points, diagnostics)) {
-    return null;
-  }
-
-  const finalPoints = applyPolygonCornerModifiers(
+  const points = resolveGeneratedPolygonPoints(
     node,
-    points,
-    cut,
-    modifierRadius,
+    values,
+    centerX,
+    centerY,
     diagnostics
   );
 
-  if (finalPoints === null || !validatePolygonPoints(node, finalPoints, diagnostics)) {
+  if (points === null) {
     return null;
   }
 
-  if (
-    fills.length === 0 &&
-    glows.length === 0 &&
-    shadows.length === 0 &&
-    strokes.length === 0
-  ) {
-    diagnostics.push(
-      createCompilerDiagnostic(
-        `The ${node.name} command requires a color shorthand, a fill child, a glow child, a shadow child, or a stroke child.`,
-        node
-      )
-    );
-    return null;
-  }
-
-  return {
-    kind: "polygon",
-    lineNumber: node.lineNumber,
-    ...(antialias === null ? {} : { antialias }),
-    points: finalPoints,
-    fills,
-    ...(shadows.length === 0 ? {} : { shadows }),
-    ...(glows.length === 0 ? {} : { glows }),
-    strokes
-  };
+  return buildPolygonCommand(
+    node,
+    points,
+    color,
+    antialias,
+    modifiers,
+    appearances,
+    diagnostics,
+    options
+  );
 }

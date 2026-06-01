@@ -18,6 +18,11 @@ export type StaticPerfServer = {
   waitForReport: (token: string, timeoutMs: number) => Promise<string>;
 };
 
+type ReportWaiter = {
+  resolve: (body: string) => void;
+  timeout: NodeJS.Timeout;
+};
+
 function getContentType(filePath: string): string {
   const extension = path.extname(filePath).toLowerCase();
 
@@ -71,66 +76,87 @@ async function serveStaticFile(
   response.end(await readFile(filePath));
 }
 
+function getProgressFilePath(token: string): string {
+  return path.join(os.tmpdir(), `radebe-web-page-perf-progress-${token}.json`);
+}
+
+function readRequestBody(
+  request: IncomingMessage,
+  onBody: (body: string) => void
+): void {
+  let body = "";
+  request.setEncoding("utf8");
+  request.on("data", (chunk: string) => {
+    body += chunk;
+  });
+  request.on("end", () => {
+    onBody(body);
+  });
+}
+
+function handlePerfReportPost(
+  request: IncomingMessage,
+  response: ServerResponse,
+  token: string,
+  reportBodies: Map<string, string>,
+  reportWaiters: Map<string, ReportWaiter>
+): void {
+  readRequestBody(request, (body) => {
+    const waiter = reportWaiters.get(token);
+
+    if (waiter) {
+      clearTimeout(waiter.timeout);
+      reportWaiters.delete(token);
+      waiter.resolve(body);
+    } else {
+      reportBodies.set(token, body);
+    }
+
+    response.statusCode = 200;
+    response.end("ok");
+  });
+}
+
+function handlePerfProgressPost(
+  request: IncomingMessage,
+  response: ServerResponse,
+  token: string,
+  progressBodies: Map<string, PerfSuiteProgress[]>
+): void {
+  readRequestBody(request, (body) => {
+    const payload = JSON.parse(body) as PerfSuiteProgress;
+    const progress = progressBodies.get(token) ?? [];
+    progress.push(payload);
+    progressBodies.set(token, progress);
+    void writeFile(
+      getProgressFilePath(token),
+      `${JSON.stringify(progress, null, 2)}\n`,
+      "utf8"
+    );
+    response.statusCode = 200;
+    response.end("ok");
+  });
+}
+
 export async function startStaticServer(
   distDir: string,
   port: number
 ): Promise<StaticPerfServer> {
   const progressBodies = new Map<string, PerfSuiteProgress[]>();
   const reportBodies = new Map<string, string>();
-  const reportWaiters = new Map<
-    string,
-    {
-      resolve: (body: string) => void;
-      timeout: NodeJS.Timeout;
-    }
-  >();
+  const reportWaiters = new Map<string, ReportWaiter>();
   const server = createServer((request, response) => {
     const requestUrl = new URL(request.url ?? "/", "http://127.0.0.1");
 
     if (request.method === "POST" && requestUrl.pathname === "/__perf-report") {
       const token = requestUrl.searchParams.get("token") ?? "";
-      let body = "";
-      request.setEncoding("utf8");
-      request.on("data", (chunk: string) => {
-        body += chunk;
-      });
-      request.on("end", () => {
-        const waiter = reportWaiters.get(token);
-
-        if (waiter) {
-          clearTimeout(waiter.timeout);
-          reportWaiters.delete(token);
-          waiter.resolve(body);
-        } else {
-          reportBodies.set(token, body);
-        }
-
-        response.statusCode = 200;
-        response.end("ok");
-      });
+      handlePerfReportPost(request, response, token, reportBodies, reportWaiters);
       return;
     }
 
     if (request.method === "POST" && requestUrl.pathname === "/__perf-progress") {
       const token = requestUrl.searchParams.get("token") ?? "";
-      let body = "";
-      request.setEncoding("utf8");
-      request.on("data", (chunk: string) => {
-        body += chunk;
-      });
-      request.on("end", () => {
-        const payload = JSON.parse(body) as PerfSuiteProgress;
-        const progress = progressBodies.get(token) ?? [];
-        progress.push(payload);
-        progressBodies.set(token, progress);
-        void writeFile(
-          path.join(os.tmpdir(), `radebe-web-page-perf-progress-${token}.json`),
-          `${JSON.stringify(progress, null, 2)}\n`,
-          "utf8"
-        );
-        response.statusCode = 200;
-        response.end("ok");
-      });
+      handlePerfProgressPost(request, response, token, progressBodies);
       return;
     }
 
@@ -167,7 +193,7 @@ export async function startStaticServer(
     },
     origin: `http://127.0.0.1:${port}`,
     progressFilePath: (token: string) => {
-      return path.join(os.tmpdir(), `radebe-web-page-perf-progress-${token}.json`);
+      return getProgressFilePath(token);
     },
     waitForReport: async (token: string, timeoutMs: number) => {
       const existingBody = reportBodies.get(token);

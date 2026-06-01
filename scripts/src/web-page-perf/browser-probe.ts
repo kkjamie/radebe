@@ -18,6 +18,20 @@ type WebSocketConnection = {
   waitingResolvers: Array<(message: string) => void>;
 };
 
+function queueDecodedMessage(
+  connection: WebSocketConnection,
+  message: string
+): void {
+  const resolver = connection.waitingResolvers.shift();
+
+  if (resolver) {
+    resolver(message);
+    return;
+  }
+
+  connection.messageQueue.push(message);
+}
+
 export async function getFreePort(): Promise<number> {
   return await new Promise<number>((resolve, reject) => {
     const server = createServer();
@@ -112,15 +126,7 @@ function decodeWebSocketFrames(connection: WebSocketConnection): void {
         continue;
       }
 
-      const message = payload.toString("utf8");
-      const resolver = connection.waitingResolvers.shift();
-
-      if (resolver) {
-        resolver(message);
-        continue;
-      }
-
-      connection.messageQueue.push(message);
+      queueDecodedMessage(connection, payload.toString("utf8"));
       continue;
     }
 
@@ -133,14 +139,7 @@ function decodeWebSocketFrames(connection: WebSocketConnection): void {
 
       const message = Buffer.concat(connection.partialTextFrames).toString("utf8");
       connection.partialTextFrames = [];
-      const resolver = connection.waitingResolvers.shift();
-
-      if (resolver) {
-        resolver(message);
-        continue;
-      }
-
-      connection.messageQueue.push(message);
+      queueDecodedMessage(connection, message);
       continue;
     }
 

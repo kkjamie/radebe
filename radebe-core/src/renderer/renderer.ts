@@ -31,7 +31,8 @@ import {
   type AlphaMask,
   type DrawnGrid,
   type Layer,
-  type PixelGrid
+  type PixelGrid,
+  type RectBounds
 } from "./shared.js";
 
 import type {
@@ -41,6 +42,11 @@ import type {
   RenderResult,
   StrokeAppearance
 } from "../types.js";
+
+type PathStrokeCommand = Pick<
+  Extract<CompiledDrawCommand, { kind: "path" }>,
+  "points"
+>;
 
 /**
  * Owns the renderer stage after compilation.
@@ -145,58 +151,78 @@ export class DocumentRenderer {
   private drawPathStroke(
     pixels: PixelGrid,
     drawnPixels: DrawnGrid,
-    command: Pick<Extract<CompiledDrawCommand, { kind: "path" }>, "points">,
+    command: PathStrokeCommand,
     stroke: StrokeAppearance,
     antialias: boolean
   ): void {
     const bounds = getPathStrokeBounds(command.points, stroke);
 
     if (stroke.fill !== null) {
-      for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
-        for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
-          const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
-            const closestSegment = getClosestPathSegmentSample(
-              pointX,
-              pointY,
-              command.points
-            );
-
-            return (
-              closestSegment.distance <= bounds.radius &&
-              getStrokePatternState(
-                stroke.style,
-                closestSegment.perimeterPosition,
-                stroke.width,
-                stroke.dashLength,
-                stroke.gapLength,
-                stroke.dotSpacing
-              )
-            );
-          });
-
-          if (coverage <= 0) {
-            continue;
-          }
-
-          const color = sampleFillColor(stroke.fill, bounds, x, y);
-
-          if (color !== null) {
-            setPixel(
-              pixels,
-              drawnPixels,
-              x,
-              y,
-              color,
-              stroke.alpha * stroke.fill.alpha * coverage
-            );
-          }
-        }
-      }
+      this.drawPathStrokeFill(
+        pixels,
+        drawnPixels,
+        command,
+        stroke,
+        bounds,
+        antialias
+      );
     }
 
     stroke.strokes.forEach((nestedStroke) => {
       this.drawPathStroke(pixels, drawnPixels, command, nestedStroke, antialias);
     });
+  }
+
+  private drawPathStrokeFill(
+    pixels: PixelGrid,
+    drawnPixels: DrawnGrid,
+    command: PathStrokeCommand,
+    stroke: StrokeAppearance,
+    bounds: RectBounds & { radius: number },
+    antialias: boolean
+  ): void {
+    const fill = stroke.fill!;
+
+    for (let y = bounds.y; y < bounds.y + bounds.height; y += 1) {
+      for (let x = bounds.x; x < bounds.x + bounds.width; x += 1) {
+        const coverage = getPixelCoverage(x, y, antialias, (pointX, pointY) => {
+          const closestSegment = getClosestPathSegmentSample(
+            pointX,
+            pointY,
+            command.points
+          );
+
+          return (
+            closestSegment.distance <= bounds.radius &&
+            getStrokePatternState(
+              stroke.style,
+              closestSegment.perimeterPosition,
+              stroke.width,
+              stroke.dashLength,
+              stroke.gapLength,
+              stroke.dotSpacing
+            )
+          );
+        });
+
+        if (coverage <= 0) {
+          continue;
+        }
+
+        const color = sampleFillColor(fill, bounds, x, y);
+
+        if (color !== null) {
+          setPixel(
+            pixels,
+            drawnPixels,
+            x,
+            y,
+            color,
+            stroke.alpha * fill.alpha * coverage
+          );
+        }
+      }
+    }
   }
 
   private drawGroup(

@@ -8,11 +8,11 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-150 | Consolidate M3 refactor gates for GitHub migration readiness | M3 | Gate D | P1 | Review | `codex` | None | Review the repo-wide readability cleanup, then finish Gate D by deciding whether TD-003 and TD-009 are closed or re-scoped for M5 |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-150 | Consolidate M3 refactor gates for GitHub migration readiness | M3 | Gate D | P1 | Ready | Unassigned | None | Review completed M3 refactors including T-151 through T-158 plus T-160 and T-161, verify required builds/tests, close or re-scope remaining refactor debt, and prepare the M4 GitHub migration handoff |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

@@ -23,6 +23,7 @@ import {
   readOptionalInteger,
   readOptionalNumber,
   readOptionalString,
+  readPropertyChildValue,
   readRequiredInteger,
   readRequiredNumber,
   readRequiredString,
@@ -322,20 +323,17 @@ function compileRadialGradient(
   };
 }
 
-export function compileFill(
+type FillArguments = {
+  propertyValues: Map<string, string>;
+  variantName: string | null;
+  variantArgs: string[];
+};
+
+function collectFillArguments(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[]
-): RectFill | null {
-  const definition = getCommandDefinition(node.name);
-
-  if (!definition) {
-    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
-    return null;
-  }
-
-  validateChildren(node, definition, diagnostics);
-
-  const fillPropertyValues = new Map<string, string>();
+): FillArguments {
+  const propertyValues = new Map<string, string>();
   let variantName: string | null = null;
   const variantArgs: string[] = [];
 
@@ -357,7 +355,7 @@ export function compileFill(
           return;
         }
 
-        setResolvedValue(fillPropertyValues, key, value, node, diagnostics);
+        setResolvedValue(propertyValues, key, value, node, diagnostics);
         return;
       }
     }
@@ -370,82 +368,165 @@ export function compileFill(
     variantArgs.push(token);
   });
 
+  return {
+    propertyValues,
+    variantName,
+    variantArgs
+  };
+}
+
+function applyFillAlphaChildren(
+  node: ParsedCommandNode,
+  propertyValues: Map<string, string>,
+  diagnostics: RadebeDiagnostic[]
+): void {
   node.children.forEach((child) => {
     if (child.name !== "alpha") {
       return;
     }
 
-    const childDefinition = getCommandDefinition(child.name);
+    const value = readPropertyChildValue(child, diagnostics);
 
-    if (!childDefinition) {
-      return;
+    if (value !== null) {
+      setResolvedValue(propertyValues, "alpha", value, node, diagnostics);
     }
-
-    const childArguments = parseArguments(child, childDefinition);
-    diagnostics.push(...childArguments.diagnostics);
-    const value = childArguments.values.get("value");
-
-    if (!value) {
-      diagnostics.push(
-        createCompilerDiagnostic(
-          'The alpha command requires "value".',
-          child
-        )
-      );
-      return;
-    }
-
-    setResolvedValue(fillPropertyValues, "alpha", value, node, diagnostics);
   });
+}
 
-  const alpha =
-    readOptionalNumber(node, fillPropertyValues, "alpha", diagnostics, {
-      min: 0,
-      max: 1
-    }) ?? 1;
-
-  if (variantName !== null) {
-    const variantDefinition = getCommandDefinition(variantName);
-
-    if (!variantDefinition || !allowsChild(definition, variantDefinition)) {
-      diagnostics.push(
-        createCompilerDiagnostic(
-          `The fill command does not allow child command "${variantName}".`,
-          node
-        )
-      );
-      return null;
-    }
-
-    const syntheticNode: ParsedCommandNode = {
-      name: variantName,
-      args: variantArgs,
-      children: [],
-      lineNumber: node.lineNumber,
-      column: node.column,
-      indentLevel: node.indentLevel
-    };
-
-    if (variantName === "solid") {
-      return compileSolid(syntheticNode, diagnostics, alpha);
-    }
-
-    if (variantName === "gradient" || variantName === "gradient-linear") {
-      return compileLinearGradient(syntheticNode, diagnostics, alpha);
-    }
-
-    if (variantName === "gradient-radial") {
-      return compileRadialGradient(syntheticNode, diagnostics, alpha);
-    }
+function compileFillVariant(
+  variantNode: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[],
+  alpha: number
+): RectFill | null {
+  if (variantNode.name === "solid") {
+    return compileSolid(variantNode, diagnostics, alpha);
   }
 
-  const variantChildren = node.children.filter(
+  if (variantNode.name === "gradient-radial") {
+    return compileRadialGradient(variantNode, diagnostics, alpha);
+  }
+
+  return compileLinearGradient(variantNode, diagnostics, alpha);
+}
+
+function compileFillShorthandVariant(
+  node: ParsedCommandNode,
+  definition: NonNullable<ReturnType<typeof getCommandDefinition>>,
+  fillArguments: FillArguments,
+  diagnostics: RadebeDiagnostic[],
+  alpha: number
+): RectFill | null {
+  const variantName = fillArguments.variantName!;
+  const variantDefinition = getCommandDefinition(variantName);
+
+  if (!variantDefinition || !allowsChild(definition, variantDefinition)) {
+    diagnostics.push(
+      createCompilerDiagnostic(
+        `The fill command does not allow child command "${variantName}".`,
+        node
+      )
+    );
+    return null;
+  }
+
+  const syntheticNode: ParsedCommandNode = {
+    name: variantName,
+    args: fillArguments.variantArgs,
+    children: [],
+    lineNumber: node.lineNumber,
+    column: node.column,
+    indentLevel: node.indentLevel
+  };
+
+  return compileFillVariant(syntheticNode, diagnostics, alpha);
+}
+
+function getFillVariantChildren(node: ParsedCommandNode): ParsedCommandNode[] {
+  return node.children.filter(
     (child) =>
       child.name === "solid" ||
       child.name === "gradient" ||
       child.name === "gradient-linear" ||
       child.name === "gradient-radial"
   );
+}
+
+function createSolidFill(color: string): SolidFill {
+  return {
+    kind: "solid",
+    color,
+    alpha: 1
+  };
+}
+
+function collectStrokeChildren(
+  node: ParsedCommandNode,
+  color: string | null,
+  diagnostics: RadebeDiagnostic[]
+): Pick<StrokeAppearance, "fill" | "strokes"> & { fills: RectFill[] } {
+  const fills: RectFill[] = color === null ? [] : [createSolidFill(color)];
+  const strokes: StrokeAppearance[] = [];
+
+  node.children.forEach((child) => {
+    if (child.name === "fill") {
+      const fill = compileFill(child, diagnostics);
+
+      if (fill !== null) {
+        fills.push(fill);
+      }
+
+      return;
+    }
+
+    if (child.name === "stroke") {
+      const nestedStroke = compileStroke(child, diagnostics);
+
+      if (nestedStroke !== null) {
+        strokes.push(nestedStroke);
+      }
+    }
+  });
+
+  return {
+    fill: fills[0] ?? null,
+    fills,
+    strokes
+  };
+}
+
+export function compileFill(
+  node: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): RectFill | null {
+  const definition = getCommandDefinition(node.name);
+
+  if (!definition) {
+    diagnostics.push(createCompilerDiagnostic(`Unknown command "${node.name}".`, node));
+    return null;
+  }
+
+  validateChildren(node, definition, diagnostics);
+
+  const fillArguments = collectFillArguments(node, diagnostics);
+  applyFillAlphaChildren(node, fillArguments.propertyValues, diagnostics);
+
+  const alpha =
+    readOptionalNumber(node, fillArguments.propertyValues, "alpha", diagnostics, {
+      min: 0,
+      max: 1
+    }) ?? 1;
+
+  if (fillArguments.variantName !== null) {
+    return compileFillShorthandVariant(
+      node,
+      definition,
+      fillArguments,
+      diagnostics,
+      alpha
+    );
+  }
+
+  const variantChildren = getFillVariantChildren(node);
 
   if (variantChildren.length === 0) {
     diagnostics.push(
@@ -469,15 +550,7 @@ export function compileFill(
 
   const variantNode = variantChildren[0]!;
 
-  if (variantNode.name === "solid") {
-    return compileSolid(variantNode, diagnostics, alpha);
-  }
-
-  if (variantNode.name === "gradient-radial") {
-    return compileRadialGradient(variantNode, diagnostics, alpha);
-  }
-
-  return compileLinearGradient(variantNode, diagnostics, alpha);
+  return compileFillVariant(variantNode, diagnostics, alpha);
 }
 
 function toStrokeAlign(token: string | null): StrokeAlign | null {
@@ -579,38 +652,9 @@ export function compileStroke(
     return null;
   }
 
-  const fills: RectFill[] = [];
-  const strokes: StrokeAppearance[] = [];
+  const childAppearances = collectStrokeChildren(node, color, diagnostics);
 
-  if (color !== null) {
-    fills.push({
-      kind: "solid",
-      color,
-      alpha: 1
-    });
-  }
-
-  node.children.forEach((child) => {
-    if (child.name === "fill") {
-      const fill = compileFill(child, diagnostics);
-
-      if (fill) {
-        fills.push(fill);
-      }
-
-      return;
-    }
-
-    if (child.name === "stroke") {
-      const nestedStroke = compileStroke(child, diagnostics);
-
-      if (nestedStroke) {
-        strokes.push(nestedStroke);
-      }
-    }
-  });
-
-  if (fills.length === 0 && strokes.length === 0) {
+  if (childAppearances.fills.length === 0 && childAppearances.strokes.length === 0) {
     diagnostics.push(
       createCompilerDiagnostic(
         "The stroke command requires a color shorthand, a fill child, or a nested stroke child.",
@@ -620,7 +664,7 @@ export function compileStroke(
     return null;
   }
 
-  if (fills.length > 1) {
+  if (childAppearances.fills.length > 1) {
     diagnostics.push(
       createCompilerDiagnostic(
         "The first stroke slice supports only one fill per stroke node.",
@@ -639,8 +683,8 @@ export function compileStroke(
     dashLength,
     gapLength,
     dotSpacing,
-    fill: fills[0] ?? null,
-    strokes
+    fill: childAppearances.fill,
+    strokes: childAppearances.strokes
   };
 }
 

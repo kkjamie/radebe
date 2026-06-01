@@ -125,6 +125,30 @@ export function setResolvedValue(
   values.set(propertyName, value);
 }
 
+export function readPropertyChildValue(
+  child: ParsedCommandNode,
+  diagnostics: RadebeDiagnostic[]
+): string | null {
+  const childDefinition = getCommandDefinition(child.name);
+
+  if (!childDefinition) {
+    return null;
+  }
+
+  const childArguments = parseArguments(child, childDefinition);
+  diagnostics.push(...childArguments.diagnostics);
+  const value = childArguments.values.get("value");
+
+  if (!value) {
+    diagnostics.push(
+      createCompilerDiagnostic(`The ${child.name} command requires "value".`, child)
+    );
+    return null;
+  }
+
+  return value;
+}
+
 export function allowsChild(
   parentDefinition: CommandDefinition,
   childDefinition: CommandDefinition
@@ -381,23 +405,9 @@ export function resolveCommandProperties(
       return;
     }
 
-    const childDefinition = getCommandDefinition(child.name);
+    const value = readPropertyChildValue(child, diagnostics);
 
-    if (!childDefinition) {
-      return;
-    }
-
-    const childArguments = parseArguments(child, childDefinition);
-    diagnostics.push(...childArguments.diagnostics);
-    const value = childArguments.values.get("value");
-
-    if (!value) {
-      diagnostics.push(
-        createCompilerDiagnostic(
-          `The ${child.name} command requires "value".`,
-          child
-        )
-      );
+    if (value === null) {
       return;
     }
 

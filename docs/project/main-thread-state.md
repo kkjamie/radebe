@@ -9,6 +9,7 @@ Last updated: `2026-06-01`
 - Status: `In Progress`
 
 ## Current Focus
+- T-150 is in review after a repo-wide readability cleanup pass. The scan now reports zero production functions at or above 120 lines and zero production `if` statements at or above 40 lines, after splitting core compiler helpers, renderer stroke loops, web performance tooling handlers, and the web Playground runtime.
 - DEC-079 records the new planning decision: move public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub, but complete the refactor milestone first.
 - DEC-080 records the follow-up planning decision to promote TD-003 into T-151 for a near-term renderer/shared cleanup before final M3 consolidation, while keeping broader TD-009 class-owned architecture slices visible as T-152 for M5 validation.
 - DEC-081 records the renderer implementation direction from T-151: shared appearance-pass rendering should target coverage sources, with alpha-mask-backed composited group coverage implemented first.
@@ -158,7 +159,7 @@ Last updated: `2026-06-01`
 - T-131 is a backlog task to resolve author-facing coordinate-space semantics before or alongside `outputscale`, including sprite bounds, point-like commands, filled extents, open paths, stroke alignment, antialiasing, tests, and docs.
 
 ## Best Next Tasks
-1. Start T-150 and review completed M3 refactors, including T-151 through T-158 plus T-160 and T-161, against Gate D pass criteria.
+1. Review the T-150 repo-wide readability cleanup with the user.
 2. Verify final Gate D evidence, then close or re-scope remaining renderer/core refactor debt such as TD-003 and TD-009.
 3. If Gate D passes, advance to M4 Gate A and begin T-135 GitHub migration planning/execution.
 

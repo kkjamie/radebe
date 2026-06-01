@@ -220,64 +220,33 @@ function Page(props: {
   }
 }
 
-function App() {
-  const hasMarkedRenderStartRef = useRef(false);
-  const perfSuiteEnabled = useMemo(
+type PerfSuitePageResult = {
+  pageId: string;
+  pageKind: PageDefinition["kind"];
+  snapshot: ReturnType<typeof getPerfSnapshot>;
+  title: string;
+};
+
+function usePerfSuite(page: PageDefinition): void {
+  const enabled = useMemo(
     () => new URLSearchParams(window.location.search).get("perf-suite") === "1",
     []
   );
-  const perfSuiteToken = useMemo(
+  const token = useMemo(
     () => new URLSearchParams(window.location.search).get("perf-suite-token") ?? "",
     []
   );
-  const perfSuitePageIds = useMemo(() => pages.map((page) => page.id), []);
-  const perfSuiteIndexRef = useRef(0);
-  const perfSuitePostedRef = useRef(false);
-  const perfSuiteResultsRef = useRef<
-    Array<{
-      pageId: string;
-      pageKind: PageDefinition["kind"];
-      snapshot: ReturnType<typeof getPerfSnapshot>;
-      title: string;
-    }>
-  >([]);
-
-  if (!hasMarkedRenderStartRef.current) {
-    markPerfPoint("app-render-start");
-    hasMarkedRenderStartRef.current = true;
-  }
-
-  const pageById = useMemo(
-    () => new Map(pages.map((page) => [page.id, page])),
-    []
-  );
-  const sourceState = useMemo(() => new Map<string, string>(), []);
-  const contentRef = useRef<HTMLElement>(null);
-  const isNarrowViewport = useNarrowViewport();
-  const pageId = useCurrentPageId(pageById);
-  const page = pageById.get(pageId) ?? pages[0]!;
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(isNarrowViewport);
+  const pageIds = useMemo(() => pages.map((suitePage) => suitePage.id), []);
+  const indexRef = useRef(0);
+  const postedRef = useRef(false);
+  const resultsRef = useRef<PerfSuitePageResult[]>([]);
 
   useEffect(() => {
-    markPerfPoint("app-mounted", page.kind);
-    window.requestAnimationFrame(() => {
-      markPerfPoint("app-first-frame", page.kind);
-    });
-  }, []);
-
-  useEffect(() => {
-    markPerfPoint("page-mounted", `${page.id}:${page.kind}`);
-    window.requestAnimationFrame(() => {
-      markPerfPoint("page-first-frame", `${page.id}:${page.kind}`);
-    });
-  }, [page.id, page.kind]);
-
-  useEffect(() => {
-    if (!perfSuiteEnabled || perfSuitePostedRef.current) {
+    if (!enabled || postedRef.current) {
       return;
     }
 
-    const expectedPageId = perfSuitePageIds[perfSuiteIndexRef.current];
+    const expectedPageId = pageIds[indexRef.current];
 
     if (!expectedPageId) {
       return;
@@ -294,25 +263,27 @@ function App() {
 
     const captureTimer = window.setTimeout(() => {
       const pageTitle = page.kind === "example" ? page.doc.title : page.title;
-      const pageResult = {
+      const pageResult: PerfSuitePageResult = {
         pageId: page.id,
         pageKind: page.kind,
         snapshot: getPerfSnapshot(),
         title: pageTitle
       };
 
-      perfSuiteResultsRef.current.push(pageResult);
+      resultsRef.current.push(pageResult);
+      indexRef.current += 1;
 
-      perfSuiteIndexRef.current += 1;
-      const nextPageId = perfSuitePageIds[perfSuiteIndexRef.current];
+      const nextPageId = pageIds[indexRef.current];
+      const progressUrl = `/__perf-progress?token=${encodeURIComponent(token)}`;
+      const reportUrl = `/__perf-report?token=${encodeURIComponent(token)}`;
 
-      void fetch(`/__perf-progress?token=${encodeURIComponent(perfSuiteToken)}`, {
+      void fetch(progressUrl, {
         body: JSON.stringify({
           capturedAt: new Date().toISOString(),
           nextPageId,
           page: pageResult,
-          pageIndex: perfSuiteIndexRef.current - 1,
-          totalPages: perfSuitePageIds.length
+          pageIndex: indexRef.current - 1,
+          totalPages: pageIds.length
         }),
         headers: {
           "Content-Type": "application/json"
@@ -327,11 +298,11 @@ function App() {
           return;
         }
 
-        perfSuitePostedRef.current = true;
-        void fetch(`/__perf-report?token=${encodeURIComponent(perfSuiteToken)}`, {
+        postedRef.current = true;
+        void fetch(reportUrl, {
           body: JSON.stringify({
             generatedAt: new Date().toISOString(),
-            pages: perfSuiteResultsRef.current
+            pages: resultsRef.current
           }),
           headers: {
             "Content-Type": "application/json"
@@ -346,7 +317,180 @@ function App() {
     return () => {
       window.clearTimeout(captureTimer);
     };
-  }, [page, perfSuiteEnabled, perfSuitePageIds, perfSuiteToken]);
+  }, [enabled, page, pageIds, token]);
+}
+
+function SiteTopbar(props: {
+  sidebarCollapsed: boolean;
+  onHomeClick: (event: MouseEvent) => void;
+  onToggleSidebar: () => void;
+}) {
+  return (
+    <header className="site-topbar">
+      <div className="topbar-left">
+        <button
+          aria-expanded={props.sidebarCollapsed ? "false" : "true"}
+          aria-label="Toggle sidebar"
+          className="sidebar-toggle"
+          onClick={props.onToggleSidebar}
+          type="button"
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+        <a
+          className="home-brand-link"
+          href="#/home"
+          onClick={props.onHomeClick}
+        >
+          <BrandIcon />
+          <span className="topbar-title">Radebe</span>
+        </a>
+        <span className="topbar-tagline">
+          Procedural image authoring language
+        </span>
+      </div>
+      <span className="version-pill">v{productVersion}</span>
+    </header>
+  );
+}
+
+function PrimaryNavLinks(props: {
+  activePageId: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <div className="nav-section">
+      <NavLink
+        activePageId={props.activePageId}
+        label="Home"
+        onNavigate={props.onNavigate}
+        pageId="home"
+      />
+      <NavLink
+        activePageId={props.activePageId}
+        label="Try it"
+        onNavigate={props.onNavigate}
+        pageId="try-it"
+      />
+      <NavLink
+        activePageId={props.activePageId}
+        label="Examples"
+        onNavigate={props.onNavigate}
+        pageId="examples"
+      />
+      <NavLink
+        activePageId={props.activePageId}
+        label="Syntax"
+        onNavigate={props.onNavigate}
+        pageId="syntax"
+      />
+      <NavLink
+        activePageId={props.activePageId}
+        label="Release notes"
+        onNavigate={props.onNavigate}
+        pageId="releases"
+      />
+      <NavLink
+        activePageId={props.activePageId}
+        label="Roadmap"
+        onNavigate={props.onNavigate}
+        pageId="roadmap"
+      />
+    </div>
+  );
+}
+
+function IntegrationNavLinks(props: {
+  activePageId: string;
+  onNavigate: () => void;
+}) {
+  if (integrationPages.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="nav-section nav-bottom">
+      <p className="nav-section-title">Integrations</p>
+      {integrationPages.map((integrationPage) => (
+        <NavLink
+          activePageId={props.activePageId}
+          key={integrationPage.id}
+          label={integrationPage.title}
+          onNavigate={props.onNavigate}
+          pageId={integrationPage.id}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SiteSidebar(props: {
+  activePageId: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <aside className="site-sidebar">
+      <div className="site-sidebar-inner">
+        <div>
+          <h1 className="site-brand-title">Radebe</h1>
+        </div>
+        <nav className="site-nav">
+          <PrimaryNavLinks
+            activePageId={props.activePageId}
+            onNavigate={props.onNavigate}
+          />
+          <div className="nav-section">
+            <p className="nav-section-title">Commands</p>
+            <CommandNav
+              activePageId={props.activePageId}
+              onNavigate={props.onNavigate}
+            />
+          </div>
+          <IntegrationNavLinks
+            activePageId={props.activePageId}
+            onNavigate={props.onNavigate}
+          />
+        </nav>
+      </div>
+    </aside>
+  );
+}
+
+function App() {
+  const hasMarkedRenderStartRef = useRef(false);
+
+  if (!hasMarkedRenderStartRef.current) {
+    markPerfPoint("app-render-start");
+    hasMarkedRenderStartRef.current = true;
+  }
+
+  const pageById = useMemo(
+    () => new Map(pages.map((page) => [page.id, page])),
+    []
+  );
+  const sourceState = useMemo(() => new Map<string, string>(), []);
+  const contentRef = useRef<HTMLElement>(null);
+  const isNarrowViewport = useNarrowViewport();
+  const pageId = useCurrentPageId(pageById);
+  const page = pageById.get(pageId) ?? pages[0]!;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isNarrowViewport);
+  usePerfSuite(page);
+
+  useEffect(() => {
+    markPerfPoint("app-mounted", page.kind);
+    window.requestAnimationFrame(() => {
+      markPerfPoint("app-first-frame", page.kind);
+    });
+  }, []);
+
+  useEffect(() => {
+    markPerfPoint("page-mounted", `${page.id}:${page.kind}`);
+    window.requestAnimationFrame(() => {
+      markPerfPoint("page-first-frame", `${page.id}:${page.kind}`);
+    });
+  }, [page.id, page.kind]);
 
   useEffect(() => {
     setSidebarCollapsed(isNarrowViewport);
@@ -377,108 +521,21 @@ function App() {
     }
   }
 
+  function handleToggleSidebar(): void {
+    setSidebarCollapsed((collapsed) => !collapsed);
+  }
+
   return (
     <main
       className="site-shell"
       data-sidebar-collapsed={sidebarCollapsed ? "true" : "false"}
     >
-      <header className="site-topbar">
-        <div className="topbar-left">
-          <button
-            aria-expanded={sidebarCollapsed ? "false" : "true"}
-            aria-label="Toggle sidebar"
-            className="sidebar-toggle"
-            onClick={() => {
-              setSidebarCollapsed((collapsed) => !collapsed);
-            }}
-            type="button"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
-          <a
-            className="home-brand-link"
-            href="#/home"
-            onClick={handleTopbarHomeClick}
-          >
-            <BrandIcon />
-            <span className="topbar-title">Radebe</span>
-          </a>
-          <span className="topbar-tagline">
-            Procedural image authoring language
-          </span>
-        </div>
-        <span className="version-pill">v{productVersion}</span>
-      </header>
-      <aside className="site-sidebar">
-        <div className="site-sidebar-inner">
-          <div>
-            <h1 className="site-brand-title">Radebe</h1>
-          </div>
-          <nav className="site-nav">
-            <div className="nav-section">
-              <NavLink
-                activePageId={page.id}
-                label="Home"
-                onNavigate={handleNavigate}
-                pageId="home"
-              />
-              <NavLink
-                activePageId={page.id}
-                label="Try it"
-                onNavigate={handleNavigate}
-                pageId="try-it"
-              />
-              <NavLink
-                activePageId={page.id}
-                label="Examples"
-                onNavigate={handleNavigate}
-                pageId="examples"
-              />
-              <NavLink
-                activePageId={page.id}
-                label="Syntax"
-                onNavigate={handleNavigate}
-                pageId="syntax"
-              />
-              <NavLink
-                activePageId={page.id}
-                label="Release notes"
-                onNavigate={handleNavigate}
-                pageId="releases"
-              />
-              <NavLink
-                activePageId={page.id}
-                label="Roadmap"
-                onNavigate={handleNavigate}
-                pageId="roadmap"
-              />
-            </div>
-            <div className="nav-section">
-              <p className="nav-section-title">Commands</p>
-              <CommandNav
-                activePageId={page.id}
-                onNavigate={handleNavigate}
-              />
-            </div>
-            {integrationPages.length > 0 ? (
-              <div className="nav-section nav-bottom">
-                <p className="nav-section-title">Integrations</p>
-                {integrationPages.map((integrationPage) => (
-                  <NavLink
-                    activePageId={page.id}
-                    key={integrationPage.id}
-                    label={integrationPage.title}
-                    onNavigate={handleNavigate}
-                    pageId={integrationPage.id}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </nav>
-        </div>
-      </aside>
+      <SiteTopbar
+        onHomeClick={handleTopbarHomeClick}
+        onToggleSidebar={handleToggleSidebar}
+        sidebarCollapsed={sidebarCollapsed}
+      />
+      <SiteSidebar activePageId={page.id} onNavigate={handleNavigate} />
       <section className="site-content" ref={contentRef}>
         <Page page={page} sourceState={sourceState} />
       </section>
