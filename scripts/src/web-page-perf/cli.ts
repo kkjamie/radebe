@@ -20,7 +20,10 @@ import {
   getWebDistDir
 } from "./paths.js";
 import { writePerfReports } from "./report-writer.js";
-import { startStaticServer } from "./static-server.js";
+import {
+  startStaticServer,
+  type StaticPerfServer
+} from "./static-server.js";
 
 import type { PerfSuiteReport, RouteProbeResult } from "./types.js";
 
@@ -124,7 +127,7 @@ export function parseCommandLine(argv: string[]): CommandLineOptions {
 
 export async function main(argv: string[]): Promise<number> {
   try {
-    const options = parseCommandLine(argv);
+    const options: CommandLineOptions = parseCommandLine(argv);
     const rootDir = findRepoRoot(process.cwd());
     const distDir = getWebDistDir(rootDir);
 
@@ -138,7 +141,10 @@ export async function main(argv: string[]): Promise<number> {
     const reportOutputDir = getReportOutputDir(rootDir);
     await mkdir(reportOutputDir, { recursive: true });
 
-    const server = await startStaticServer(distDir, options.port);
+    const server: StaticPerfServer = await startStaticServer(
+      distDir,
+      options.port
+    );
 
     try {
       const reportToken = randomBytes(8).toString("hex");

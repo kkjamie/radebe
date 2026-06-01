@@ -161,7 +161,7 @@ function runCompile(argv: string[]): number {
     return 1;
   }
 
-  const result = renderSource({ source });
+  const result: PipelineResult = renderSource({ source });
   process.stdout.write(`${buildUnityJsonArtifact(result, options.sourcePath)}\n`);
   printDiagnostics(result.diagnostics);
 
@@ -174,7 +174,7 @@ export function run(argv: string[]): number {
   }
 
   const input = argv[2] ?? "";
-  const result = renderSource({ source: input });
+  const result: PipelineResult = renderSource({ source: input });
   const output = result.artifact.rows.join("\n");
 
   process.stdout.write(output === "" ? "\n" : `${output}\n`);

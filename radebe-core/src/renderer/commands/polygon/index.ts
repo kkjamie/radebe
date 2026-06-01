@@ -1,9 +1,13 @@
 import type { CompiledDrawCommand } from "../../../types.js";
 import {
   drawCoverageAppearancePasses,
-  normalizeCoverageAppearancePasses
+  normalizeCoverageAppearancePasses,
+  type CoverageAppearancePasses
 } from "../../appearance.js";
-import { createPolygonCoverageSource } from "../../coverage.js";
+import {
+  createPolygonCoverageSource,
+  type CoverageSource
+} from "../../coverage.js";
 import { type DrawnGrid, type PixelGrid } from "../../shared.js";
 
 export function drawPolygonCommand(
@@ -13,8 +17,12 @@ export function drawPolygonCommand(
   defaultAntialias: boolean
 ): void {
   const antialias = command.antialias ?? defaultAntialias;
-  const coverage = createPolygonCoverageSource(command, antialias);
-  const passes = normalizeCoverageAppearancePasses(command);
+  const coverage: CoverageSource = createPolygonCoverageSource(
+    command,
+    antialias
+  );
+  const passes: CoverageAppearancePasses =
+    normalizeCoverageAppearancePasses(command);
 
   drawCoverageAppearancePasses(pixels, drawnPixels, coverage, passes);
 }

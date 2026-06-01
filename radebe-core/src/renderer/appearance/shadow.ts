@@ -8,7 +8,8 @@ import {
   sampleFillColor,
   setPixel,
   type DrawnGrid,
-  type PixelGrid
+  type PixelGrid,
+  type RectBounds
 } from "../shared.js";
 
 export function drawCoverageShadow(
@@ -22,14 +23,14 @@ export function drawCoverageShadow(
   }
 
   const blurRadius = getShadowBlurRadius(shadow);
-  const shadowSource = source.createSpreadSource(shadow.spread);
-  const shadowBounds = offsetAndExpandBounds(
+  const shadowSource: CoverageSource = source.createSpreadSource(shadow.spread);
+  const shadowBounds: RectBounds = offsetAndExpandBounds(
     shadowSource.bounds,
     shadow.offsetX,
     shadow.offsetY,
     0
   );
-  const drawBounds =
+  const drawBounds: RectBounds =
     blurRadius === 0 ? shadowBounds : expandBounds(shadowBounds, blurRadius);
   const sampleShadowAlpha = (sampleX: number, sampleY: number) => {
     const sourceX = Math.round(sampleX - shadow.offsetX);

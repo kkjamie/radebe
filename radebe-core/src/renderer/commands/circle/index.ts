@@ -1,9 +1,13 @@
 import type { CompiledDrawCommand } from "../../../types.js";
 import {
   drawCoverageAppearancePasses,
-  normalizeCoverageAppearancePasses
+  normalizeCoverageAppearancePasses,
+  type CoverageAppearancePasses
 } from "../../appearance.js";
-import { createCircleCoverageSource } from "../../coverage.js";
+import {
+  createCircleCoverageSource,
+  type CoverageSource
+} from "../../coverage.js";
 import { type DrawnGrid, type PixelGrid } from "../../shared.js";
 
 export function drawCircleCommand(
@@ -13,8 +17,12 @@ export function drawCircleCommand(
   defaultAntialias: boolean
 ): void {
   const antialias = command.antialias ?? defaultAntialias;
-  const coverage = createCircleCoverageSource(command, antialias);
-  const passes = normalizeCoverageAppearancePasses(command);
+  const coverage: CoverageSource = createCircleCoverageSource(
+    command,
+    antialias
+  );
+  const passes: CoverageAppearancePasses =
+    normalizeCoverageAppearancePasses(command);
 
   drawCoverageAppearancePasses(pixels, drawnPixels, coverage, passes);
 }

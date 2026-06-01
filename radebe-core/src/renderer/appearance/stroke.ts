@@ -64,7 +64,7 @@ export function drawCoverageStroke(
     }
   }
 
-  const nestedSource = source.createSpreadSource(outer);
+  const nestedSource: CoverageSource = source.createSpreadSource(outer);
 
   stroke.strokes.forEach((nestedStroke) => {
     drawCoverageStroke(pixels, drawnPixels, nestedSource, nestedStroke);

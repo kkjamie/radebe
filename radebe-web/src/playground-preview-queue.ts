@@ -146,7 +146,7 @@ async function runFallbackJob(job: PreviewRenderJob): Promise<void> {
     fallbackRendererImport ??= import("@radebe/core/renderer");
     const renderer = await fallbackRendererImport;
     const startedAt = getNowMs();
-    const result = renderer.renderSource({ source: job.source });
+    const result: PipelineResult = renderer.renderSource({ source: job.source });
     const durationMs = getNowMs() - startedAt;
 
     completeActiveJob();

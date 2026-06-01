@@ -11,7 +11,9 @@ import type {
   RectFill,
   ShadowAppearance,
   SolidFill,
-  StrokeAppearance
+  StrokeAlign,
+  StrokeAppearance,
+  StrokeStyle
 } from "../types.js";
 
 import {
@@ -203,7 +205,7 @@ function compileGradientStops(
     return null;
   }
 
-  const stops = stopChildren
+  const stops: GradientStop[] = stopChildren
     .map((child) => compileGradientStop(child, diagnostics))
     .filter((stop): stop is GradientStop => stop !== null);
 
@@ -478,6 +480,26 @@ export function compileFill(
   return compileLinearGradient(variantNode, diagnostics, alpha);
 }
 
+function toStrokeAlign(token: string | null): StrokeAlign | null {
+  if (token === null) {
+    return "center";
+  }
+
+  return token === "inside" || token === "center" || token === "outside"
+    ? token
+    : null;
+}
+
+function toStrokeStyle(token: string | null): StrokeStyle | null {
+  if (token === null) {
+    return "solid";
+  }
+
+  return token === "solid" || token === "dashed" || token === "dotted"
+    ? token
+    : null;
+}
+
 export function compileStroke(
   node: ParsedCommandNode,
   diagnostics: RadebeDiagnostic[]
@@ -533,10 +555,7 @@ export function compileStroke(
     return null;
   }
 
-  const align =
-    alignToken === null ? "center" : alignToken === "inside" || alignToken === "center" || alignToken === "outside"
-      ? alignToken
-      : null;
+  const align: StrokeAlign | null = toStrokeAlign(alignToken);
 
   if (align === null) {
     diagnostics.push(
@@ -548,10 +567,7 @@ export function compileStroke(
     return null;
   }
 
-  const style =
-    styleToken === null ? "solid" : styleToken === "solid" || styleToken === "dashed" || styleToken === "dotted"
-      ? styleToken
-      : null;
+  const style: StrokeStyle | null = toStrokeStyle(styleToken);
 
   if (style === null) {
     diagnostics.push(

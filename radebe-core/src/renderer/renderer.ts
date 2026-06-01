@@ -9,7 +9,10 @@ import {
   normalizeCoverageAppearancePasses,
   type CoverageAppearancePasses
 } from "./appearance.js";
-import { createAlphaMaskCoverageSource } from "./coverage.js";
+import {
+  createAlphaMaskCoverageSource,
+  type CoverageSource
+} from "./coverage.js";
 import {
   buildAlphaMask,
   compositeLayer,
@@ -202,7 +205,8 @@ export class DocumentRenderer {
     command: Extract<CompiledDrawCommand, { kind: "group" }>,
     defaultAntialias: boolean
   ): void {
-    const passes = normalizeCoverageAppearancePasses(command);
+    const passes: CoverageAppearancePasses =
+      normalizeCoverageAppearancePasses(command);
 
     if (!this.groupHasPasses(passes)) {
       command.commands.forEach((childCommand) => {
@@ -213,7 +217,7 @@ export class DocumentRenderer {
 
     const height = pixels.length;
     const width = pixels[0]?.length ?? 0;
-    const childLayer = createLayer(width, height);
+    const childLayer: Layer = createLayer(width, height);
 
     command.commands.forEach((childCommand) => {
       this.drawCommand(
@@ -224,35 +228,63 @@ export class DocumentRenderer {
       );
     });
 
-    const mask = buildAlphaMask(childLayer.pixels);
+    const mask: AlphaMask = buildAlphaMask(childLayer.pixels);
     const bounds = getAlphaMaskBounds(mask);
 
     if (bounds === null) {
       return;
     }
 
-    const coverageSource = createAlphaMaskCoverageSource(mask, bounds);
-    const finalLayer = createLayer(width, height);
+    const coverageSource: CoverageSource = createAlphaMaskCoverageSource(
+      mask,
+      bounds
+    );
+    const finalLayer: Layer = createLayer(width, height);
 
     passes.shadows.forEach((shadow) => {
-      drawCoverageShadow(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, shadow);
+      drawCoverageShadow(
+        finalLayer.pixels,
+        finalLayer.drawnPixels,
+        coverageSource,
+        shadow
+      );
     });
     passes.glows
       .filter((glow) => glow.mode === "outer")
       .forEach((glow) => {
-        drawCoverageGlow(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, glow);
+        drawCoverageGlow(
+          finalLayer.pixels,
+          finalLayer.drawnPixels,
+          coverageSource,
+          glow
+        );
       });
     compositeLayer(finalLayer.pixels, finalLayer.drawnPixels, childLayer);
     passes.fills.forEach((fill) => {
-      drawCoverageFill(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, fill);
+      drawCoverageFill(
+        finalLayer.pixels,
+        finalLayer.drawnPixels,
+        coverageSource,
+        fill
+      );
     });
     passes.glows
       .filter((glow) => glow.mode === "inner")
       .forEach((glow) => {
-        drawCoverageGlow(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, glow);
+        drawCoverageGlow(
+          finalLayer.pixels,
+          finalLayer.drawnPixels,
+          coverageSource,
+          glow
+        );
       });
     passes.strokes.forEach((stroke) => {
-      drawCoverageStroke(finalLayer.pixels, finalLayer.drawnPixels, coverageSource, stroke);
+      drawCoverageStroke(
+        finalLayer.pixels,
+        finalLayer.drawnPixels,
+        coverageSource,
+        stroke
+      );
     });
 
     compositeLayer(pixels, drawnPixels, finalLayer);
@@ -292,8 +324,8 @@ export class DocumentRenderer {
   ): void {
     const height = pixels.length;
     const width = pixels[0]?.length ?? 0;
-    const shapeLayer = createLayer(width, height);
-    const contentLayer = createLayer(width, height);
+    const shapeLayer: Layer = createLayer(width, height);
+    const contentLayer: Layer = createLayer(width, height);
 
     command.shapeCommands.forEach((shapeCommand) => {
       this.drawCommand(
@@ -323,7 +355,11 @@ export class DocumentRenderer {
       return;
     }
 
-    this.applyAlphaMaskToLayer(contentLayer, buildAlphaMask(shapeLayer.pixels), command.invert);
+    this.applyAlphaMaskToLayer(
+      contentLayer,
+      buildAlphaMask(shapeLayer.pixels),
+      command.invert
+    );
     compositeLayer(pixels, drawnPixels, contentLayer);
   }
 

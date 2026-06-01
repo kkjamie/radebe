@@ -1,5 +1,6 @@
 import { renderSource } from "@radebe/core/renderer";
 
+import type { PipelineResult } from "@radebe/core/types";
 import type {
   PreviewRenderRequestMessage,
   PreviewRenderResponseMessage
@@ -20,7 +21,7 @@ globalThis.onmessage = (
 
   try {
     const startedAt = getNowMs();
-    const result = renderSource({ source: message.source });
+    const result: PipelineResult = renderSource({ source: message.source });
     const response: PreviewRenderResponseMessage = {
       durationMs: getNowMs() - startedAt,
       jobId: message.jobId,

@@ -12,6 +12,7 @@ import {
   type LanguagePosition,
   type LanguageSmartEdit,
   type LanguageTextEdit,
+  type PipelineResult,
   type RadebeColorToken,
   type RadebeRgbaColor,
   type RadebeDiagnostic,
@@ -284,7 +285,9 @@ export function getSmartTextEditsAtOffset(
 }
 
 export function getDiagnosticRanges(source: string): RadebeDiagnosticRange[] {
-  return renderSource({ source }).diagnostics.map((diagnostic) => ({
+  const result: PipelineResult = renderSource({ source });
+
+  return result.diagnostics.map((diagnostic) => ({
     ...getDiagnosticTokenRange(source, diagnostic),
     stage: diagnostic.stage,
     message: diagnostic.message,
@@ -314,7 +317,7 @@ export function formatArgumentName(
 }
 
 export function createRenderPreviewText(source: string): string {
-  const result = renderSource({ source });
+  const result: PipelineResult = renderSource({ source });
   const diagnostics =
     result.diagnostics.length === 0
       ? ["(no diagnostics)"]

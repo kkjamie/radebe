@@ -5,7 +5,8 @@ import {
   expandBounds,
   getGlowBlurRadius,
   type DrawnGrid,
-  type PixelGrid
+  type PixelGrid,
+  type RectBounds
 } from "../shared.js";
 
 export function drawCoverageGlow(
@@ -20,11 +21,11 @@ export function drawCoverageGlow(
 
   const spread = Math.max(glow.spread, 0);
   const blurRadius = getGlowBlurRadius(glow);
-  const glowSource = source.createSpreadSource(
+  const glowSource: CoverageSource = source.createSpreadSource(
     glow.mode === "outer" ? spread : -spread
   );
-  const glowBounds = glowSource.bounds;
-  const drawBounds =
+  const glowBounds: RectBounds = glowSource.bounds;
+  const drawBounds: RectBounds =
     glow.mode === "outer" ? expandBounds(glowBounds, blurRadius) : source.bounds;
   const sampleSourceAlpha = (sampleX: number, sampleY: number) =>
     source.sampleAlpha(Math.round(sampleX), Math.round(sampleY));
