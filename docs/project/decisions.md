@@ -1,7 +1,7 @@
 # Decisions Log
 
 Owner: `Main Thread`
-Last updated: `2026-06-01`
+Last updated: `2026-06-02`
 
 Use for significant decisions only. Keep entries short and explicit.
 
@@ -972,4 +972,15 @@ Use for significant decisions only. Keep entries short and explicit.
 - Decision: Record repo-wide TypeScript readability rules in the shared engineering standards, with Radebe-specific pointers in the project styleguide. Function and API boundaries stay explicitly typed; local variables from non-obvious domain function calls should also be explicitly typed; wrapped calls should put each argument on its own line, while short single-argument calls can stay inline; blank lines should separate distinct phases; comments and JSDoc should explain purpose, behavior, or contract in plain English.
 - Consequences: Future cleanup can apply the rule in touched code without a noisy mechanical sweep. Reviews have a concrete standard for when an annotation, blank line, or clearer comment wording is useful.
 - Related tasks: T-160, T-150
+- Supersedes: N/A
+
+---
+
+### DEC-087: Close M3 Refactor Debt Before GitHub Migration
+- Date: `2026-06-02`
+- Status: Accepted
+- Context: T-150 needed to decide whether the remaining M3 refactor debt still blocked GitHub migration after the coverage-source renderer work, focused appearance modules, readability sweep, and passing build/test evidence.
+- Decision: Close TD-003 as satisfied by the renderer appearance-pass consolidation, and re-scope TD-009 into T-152 for M5 backlog validation instead of keeping broader class-owned subsystem work as an M4 blocker.
+- Consequences: M3 Gate D can pass and M4 GitHub migration can start. Future class-owned slices remain visible, but they should be selected only when they lower concrete adjacent change risk after the M5 backlog review.
+- Related tasks: T-150, T-151, T-153, T-154, T-155, T-156, T-160, T-161, T-152, T-135
 - Supersedes: N/A

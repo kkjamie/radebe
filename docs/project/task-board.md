@@ -1,14 +1,14 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-06-01`
+Last updated: `2026-06-02`
 
 Use this as the single source of truth for active execution state. Keep `Active` limited to live execution items; closed work belongs in `Completed`.
 
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-150 | Consolidate M3 refactor gates for GitHub migration readiness | M3 | Gate D | P1 | Review | `codex` | None | Review the repo-wide readability cleanup, then finish Gate D by deciding whether TD-003 and TD-009 are closed or re-scoped for M5 |
+| T-135 | Migrate public source, website, release artifacts, and pipelines to GitHub | M4 | Gate A | P1 | Ready | Unassigned | None | Define the GitHub repo, Actions, Pages, Releases, secrets, branch, and cutover plan, then implement the migration gates before restoring public downloads |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
@@ -18,9 +18,8 @@ Use this as the single source of truth for active execution state. Keep `Active`
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-126 | Publish the web-only `v0.1.0` site release through the GitHub path | M4 | Gate E | P1 | Backlog | Unassigned | Parked by the 2026-05-28 GitHub migration decision until M3 refactors and M4 pipeline/hosting gates are ready | Publish and tag the site/product release through GitHub Pages/Releases instead of the Azure/Cloudflare path |
-| T-135 | Migrate public source, website, release artifacts, and pipelines to GitHub | M4 | Gate A | P1 | Backlog | Unassigned | Wait for M3 refactor consolidation before moving the public hosting and pipeline surface | Define the GitHub repo, Actions, Pages, Releases, secrets, branch, and cutover plan, then implement the migration gates before restoring public downloads |
 | T-148 | Review and prune the full post-migration backlog | M5 | Gate A | P1 | Backlog | Unassigned | Wait for M4 GitHub migration to complete so the review sees the real public repo, hosting, and pipeline shape | Audit every open task for keep, prune, merge, split, or defer decisions, then produce the next milestone split before feature work resumes |
-| T-152 | Continue targeted class-owned core subsystem slices | M5 | Gate A | P2 | Backlog | Unassigned | Validate during T-148 after T-151 narrows the renderer side of TD-009 | Decide the next class-owned subsystem slice, such as command renderers, appearance-pass classes, samplers, layers, masks, or compiler command objects, and implement only when it lowers concrete adjacent change risk |
+| T-152 | Continue targeted class-owned core subsystem slices | M5 | Gate A | P2 | Backlog | Unassigned | Validate during T-148 after T-150 re-scoped TD-009 out of M3 | Decide the next class-owned subsystem slice, such as command renderers, appearance-pass classes, samplers, layers, masks, or compiler command objects, and implement only when it lowers concrete adjacent change risk |
 | T-054 | Phase 5: Package the editor as a reusable consumer surface | M5 | Gate B | P2 | Backlog | Unassigned | Postponed by user on 2026-05-21 until the product/editor surface is deliberately resumed and must pass M5 backlog validation first | Later define a reusable editor boundary for the CodeMirror host, assist UI, diagnostics, preview hooks, framework wrappers, and non-React consumption story |
 | T-055 | Phase 6: Build Unity editor live-authoring parity | M5 | Gate B | P2 | Backlog | Unassigned | Postponed by user on 2026-05-21; must pass M5 backlog validation before Unity authoring work resumes | Later design the Unity editor presentation layer and decide whether it consumes a lightweight language-service process, CLI calls, generated metadata, or another shared contract |
 | T-137 | Add VS Code live rendered preview pane | M5 | Gate B | P1 | Backlog | Unassigned | Keep scoped to the VS Code extension; do not add this task to the public website roadmap; validate priority during M5 | Implement `Radebe: Open Live Preview` as an in-VS-Code WebviewPanel beside the native `.rdb` editor, reusing `@radebe/core` rendering with debounced document updates, canvas drawing, zoom/fit, status, and diagnostics without embedding the Preact web playground or opening a separate browser window |
@@ -50,6 +49,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Completed
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-150 | Consolidate M3 refactor gates for GitHub migration readiness | M3 | Gate D | P1 | Done | `codex` | None | M3 Gate D passed after final consolidation: build, tests, and diff check pass; TD-003 is closed; TD-009 is re-scoped to T-152 for M5 validation; proceed to M4 Gate A with T-135 |
 | T-141 | Unify schema, compiler, language-service, and color-token argument binding | M3 | Gate A | P1 | Done | `codex` | None | High-risk positional binding now shares one internal helper for strict integer-token detection, `rect-inset` slot mapping, and variadic trailing-color handling across compiler, language-service, and color-token detection; proceed to T-140 compiler module extraction |
 | T-143 | Split the core render test suite and fixture helpers | M3 | Gate A | P1 | Done | `codex` | None | Core tests now live in focused `schema`, `compiler`, and `render` modules with shared helpers, strict malformed numeric-token coverage, and verified `@radebe/core` build plus direct Node test execution |
 | T-140 | Refactor the core compiler into command-owned modules | M3 | Gate A | P1 | Done | `codex` | None | `radebe-core/src/compiler.ts` now stays as the public compile facade while shared compiler utilities, variables, sprite header compilation, appearance passes, primitive commands, shape commands, path compilation, and group/mask compilation live under focused `src/compiler/` modules; proceed to M3 Gate B with T-147 and T-133 |

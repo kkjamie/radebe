@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-06-01`
+Last updated: `2026-06-02`
 
 ## Planning Horizon
 - Current: `2026-05-24` to `2026-06-07`
@@ -13,8 +13,8 @@ Last updated: `2026-06-01`
 | M0 | Planning baseline for the Radebe monorepo and package model | P0 | Done | 2026-05-24 | Initial setup | `docs/project/milestones/M0-planning-phase.md` | Passed |
 | M1 | Workspace scaffold for `radebe-core`, `radebe-cli`, `radebe-web`, `radebe-unity`, and `scripts` | P0 | Done | 2026-06-07 | M0 completed | `docs/project/milestones/M1-implementation-foundation.md` | Passed |
 | M2 | Website and release closeout candidate for the first usable authoring loop | P1 | Paused | 2026-06-07 | M1 completed; historical M2 gates A-C passed | `docs/project/milestones/M2-scale-and-optimization.md` | Gate D blocked |
-| M3 | Refactoring and architecture stabilization before public GitHub migration | P1 | In Progress | 2026-06-21 | M2 release candidate prepared; GitHub migration intentionally waits | `docs/project/milestones/M3-refactoring-stabilization.md` | Gate D |
-| M4 | GitHub migration for source, website, release binaries, and pipelines | P1 | Planned | 2026-07-05 | M3 refactor consolidation | `docs/project/milestones/M4-github-migration.md` | Gate A |
+| M3 | Refactoring and architecture stabilization before public GitHub migration | P1 | Done | 2026-06-21 | M2 release candidate prepared; GitHub migration intentionally waits | `docs/project/milestones/M3-refactoring-stabilization.md` | Passed |
+| M4 | GitHub migration for source, website, release binaries, and pipelines | P1 | In Progress | 2026-07-05 | M3 refactor consolidation | `docs/project/milestones/M4-github-migration.md` | Gate A |
 | M5 | Full backlog review and future milestone replan before broad feature work resumes | P1 | Planned | 2026-07-12 | M4 GitHub migration | `docs/project/milestones/M5-backlog-review-and-replan.md` | Gate A |
 
 ## Priority Rules
@@ -25,8 +25,8 @@ Last updated: `2026-06-01`
 ## Current Focus
 - The milestone order has been reworked around the 2026-05-28 GitHub decision: refactoring first, GitHub migration second, backlog review third, then any remaining feature/integration work only after that review splits the next milestones.
 - M2 is paused rather than pushed through the Azure/Cloudflare closeout path. The local web-only `v0.1.0` release candidate, `siteVersion` `2026-05-27.1`, release notes, hidden public integration/download pages, and Pages-safe build output remain useful preparation, but public publication is retargeted to the M4 GitHub cutover.
-- M3 now owns the refactor/stabilization queue: Gate A is complete through T-143 test-suite split, T-141 shared argument binding, and T-140 compiler modularization; Gate B is complete through T-147 and T-133, with T-149 added as a user-requested core follow-up; Gate C is complete through T-142, T-144, T-145, and T-146; Gate D is complete through T-161 TypeScript readability sweep, and then continues with T-150 consolidation.
-- M4 now owns the accepted GitHub migration: code hosting, website hosting, release binary hosting, GitHub Actions pipelines, and retargeted `v0.1.0` publication/tagging. T-135 is no longer a comparison task; it is the migration execution task.
+- M3 is complete: Gate A passed through T-143 test-suite split, T-141 shared argument binding, and T-140 compiler modularization; Gate B passed through T-147, T-133, and T-149; Gate C passed through T-142, T-144, T-145, and T-146; Gate D passed through T-151 through T-158, T-160, T-161, and final T-150 consolidation.
+- M4 now owns the accepted GitHub migration and is active at Gate A: code hosting, website hosting, release binary hosting, GitHub Actions pipelines, and retargeted `v0.1.0` publication/tagging. T-135 is no longer a comparison task; it is the migration execution task.
 - M5 now owns the deliberate backlog review before "everything else". Rendering/language features, Unity/editor work, VS Code live preview, reusable editor packaging, public-site follow-ons, and broader class-owned core follow-ups such as T-152 should be pruned, validated, merged, split, or re-milestoned there before new feature work begins.
 - T-140 is now complete: `radebe-core` keeps the public `src/compiler.ts` and `compileDocument` contract stable, while compiler internals are split into shared utility/value readers, variable resolution, sprite header compilation, appearance-pass compilation, primitive commands, rect/circle/polygon/path command modules, and structural group/mask modules under `src/compiler/`.
 - T-147 has landed the first class-owned core slice: the public `compileDocument` facade delegates to an internal `Compiler` owner that holds diagnostics, variables, sprite state, root dispatch, and draw-command dispatch while compiled documents and render instructions remain plain data.
@@ -37,6 +37,7 @@ Last updated: `2026-06-01`
 - T-159 now tracks a future M5 feature idea, not current M3 refactor scope: allow normal appearance passes such as fill, shadow, glow, and additional strokes on stroke-generated surfaces after explicitly defining whether those nested passes target the stroke band, the expanded outer envelope, or an explicit surface choice.
 - T-160 is now complete: the shared engineering standards and Radebe styleguide define when to add explicit TypeScript local types, how to wrap function calls, where blank lines should separate phases, and how comments/JSDoc should explain purpose in human English; the public compiler and renderer facade headers were updated as touched examples.
 - T-161 is now complete: the T-160 explicit-type and wrapped-call standards were applied to clear production/test TypeScript targets across core renderer/compiler paths, CLI render results, web preview worker/queue results, VS Code diagnostic/preview rendering, scripts performance tooling, and shared core test helpers without broad mechanical primitive or literal annotations.
+- T-150 is now complete: final M3 Gate D consolidation verified `npm run build`, `npm test`, and `git diff --check`; TD-003 is closed after the renderer coverage-source and appearance-pass cleanup; TD-009 is re-scoped into T-152 for M5 validation instead of blocking GitHub migration.
 - T-149 is now complete as a core-only follow-up requested after Gate B passed: the public `renderDocument` facade delegates to an internal `DocumentRenderer` owner under `src/renderer/renderer.ts`, while `src/renderer.ts` keeps the public renderer facade and source pipeline helper stable.
 - T-142 is now complete: the web Playground keeps `playground.tsx` as the Preact orchestration shell while activation queueing, language assist helpers/rendering, CodeMirror syntax/color/diagnostic decorations, preview canvas/status handling, and cached-preview presentation live under focused `radebe-web/src/playground/` modules.
 - T-144 is now complete: the Unity CLI bridge keeps `RadebeCliBridgeHelper.cs` as the public editor facade while payload validation/install, platform and path resolution, process invocation/argument quoting, manifest DTOs, and result DTOs live in focused `Assets/Editor/RadebeCli*` modules.

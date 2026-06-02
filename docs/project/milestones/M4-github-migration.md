@@ -3,8 +3,8 @@
 Milestone ID: `M4`
 Title: `GitHub Migration`
 Owner: `Main Thread`
-Last updated: `2026-05-28`
-Status: `Planned`
+Last updated: `2026-06-02`
+Status: `In Progress`
 
 ## Outcome
 - Move Radebe's public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub after the refactor milestone is complete.
@@ -19,7 +19,7 @@ Status: `Planned`
 ## Gate Definitions
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
-| Gate A | Repository Cutover Plan | GitHub repository, branch, visibility, secrets, and migration steps are defined without losing local history or required docs | Not Started | Seed task: T-135 |
+| Gate A | Repository Cutover Plan | GitHub repository, branch, visibility, secrets, and migration steps are defined without losing local history or required docs | In Progress | Seed task: T-135 is now the active next task after M3 refactor closeout |
 | Gate B | GitHub Actions Pipeline | Build, test, website, and release-artifact workflows are implemented and validated on GitHub Actions | Not Started | Replaces the current Azure DevOps pipeline as the intended public pipeline path |
 | Gate C | Website Hosting | The public website is deployed from GitHub-hosted automation and the previous Cloudflare Pages path is either retired or explicitly kept only as legacy context | Not Started | T-126 should publish through this path after Gate B is stable |
 | Gate D | Release Assets | CLI, VSIX, Unity package, manifests, checksums, and release notes have a GitHub Releases hosting plan before public integration/download pages are restored | Not Started | Resolves the artifact-hosting part of T-135 |

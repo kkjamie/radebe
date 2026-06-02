@@ -1,15 +1,15 @@
 # Main Thread State
 
 Owner: `Main Thread`
-Last updated: `2026-06-01`
+Last updated: `2026-06-02`
 
 ## Current Milestone / Gate
-- Milestone: `M3`
-- Gate: `Gate D`
+- Milestone: `M4`
+- Gate: `Gate A`
 - Status: `In Progress`
 
 ## Current Focus
-- T-150 is in review after a repo-wide readability cleanup pass. The scan now reports zero production functions at or above 120 lines and zero production `if` statements at or above 40 lines, after splitting core compiler helpers, renderer stroke loops, web performance tooling handlers, and the web Playground runtime.
+- T-150 is complete and M3 Gate D has passed. Final closeout verified `npm run build`, `npm test`, and `git diff --check`; TD-003 is closed, TD-009 is re-scoped to T-152 for M5 validation, and T-135 is now the active M4 Gate A migration task.
 - DEC-079 records the new planning decision: move public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub, but complete the refactor milestone first.
 - DEC-080 records the follow-up planning decision to promote TD-003 into T-151 for a near-term renderer/shared cleanup before final M3 consolidation, while keeping broader TD-009 class-owned architecture slices visible as T-152 for M5 validation.
 - DEC-081 records the renderer implementation direction from T-151: shared appearance-pass rendering should target coverage sources, with alpha-mask-backed composited group coverage implemented first.
@@ -18,13 +18,14 @@ Last updated: `2026-06-01`
 - DEC-084 records the T-155 module-split follow-up: `renderer/appearance.ts` stays as the stable barrel, while coverage fill, stroke, shadow, glow, and ordered-pass orchestration live in focused `renderer/appearance/` modules.
 - DEC-085 records the T-158 naming cleanup: the main public render output is now `RenderedImage` with runtime kind `rendered-image`, while `SpriteGridRenderArtifact` remains as a deprecated type alias.
 - DEC-086 records the T-160 style decision: domain-result locals from non-obvious function calls should be explicitly typed, wrapped function calls should use predictable per-argument lines, blank lines should separate function phases, and comments/JSDoc should explain purpose in human English.
-- The milestone sequence is now M3 refactoring and architecture stabilization, M4 GitHub migration, then M5 full backlog review/replan before broad feature work resumes.
+- DEC-087 records the T-150 closeout decision: TD-003 is closed, TD-009 is re-scoped to T-152 for M5 validation, and M4 GitHub migration is no longer blocked by M3 refactor debt.
+- The milestone sequence is now M4 GitHub migration, then M5 full backlog review/replan before broad feature work resumes.
 - M2 is paused. The local web-only `v0.1.0` release candidate remains prepared with `siteVersion` `2026-05-27.1`, release notes, hidden integration/download pages, and Pages-safe output, but Azure/Cloudflare publication is no longer the next objective.
 - T-126 is parked from the old Cloudflare closeout path and retargeted to M4 Gate E so the release is published and tagged through the GitHub path.
 - T-135 is no longer an undecided hosting comparison; it is now the M4 GitHub migration execution task for repo/source hosting, GitHub Actions, Pages, Releases, secrets, branch/cutover, and release binary hosting.
 - T-143, T-141, and T-140 are complete, so M3 Gate A has passed. The core test safety net is split by concern, malformed numeric-token coverage is in place, one shared internal binding helper now handles strict integer-token detection plus `rect-inset` and variadic trailing-color positional interpretation across compiler, language-service, and color-token detection, and the compiler is split behind the stable public `compileDocument` facade.
 - M3 Gate B has passed. T-147 is complete with an internal `Compiler` owner behind the public `compileDocument` facade, T-133 is complete with a shared covered-fill renderer appearance capability for rect, circle, and polygon fills while preserving command-owned geometry coverage, and user-requested core follow-up T-149 is complete with an internal `DocumentRenderer` owner behind the public `renderDocument` facade.
-- M3 Gate C is complete for non-core refactor hotspots. T-142 is complete: the web Playground now keeps `playground.tsx` as the Preact orchestration shell while activation queueing, assist helpers/rendering, CodeMirror syntax/color/diagnostic decorations, preview canvas/status control, and cached-preview presentation live under focused `radebe-web/src/playground/` modules. T-144 is also complete: the Unity CLI bridge now keeps `RadebeCliBridgeHelper.cs` as the public editor facade while validation/install, platform/path, process invocation, manifest, and result concerns live in focused modules. T-145 is complete: `styles.css` now imports focused token, base, syntax, editor, shell, page, Playground, and responsive styles from `radebe-web/src/styles/`. T-146 is complete: `scripts/src/web-page-perf.ts` now stays as the performance diagnostics entrypoint while static-server, browser/WebSocket probe, metrics, report writer, path, type, and CLI modules live under `scripts/src/web-page-perf/`, with strict numeric option validation covered by a focused script test. M3 Gate D is now active with T-151, T-153, T-154, T-155, T-156, T-157, T-158, T-160, and T-161 complete and T-150 consolidation next.
+- M3 Gate C is complete for non-core refactor hotspots. T-142 is complete: the web Playground now keeps `playground.tsx` as the Preact orchestration shell while activation queueing, assist helpers/rendering, CodeMirror syntax/color/diagnostic decorations, preview canvas/status control, and cached-preview presentation live under focused `radebe-web/src/playground/` modules. T-144 is also complete: the Unity CLI bridge now keeps `RadebeCliBridgeHelper.cs` as the public editor facade while validation/install, platform/path, process invocation, manifest, and result concerns live in focused modules. T-145 is complete: `styles.css` now imports focused token, base, syntax, editor, shell, page, Playground, and responsive styles from `radebe-web/src/styles/`. T-146 is complete: `scripts/src/web-page-perf.ts` now stays as the performance diagnostics entrypoint while static-server, browser/WebSocket probe, metrics, report writer, path, type, and CLI modules live under `scripts/src/web-page-perf/`, with strict numeric option validation covered by a focused script test.
 - T-151 is complete. `radebe-core/src/renderer/coverage.ts` now defines a renderer-internal `CoverageSource` contract, and composited group fill/stroke/shadow/glow passes use alpha-mask coverage sources instead of private `DocumentRenderer` mask-pass loops.
 - T-153 is complete. Rect, circle, and polygon coverage-source factories now expose shape alpha, spread, nested-stroke expansion, and stroke-pattern positioning, and the primitive fill/stroke/shadow/glow modules route through shared coverage appearance helpers.
 - T-154 is complete. Redundant rect/circle/polygon `fill`, `stroke`, `shadow`, and `glow` adapter files are deleted; each primitive command entry creates its coverage source and calls the shared ordered coverage appearance-pass helper.
@@ -35,6 +36,7 @@ Last updated: `2026-06-01`
 - T-159 is parked in the M5 backlog, not M3: future stroke-generated surfaces may host normal fill, shadow, glow, and stroke passes after the team defines whether nested passes target the stroke band, the expanded outer envelope, or an explicit surface choice.
 - T-160 is complete. `docs/agent/standards.md` and `docs/project/styleguide.md` now standardize explicit local types for non-obvious domain function calls, multiline function-call formatting, blank-line spacing between function phases, and human-English comment/JSDoc wording; `radebe-core/src/compiler.ts` and `radebe-core/src/renderer.ts` were updated as touched examples.
 - T-161 is complete. It applied the T-160 readability standards to clear production/test TypeScript targets across core renderer/compiler paths, CLI render results, web preview worker/queue results, VS Code diagnostic/preview rendering, scripts performance tooling, and shared core test helpers while avoiding broad mechanical annotations on obvious literals, primitives, and short temporaries.
+- T-150 is complete. The final M3 closeout accepted the repo-wide readability cleanup, confirmed build/test/diff-check evidence, closed TD-003, and re-scoped TD-009 to T-152 for M5 validation; M3 is no longer blocking GitHub migration.
 - M5 now owns backlog validation through new task T-148. Rendering/language features, Unity/editor follow-ons, VS Code live preview, reusable editor packaging, public-site follow-ons, and the broader T-152 class-owned core follow-up should not start until they are pruned, validated, merged, split, or assigned to fresh post-review milestones.
 - T-125 final public website QA/polish, T-074 vocabulary alignment, the 2026-05-27 Unity redeploy/GUID repair, and the 2026-05-28 VS Code Enter/autocomplete fix remain completed historical context.
 - The recovered source product spec is now reflected in code through an indentation-aware command tree, a schema-backed compiler registry, a small `sprite` header block with nested `size` and `background` properties, root-level `plot`, `line`, `rect`, `rect-absolute`, `rect-inset`, and `circle` commands, generic property normalization across positional inline args, named inline args, and child property commands, plus actual `fill` / `solid` / explicit `gradient-linear` / explicit `gradient-radial` appearance commands while `gradient` remains the compatibility alias for the linear form.
@@ -159,9 +161,9 @@ Last updated: `2026-06-01`
 - T-131 is a backlog task to resolve author-facing coordinate-space semantics before or alongside `outputscale`, including sprite bounds, point-like commands, filled extents, open paths, stroke alignment, antialiasing, tests, and docs.
 
 ## Best Next Tasks
-1. Review the T-150 repo-wide readability cleanup with the user.
-2. Verify final Gate D evidence, then close or re-scope remaining renderer/core refactor debt such as TD-003 and TD-009.
-3. If Gate D passes, advance to M4 Gate A and begin T-135 GitHub migration planning/execution.
+1. Start T-135 for M4 Gate A.
+2. Define the GitHub repository, branch, visibility, secrets, and cutover plan without losing local history or required docs.
+3. Sequence GitHub Actions, Pages, Releases, and the retargeted `v0.1.0` publication gates.
 
 ## Resume Checklist
 1. Read the latest `docs/project/session-log/*.md`.
