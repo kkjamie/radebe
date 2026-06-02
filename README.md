@@ -1,8 +1,8 @@
 # Radebe
 
-Radebe is a TypeScript-based language toolchain and authoring ecosystem.
+Radebe is a procedural image authoring langauge & toolchain.
 
-The repo is being organized as a multi-package workspace with these primary parts:
+Currently we use a monorepo with the following components:
 
 - `radebe-core`: parsing, compiling, and rendering for the language.
 - `radebe-cli`: standalone command-line wrapper around `radebe-core`.
@@ -29,17 +29,25 @@ npm install
 
 The repo declares the same requirement in root `package.json`, enables npm `engine-strict`, and includes `.nvmrc` so the expected Node version is explicit across developer machines.
 
-## Documentation
+## Agent assisted development
+
+This project uses agent assisted development by using the [Wilko Workflow](https://wilko-workflow.pages.dev/) to help guide agents and maintain sufficient documentation.
 
 Project planning and source-of-truth docs live in `docs/project/`.
 
-Start with:
+Agents start with:
 
 1. `AGENTS.md`
 2. `docs/project/README.md`
 3. `docs/project/product-spec.md`
 4. `docs/project/task-board.md`
 5. `docs/project/roadmap.md`
+
+Although agents are used heavily in development, this is not blind "vibe coded". Code is thoroughly reviewed and iterated until the API design, architecture and readability is satisfactory before anything is released. Pure blind vibe coding is used to rapidly prototype new features or conduct experiments, but it gets bashed into shape prior to merge/release.
+
+## Rendering
+
+There is no third party rendering backend in here, everything is done "in house". We construct our own pixel buffers and do all our own mathematics to populate them, producing the final rendered artifact. This is a deliberate desicion to aid portability and give us full control in what we do.
 
 ## Packaging Direction
 
