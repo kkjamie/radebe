@@ -9,7 +9,7 @@ Last updated: `2026-10-20`
 - Status: `In Progress`
 
 ## Current Focus
-- 2026-10-20: a portfolio-readiness review added T-162 to T-165 to M4 (DEC-088, IR-003; session log `2026-10-20-portfolio-readiness-review.md`). Recommended order: T-162 first (the live site overclaims today), then T-163 alongside T-135 Gate A, T-164 as part of Gate B, and T-165 after T-163. T-135 stays the main M4 migration task.
+- 2026-10-20: a portfolio-readiness review added T-162 to T-165 to M4 (DEC-088, IR-003; session log `2026-10-20-portfolio-readiness-review.md`). Recommended order: T-162 first (the live site overclaims today), then T-163 alongside T-135 Gate A, T-164 as part of Gate B, and T-165 after T-163. T-135 stays the main M4 migration task. T-162 is done (session log `2026-10-20-t162-site-honesty-and-credit.md`); next is T-163.
 - T-150 is complete and M3 Gate D has passed. Final closeout verified `npm run build`, `npm test`, and `git diff --check`; TD-003 is closed, TD-009 is re-scoped to T-152 for M5 validation, and T-135 is now the active M4 Gate A migration task.
 - DEC-079 records the new planning decision: move public code hosting, website hosting, release binary hosting, and CI/CD pipelines to GitHub, but complete the refactor milestone first.
 - DEC-080 records the follow-up planning decision to promote TD-003 into T-151 for a near-term renderer/shared cleanup before final M3 consolidation, while keeping broader TD-009 class-owned architecture slices visible as T-152 for M5 validation.

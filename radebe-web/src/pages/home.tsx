@@ -24,11 +24,20 @@ export function HomePage() {
           <h3 className="plain-list-title">Key features</h3>
           <ul className="plain-list-items">
             <li>Simple &amp; readable</li>
-            <li>Consumable as a Node package</li>
-            <li>CLI support</li>
+            <li>Browser editor with live preview</li>
+            <li>Deterministic, in-house renderer</li>
+          </ul>
+          <h3 className="plain-list-title">Coming soon</h3>
+          <ul className="plain-list-items plain-list-items--muted">
+            <li>Node packages</li>
+            <li>CLI</li>
             <li>Unity integration</li>
             <li>VS Code extension</li>
           </ul>
+          <p className="home-features-note">
+            These integrations are built and waiting on public release
+            hosting. See the <a href="#/roadmap">roadmap</a>.
+          </p>
         </section>
         <div className="hero-actions">
           <ActionLink link={{ label: "Try it", href: "#/try-it" }} />

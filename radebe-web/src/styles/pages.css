@@ -33,6 +33,25 @@
   margin-top: 18px;
 }
 
+.home-features .plain-list-items + .plain-list-title {
+  margin-top: 16px;
+}
+
+.plain-list-items--muted {
+  color: var(--color-text-subtle);
+}
+
+.home-features-note {
+  margin: 10px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.home-features-note a {
+  color: var(--color-accent-soft);
+}
+
 .integration-actions {
   margin: 0 0 22px;
 }

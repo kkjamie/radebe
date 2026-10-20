@@ -2,6 +2,7 @@ import { render } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 
 import { BrandIcon } from "./brand-icon.js";
+import { siteLinks } from "./content/site-links.js";
 import { exampleDocs, integrationPages, pages, productVersion } from "./data.js";
 import {
   getPerfSnapshot,
@@ -351,7 +352,17 @@ function SiteTopbar(props: {
           Procedural image authoring language
         </span>
       </div>
-      <span className="version-pill">v{productVersion}</span>
+      <div className="topbar-right">
+        <a
+          className="topbar-link"
+          href={siteLinks.repositoryUrl}
+          rel="noreferrer"
+          target="_blank"
+        >
+          GitHub
+        </a>
+        <span className="version-pill">v{productVersion}</span>
+      </div>
     </header>
   );
 }
@@ -453,6 +464,16 @@ function SiteSidebar(props: {
             onNavigate={props.onNavigate}
           />
         </nav>
+        <p className="site-credit">
+          Built by{" "}
+          <a href={siteLinks.authorUrl} rel="noreferrer" target="_blank">
+            {siteLinks.authorName}
+          </a>
+          {" · "}
+          <a href={siteLinks.repositoryUrl} rel="noreferrer" target="_blank">
+            Source
+          </a>
+        </p>
       </div>
     </aside>
   );

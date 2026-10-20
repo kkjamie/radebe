@@ -1,7 +1,7 @@
 # Codebase Map
 
 Owner: `Main Thread`
-Last updated: `2026-06-01`
+Last updated: `2026-10-20`
 
 ## Top-Level Layout
 - `docs/`: workflow, planning, and project source-of-truth docs.
@@ -43,6 +43,7 @@ Last updated: `2026-06-01`
 - `radebe-web/src/pages/home.tsx`: homepage component with its page definition and highlighted mini-preview source co-located at the top.
 - `radebe-web/src/pages/try-it.tsx`: full-page Try it component with its page definition and default editor example data co-located at the top.
 - `radebe-web/src/pages/syntax.tsx`: syntax guide component with feature cards, notes, and example snippets co-located at the top.
+- `radebe-web/src/content/site-links.ts`: public author credit and source repository links used by the top bar and sidebar credit.
 - `radebe-web/src/content/release-notes.ts`: canonical product release-note content rendered by the public site.
 - `radebe-web/src/pages/release-notes.tsx`: release notes page component that renders the canonical product release-note content.
 - `radebe-web/src/pages/roadmap.tsx`: public roadmap component with feature cards and planned syntax examples co-located at the top.
