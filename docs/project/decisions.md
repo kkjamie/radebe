@@ -995,3 +995,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: The homepage loses some claims in the short term, but the site becomes consistent. Once M4 Gate D ships, restoring the VSIX and Unity package downloads is the highest-value follow-up, because those integrations already exist. Golden images become the regression contract for renderer output, so intentional visual changes need an explicit reference update.
 - Related tasks: T-162, T-163, T-164, T-165, T-135
 - Supersedes: N/A
+
+---
+
+### DEC-089: Keep Cloudflare Pages Hosting, Deploy From GitHub Actions
+- Date: `2026-10-20`
+- Status: Accepted
+- Context: M4 planned to move website hosting to GitHub Pages. GitHub Pages would serve the site under `/radebe/`, which breaks today's root-absolute paths (for example the favicon in `index.html` and Vite's default `/` base), and it would change the public URL away from `radebe.pages.dev`. The Azure pipeline only built the website and deployed it to Cloudflare Pages, with no test stage.
+- Decision: Keep Cloudflare Pages as the website host. Move the pipeline to GitHub Actions (`.github/workflows/ci.yml`): build, typecheck and test on Ubuntu and Windows for every push and pull request to `main`, then deploy the site to Cloudflare Pages with `wrangler` only after tests pass on `main`. The workflow also sets the Pages production branch to `main`. Secrets are the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` GitHub repository secrets.
+- Consequences: The public URL stays stable and no base-path changes are needed. M4 Gate C is satisfied by GitHub-hosted automation deploying to Cloudflare rather than by GitHub Pages hosting. Tests now gate deploys, which the Azure pipeline never did. The Azure pipeline and its Cloudflare token should be disabled and revoked once the GitHub workflow is green; `azure-pipelines.yml` is legacy until then.
+- Related tasks: T-135, T-162
+- Supersedes: The GitHub Pages hosting part of DEC-079

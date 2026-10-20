@@ -8,7 +8,7 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Active
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-135 | Migrate public source, website, release artifacts, and pipelines to GitHub | M4 | Gate A | P1 | Ready | Unassigned | None | Define the GitHub repo, Actions, Pages, Releases, secrets, branch, and cutover plan, then implement the migration gates before restoring public downloads |
+| T-135 | Migrate public source, website, release artifacts, and pipelines to GitHub | M4 | Gate B | P1 | In Progress | `claude` | None | Repo is live at github.com/kkjamie/radebe (`development` pushed as `main`); `.github/workflows/ci.yml` added (DEC-089). Next: confirm the first GitHub run is green, disable the Azure pipeline and revoke its token, then add the Gate D release-artifact workflow |
 
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |

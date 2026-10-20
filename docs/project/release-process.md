@@ -30,7 +30,7 @@ When a user asks to "setup a release", "prepare a release", or similar, that req
    - `npm run smoke:cli:sea`
    - `npm run package:vscode`
    - `npm run package:unity`
-11. Merge or push the prepared release commit to `master` so Azure DevOps can run the staged build/deploy flow.
+11. Push the prepared release commit to `main` on GitHub; `.github/workflows/ci.yml` runs build, typecheck and tests, then deploys the site to Cloudflare Pages (DEC-089). The Azure DevOps `master` pipeline is legacy.
 12. Verify the hosted pipeline result, website deployment, and release artifact availability if artifacts were in scope after CI completes.
 13. If the release introduces a process or packaging change, update this file and the relevant project tracking docs in the same thread.
 

@@ -20,14 +20,19 @@ Status: `In Progress`
 | Gate | Name | Required Evidence | Status | Notes |
 | --- | --- | --- | --- | --- |
 | Gate A | Repository Cutover Plan | GitHub repository, branch, visibility, secrets, and migration steps are defined without losing local history or required docs | In Progress | Seed task: T-135 is now the active next task after M3 refactor closeout |
-| Gate B | GitHub Actions Pipeline | Build, test, website, and release-artifact workflows are implemented and validated on GitHub Actions | Not Started | Replaces the current Azure DevOps pipeline as the intended public pipeline path |
-| Gate C | Website Hosting | The public website is deployed from GitHub-hosted automation and the previous Cloudflare Pages path is either retired or explicitly kept only as legacy context | Not Started | T-126 should publish through this path after Gate B is stable |
+| Gate B | GitHub Actions Pipeline | Build, test, website, and release-artifact workflows are implemented and validated on GitHub Actions | In Progress | Replaces the current Azure DevOps pipeline as the intended public pipeline path |
+| Gate C | Website Hosting | The public website is deployed from GitHub-hosted automation and the previous Cloudflare Pages path is either retired or explicitly kept only as legacy context | In Progress | T-126 should publish through this path after Gate B is stable |
 | Gate D | Release Assets | CLI, VSIX, Unity package, manifests, checksums, and release notes have a GitHub Releases hosting plan before public integration/download pages are restored | Not Started | Resolves the artifact-hosting part of T-135 |
 | Gate E | Release Cutover | `v0.1.0` site/product tags and any matching GitHub release/page deploy are created from the accepted GitHub path | Not Started | Retargeted T-126 closeout |
 
 ## Repository
 - GitHub repository: `https://github.com/kkjamie/radebe` (public, personal account; chosen 2026-10-20 for clear authorship; can transfer to an org later with redirects).
 - Initial push: the existing `development` history was pushed as `main` (the GitHub default branch) on 2026-10-20.
+
+## Pipeline (DEC-089)
+- `.github/workflows/ci.yml` builds, typechecks and tests on Ubuntu and Windows, then deploys the site to Cloudflare Pages from `main` after tests pass.
+- Cloudflare Pages stays the site host; the Azure DevOps pipeline is legacy until the GitHub workflow is green, then it is disabled and its token revoked.
+- Release-artifact workflow (CLI SEA per platform, VSIX, Unity package, checksums to GitHub Releases) remains for Gate D.
 
 ## Portfolio Readiness (DEC-088)
 - Gate A also covers T-163: a README written for public GitHub readers.
