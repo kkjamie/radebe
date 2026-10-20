@@ -984,3 +984,14 @@ Use for significant decisions only. Keep entries short and explicit.
 - Consequences: M3 Gate D can pass and M4 GitHub migration can start. Future class-owned slices remain visible, but they should be selected only when they lower concrete adjacent change risk after the M5 backlog review.
 - Related tasks: T-150, T-151, T-153, T-154, T-155, T-156, T-160, T-161, T-152, T-135
 - Supersedes: N/A
+
+---
+
+### DEC-088: Public Surfaces Reflect Only What Is Publicly Available
+- Date: `2026-10-20`
+- Status: Accepted
+- Context: Radebe is now also a public portfolio piece for its author. A review of the live site found the homepage advertising CLI, Node package, Unity and VS Code support while the release notes and roadmap say those are not publicly available yet (IR-003). It also found no author credit, no public repository link, and no automated visual regression protection for the deterministic renderer.
+- Decision: Public surfaces (site, README, release notes) describe only capabilities a visitor can use today; built-but-unreleased integrations are labelled as coming soon until M4 Gate D publishes them through GitHub Releases. Portfolio-readiness work (T-162 site honesty and author credit, T-163 public README, T-164 golden-image regression suite, T-165 "How Radebe is built" page) joins M4, because it belongs to making the repository and website public.
+- Consequences: The homepage loses some claims in the short term, but the site becomes consistent. Once M4 Gate D ships, restoring the VSIX and Unity package downloads is the highest-value follow-up, because those integrations already exist. Golden images become the regression contract for renderer output, so intentional visual changes need an explicit reference update.
+- Related tasks: T-162, T-163, T-164, T-165, T-135
+- Supersedes: N/A

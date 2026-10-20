@@ -1,7 +1,7 @@
 # Roadmap
 
 Owner: `Main Thread`
-Last updated: `2026-06-02`
+Last updated: `2026-10-20`
 
 ## Planning Horizon
 - Current: `2026-05-24` to `2026-06-07`
@@ -23,6 +23,7 @@ Last updated: `2026-06-02`
 - P2: useful improvements, schedule as capacity allows.
 
 ## Current Focus
+- 2026-10-20 portfolio-readiness review (DEC-088): Radebe is also the author's public portfolio piece, so M4 now carries four readiness tasks: T-162 (site honesty and author credit; can ship on the current Pages deploy now), T-163 (public README), T-164 (golden-image regression suite, enforced by the new pipeline), and T-165 ("How Radebe is built" page). After the cutover, publishing the already-built VSIX and Unity package through GitHub Releases (Gate D) is the highest-value follow-up.
 - The milestone order has been reworked around the 2026-05-28 GitHub decision: refactoring first, GitHub migration second, backlog review third, then any remaining feature/integration work only after that review splits the next milestones.
 - M2 is paused rather than pushed through the Azure/Cloudflare closeout path. The local web-only `v0.1.0` release candidate, `siteVersion` `2026-05-27.1`, release notes, hidden public integration/download pages, and Pages-safe build output remain useful preparation, but public publication is retargeted to the M4 GitHub cutover.
 - M3 is complete: Gate A passed through T-143 test-suite split, T-141 shared argument binding, and T-140 compiler modularization; Gate B passed through T-147, T-133, and T-149; Gate C passed through T-142, T-144, T-145, and T-146; Gate D passed through T-151 through T-158, T-160, T-161, and final T-150 consolidation.

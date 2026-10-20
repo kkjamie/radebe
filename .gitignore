@@ -9,3 +9,6 @@ radebe-web/public/generated/
 .env
 .env.local
 .env.*.local
+
+# Local history backups (never publish)
+backups/

@@ -1,7 +1,7 @@
 # Task Board
 
 Owner: `Main Thread`
-Last updated: `2026-06-02`
+Last updated: `2026-10-20`
 
 Use this as the single source of truth for active execution state. Keep `Active` limited to live execution items; closed work belongs in `Completed`.
 
@@ -13,6 +13,10 @@ Use this as the single source of truth for active execution state. Keep `Active`
 ## Next Up
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| T-162 | Make the public site honest about what is shipped, and credit the author | M4 | Gate C | P1 | Ready | Unassigned | None. Can ship on the current Pages deploy ahead of the GitHub cutover, because the live site overclaims today (IR-003) | Change the homepage "Key features" so the CLI, Node package, Unity and VS Code items are labelled as coming soon (or link to their roadmap cards) until M4 Gate D restores downloads. Add a site-wide author credit ("Built by Jamie Healey") with repo and LinkedIn links in the top bar or footer |
+| T-163 | Rewrite the root README for public GitHub readers | M4 | Gate A | P1 | Ready | Unassigned | None | Restructure README.md for outside readers: what Radebe is and why it exists, a rendered showcase image, quickstart, package overview, a source -> parser -> compiler -> renderer architecture diagram, key design decisions linked to `decisions.md`, the existing agent-assisted development statement, and roadmap/release links. Fix typos ("langauge", "desicion") |
+| T-164 | Add a golden-image regression suite for the renderer | M4 | Gate B | P1 | Ready | Unassigned | None | Render every web example and a curated fixture set to PNG, compare byte-for-byte against committed references (the renderer is deterministic), add an explicit `npm run test:golden:update` flow for intentional changes, and run it in `npm test` so the GitHub Actions pipeline enforces it |
+| T-165 | Publish a "How Radebe is built" page | M4 | Gate C | P2 | Backlog | Unassigned | Best after T-163, so README and page share one architecture story | Add a public site page (and optional blog-ready Markdown) covering the pipeline architecture, the in-house rasteriser and coverage-source model, multi-sample antialiasing, determinism, the main design decisions, and how the main-thread/worker-thread agent workflow is used with human review |
 
 ## Backlog
 | ID | Title | Milestone | Gate | Priority | Status | Owner | Blockers | Next Action |
